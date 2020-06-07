@@ -1,0 +1,22 @@
+/* main page */
+
+
+/* example page */
+main {
+  position: relative;
+  margin: 16px auto;
+  width: 1000px;
+}
+
+main>canvas {
+  width: 1000px;
+  height: 600px;
+}
+
+.menu {
+  margin: 8px auto;
+  margin-top: 32px;
+  width: 400px;
+  display: flex;
+  justify-content: space-around;
+}

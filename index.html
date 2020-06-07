@@ -4,9 +4,111 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kun Liu's Blog</title>
+
+  <link rel="stylesheet" href="./main.css">
 </head>
-<body>
-  <header>test</header>
-  <main></main>
+<body onload="init()">
+  <header>
+    <nav>
+      <ul id="nav-menu">
+        <li id="cg-example">Computational Geometry</li>
+        <li id="about">About</li>
+      </ul>
+    </nav>
+  </header>
+  <main>
+    <div id="main-container"></div>
+    <div id="main-about">
+      <p>Hi! I'm Kun Liu.</p>
+
+      <p>As a software engineer, I was interested in <strong>computational geometry</strong>, <strong>data/geographic visualization</strong>, <strong>3d</strong>.</p>
+
+      <p>I graduated with a Master's degree in Geographic Information Science(GIS) from Nanjing Normal University.</p>
+
+      <p>I will publish some interesting examples.</p>
+    </div>
+  </main>
+
+  <script>
+    const containerEle = document.getElementById('main-container');
+    const aboutEle = document.getElementById('main-about');
+    const navMenuEle = document.getElementById('nav-menu');
+
+    const allExamples = [
+      {
+        type: 'cg-example',
+        groups: [
+          {
+            name: 'convexHull',
+            methods: [
+              {
+                file: 'grahamScanCH',
+                title: "Convex Hulls in Two Dimensions: Graham's Algorithm"
+              },
+              {
+                file: 'upperLowerCH',
+                title: 'Convex Hulls in Two Dimensions: Lower Bound'
+              },
+              {
+                file: 'incrementalCH',
+                title: 'Convex Hulls in Two Dimensions: Incremental Algorithm'
+              }
+            ]
+          }
+        ]
+      }
+    ];
+
+    const exampleTemplate = `
+      <div class="item">
+        <a href="#{url}">
+          <img src="#{src}" alt="">
+          <span class="title">#{title}</span>
+        </a>
+      </div>`
+    function init() {
+      renderContainer();
+
+      navMenuEle.addEventListener('click', (event) => {
+        const targetId = event.target.id;
+        if (targetId === 'about') {
+          renderAbout();
+        } else {
+          const menuIndex = allExamples.findIndex(e => e.type === targetId);
+          renderContainer(Math.min(menuIndex, 0));
+        }
+      });
+    }
+
+    function renderContainer(index = 0) {
+      const items = [];
+      let path;
+      allExamples[index].groups.forEach((group) => {
+        group.methods.forEach((item) => {
+          path = `${allExamples[index].type}/${group.name}/${item.file}`
+          items.push({
+            ...item,
+            url: path + '.html',
+            src: path + '.gif',
+          })
+        });
+      });
+
+      const content = items.map(item =>
+        exampleTemplate.replace('#{url}', item.url)
+          // .replace('#{src}', item.src)
+          .replace('#{title}', item.title)
+      ).join('');
+      containerEle.innerHTML = content;
+
+      aboutEle.style.display = 'none';
+      containerEle.style.display = 'block';
+    }
+
+    function renderAbout() {
+      containerEle.style.display = 'none';
+      aboutEle.style.display = 'block';
+    }
+  </script>
 </body>
 </html>
