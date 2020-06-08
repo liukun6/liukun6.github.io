@@ -13,7 +13,6 @@
 <body>
   <main>
     <canvas id="container"></canvas>
-    <canvas id="anim-container" style="position: absolute; top: 0; left: 0;"></canvas>
   </main>
   <div class="menu">
     <button id="btn_refresh">refresh</button>
@@ -26,21 +25,18 @@
     const { Geometry: { Point, Segment, Polygon }, CanvasRender } = CG;
     const canvasEle = document.getElementById('container');
     const render = new CanvasRender(canvasEle);
-    const anim_render = new CanvasRender(document.getElementById('anim-container'));
-
     let anim;
     upperLowerCH();
 
     function upperLowerCH() {
       const points = [];
-      for (let i = 0; i < 20; i++) {
+      for (let i = 0; i < 35; i++) {
         points[i] = randomPoint();
       }
       const chVertices = CG.upperLowerCH(points);
       render.clearCanvas();
-      anim_render.clearCanvas();
+      render.drawPolygon(new Polygon(chVertices));
       render.drawPoints(points);
-      anim_render.drawPolygon(new Polygon(chVertices), { style: { fillColor: '#3969AC85'} });
 
       let breakIndex = chVertices.length - 1;
       for(let i = 0; i < chVertices.length - 1; i++) {
@@ -50,16 +46,17 @@
         }
       }
       anim = new CG.Animation((step) => {
-        anim_render.clearCanvas();
+        render.clearCanvas();
         if (step <= breakIndex) {
-          anim_render.drawPolygon(new Polygon(chVertices.slice(0, step+1)), { style: { fillColor: '#ff000055'} });
+          render.drawPolygon(new Polygon(chVertices.slice(0, step+1)));
         } else {
-          anim_render.drawPolygon(new Polygon(chVertices.slice(0, breakIndex+1)), { style: { fillColor: '#ff000055'} });
+          render.drawPolygon(new Polygon(chVertices.slice(0, breakIndex+1)));
           let upper = chVertices.slice(breakIndex, step+1);
           upper.unshift(chVertices[0]);
-          anim_render.drawPolygon(new Polygon(upper), { style: { fillColor: '#00ff0055'} });
+          render.drawPolygon(new Polygon(upper), { style: { fillColor: '#ff000055'} });
         }
-      }, { frameCount: chVertices.length, frameDuration: 200, recycle: false});
+        render.drawPoints(points);
+      }, { frameCount: chVertices.length, frameDuration: 300, recycle: false});
     }
 
     const refreshElem = document.getElementById('btn_refresh');

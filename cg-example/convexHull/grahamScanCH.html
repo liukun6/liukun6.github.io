@@ -13,7 +13,6 @@
 <body>
   <main>
     <canvas id="container"></canvas>
-    <canvas id="anim-container" style="position: absolute; top: 0; left: 0;"></canvas>
   </main>
   <div class="menu">
     <button id="btn_refresh">refresh</button>
@@ -26,8 +25,6 @@
     const { Geometry: { Point, Segment, Polygon }, CanvasRender } = CG;
     const canvasEle = document.getElementById('container');
     const render = new CanvasRender(canvasEle);
-    const anim_render = new CanvasRender(document.getElementById('anim-container'));
-
     let anim;
     grahamScanCH();
 
@@ -39,18 +36,18 @@
       const records = [];
       const chVertices = CG.grahamScanCH(points, records);
       render.clearCanvas();
-      anim_render.clearCanvas();
-      anim_render.drawPolygon(new Polygon(chVertices), { style: { fillColor: '#3969AC85'} });
+      render.drawPolygon(new Polygon(chVertices));
       render.drawPoints(points);
 
       anim = new CG.Animation((step) => {
-        anim_render.clearCanvas();
-        anim_render.drawPolygon(new Polygon(records[step].chVertices), { style: { fillColor: '#3969AC85'} });
+        render.clearCanvas();
+        render.drawPolygon(new Polygon(records[step].chVertices));
+        render.drawPoints(points);
         if (records[step].vertice) {
-          anim_render.drawSegment(new Segment(...records[step].chVertices.slice(-2)), 4, 'green');
-          anim_render.drawPoint(records[step].vertice, 4, 'green');
+          render.drawSegment(new Segment(...records[step].chVertices.slice(-2)), 4, '#ff0000');
+          render.drawPoint(records[step].vertice, 5, '#ff0000');
         }
-      }, { frameCount: records.length, frameDuration: 200, recycle: false});
+      }, { frameCount: records.length, frameDuration: 300, recycle: false});
     }
 
     const refreshElem = document.getElementById('btn_refresh');

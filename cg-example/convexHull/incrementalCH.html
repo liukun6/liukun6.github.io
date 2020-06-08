@@ -13,7 +13,6 @@
 <body>
   <main>
     <canvas id="container"></canvas>
-    <canvas id="anim-container" style="position: absolute; top: 0; left: 0;"></canvas>
   </main>
   <div class="menu">
     <button id="btn_refresh">refresh</button>
@@ -31,22 +30,19 @@
     const { Geometry: { Point, Segment, Polygon }, CanvasRender } = CG;
     const canvasEle = document.getElementById('container');
     const render = new CanvasRender(canvasEle);
-    const anim_render = new CanvasRender(document.getElementById('anim-container'));
-
     let anim;
     incrementalCH();
 
     function incrementalCH() {
       let points = [];
       let chVertices = [];
-      for (let i = 0; i < 30; i++) {
+      for (let i = 0; i < 35; i++) {
         points[i] = randomPoint();
         CG.incrementalCH(chVertices, points[i]);
       }
-      anim_render.clearCanvas();
-      anim_render.drawPolygon(new Polygon(chVertices), { style: { fillColor: '#3969AC85'} });
-      anim_render.drawPoints(points);
-      anim_render.drawPoints(chVertices);
+      render.clearCanvas();
+      render.drawPolygon(new Polygon(chVertices));
+      render.drawPoints(points);
 
       anim = new CG.Animation((step) => {
         if (step === 0) {
@@ -54,11 +50,11 @@
         }
         CG.incrementalCH(chVertices, points[step]);
 
-        anim_render.clearCanvas();
-        anim_render.drawPolygon(new Polygon(chVertices), { style: { fillColor: '#3969AC85'} });
-        anim_render.drawPoints(points.slice(0, step));
-        anim_render.drawPoint(points[step], 4, 'green');
-      }, { frameCount: points.length, frameDuration: 200, recycle: false});
+        render.clearCanvas();
+        render.drawPolygon(new Polygon(chVertices));
+        render.drawPoints(points.slice(0, step));
+        render.drawPoint(points[step], 5, '#ff0000');
+      }, { frameCount: points.length, frameDuration: 300, recycle: false});
     }
 
     const refreshElem = document.getElementById('btn_refresh');
