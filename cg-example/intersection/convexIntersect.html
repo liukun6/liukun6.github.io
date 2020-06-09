@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>ConvexHull</title>
+  <title>Convex Polygon Intersect</title>
 
   <link rel="stylesheet" type="text/css" href="../main.css">
   <script src="../lib/cg.js"></script>
@@ -25,30 +25,33 @@
     const { Geometry: { Point, Segment, Polygon }, CanvasRender } = CG;
     const canvasEle = document.getElementById('container');
     const render = new CanvasRender(canvasEle);
-    let anim;
-    grahamScanCH();
 
-    function grahamScanCH() {
-      const points = [];
-      for (let i = 0; i < 30; i++) {
-        points[i] = randomPoint();
-      }
+    let anim;
+    convexIntersect();
+
+    function convexIntersect() {
+      let points = new Array(15).fill(0);
+      points = points.map(() => randomPoint());
+      const polygon1 = new Polygon(CG.grahamScanCH(points));
+      points = points.map(() => randomPoint())
+      const polygon2 = new Polygon(CG.grahamScanCH(points));
+
       const records = [];
-      const chVertices = CG.grahamScanCH(points, records);
+      const intersectPolygon = CG.convexIntersect(polygon1, polygon2, records);
       render.clearCanvas();
-      render.drawPolygon(new Polygon(chVertices));
-      render.drawPoints(points);
+      render.drawPolygon(polygon1, { style: { fillColor: '#7F3C8D55'} });
+      render.drawPolygon(polygon2, { style: { fillColor: '#11A57955'} });
+      render.drawPolygon(intersectPolygon, { style: { fillColor: '#ca562c'} });
 
       anim = new CG.Animation((step) => {
         render.clearCanvas();
-        render.drawPolygon(new Polygon(records[step].chVertices));
-        render.drawPoints(points);
-        if (records[step].vertice) {
-          render.drawSegment(new Segment(...records[step].chVertices.slice(-2)), 4, '#ff0000');
-          render.drawPoint(records[step].vertice, 5, '#ff0000');
-        }
+        render.drawPolygon(polygon1, { style: { fillColor: '#7F3C8D55'} });
+        render.drawPolygon(polygon2, { style: { fillColor: '#11A57955'} });
+        render.drawPolygon(records[step].intersectPolygon, { style: { fillColor: '#ca562c'} });
+        render.drawSegments(records[step].currentEdges, 3, '#ff0000');
       }, { frameCount: records.length, frameDuration: 300, recycle: false});
     }
+
 
     const refreshElem = document.getElementById('btn_refresh');
     const startElem = document.getElementById('btn_start');
@@ -57,7 +60,7 @@
     const nextElem = document.getElementById('btn_next');
     refreshElem.addEventListener('click', () => {
       anim.pause();
-      grahamScanCH();
+      convexIntersect();
     });
     startElem.addEventListener('click', () => anim.start());
     pauseElem.addEventListener('click', () => anim.pause());

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Segments Interset</title>
+
+  <link rel="stylesheet" type="text/css" href="../main.css">
+  <script src="../lib/cg.js"></script>
+</head>
+
+<body>
+  <main>
+    <canvas id="container"></canvas>
+  </main>
+  <div class="menu">
+    <button id="btn_refresh">refresh</button>
+    <button id="btn_start">start</button>
+    <button id="btn_pause">pause</button>
+    <button id="btn_prev">prev</button>
+    <button id="btn_next">next</button>
+  </div>
+  <script>
+    const canvasEle = document.getElementById('container');
+    const render = new CG.CanvasRender(canvasEle);
+    const { Point, Segment } = CG.Geometry;
+    // segments = [
+    //   new Segment({ x: 0, y: 0}, { x: 11, y: 11}),
+    //   new Segment({ x: 5, y: 10}, { x: 10, y: 5}),
+    //   new Segment({ x: 2, y: 0}, { x: 9, y: 7})
+    // ];
+    // const segment1 = new Segment({x: 773.6109601733025, y: 713.3014329136525}, {x: 684.7374710518732, y: 31.7642411073912});
+    // const segment2 = new Segment({x: 773.6109601733025, y: -100000}, {x: 773.6109601733025, y: 100000});
+    // console.log(segment1.intersect(segment2));
+    let segments, records, anim;
+    segmentsIntersect();
+    function segmentsIntersect() {
+      records = [];
+      segments = [];
+      let begin, end;
+      for (let i = 0; i < 40; i++) {
+        begin = randomPoint();
+        end = randomPoint();
+        if (Math.abs(begin.y - end.y) > CG.Geometry.Util.PRECISION) {
+          segments.push(new Segment(begin, end));
+        }
+      }
+      let intersections = CG.segmentsIntersect(segments, records);
+      render.clearCanvas();
+      render.drawSegments(segments, 2);
+      render.drawPoints(intersections.map(item => item.point));
+
+      anim = new CG.Animation((step) => {
+        drawRecord(step);
+      }, { frameCount: records.length, frameDuration: 40, recycle: false});
+    }
+
+    function drawRecord(step) {
+      const record = records[step];
+      render.clearCanvas();
+      const sweepX = record.event.point.x;
+      const sweepLine = new Segment({x: sweepX, y: 0}, {x: sweepX, y: canvasEle.offsetHeight});
+      render.drawSegments(segments, 2);
+      render.drawSegments(record.statusTree.map(item => item.segment), 3, '#F2B701');
+      render.drawSegment(sweepLine, 2, '#ff0000');
+      render.drawPoints(record.intersections.map(item => item.point));
+    }
+
+    const refreshElem = document.getElementById('btn_refresh');
+    const startElem = document.getElementById('btn_start');
+    const pauseElem = document.getElementById('btn_pause');
+    const prevElem = document.getElementById('btn_prev');
+    const nextElem = document.getElementById('btn_next');
+    refreshElem.addEventListener('click', () => {
+      anim.pause();
+      segmentsIntersect();
+    });
+    startElem.addEventListener('click', () => anim.start());
+    pauseElem.addEventListener('click', () => anim.pause());
+    prevElem.addEventListener('click', () => anim.prev());
+    nextElem.addEventListener('click', () => anim.next());
+
+    function randomPoint() {
+      return new Point(Math.random() * canvasEle.offsetWidth, Math.random() * canvasEle.offsetHeight);
+    }
+  </script>
+</body>
+</html>
