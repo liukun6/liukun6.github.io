@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Voronoi Diagram: Sweep/Fortune's Algorithm</title>
+
+  <link rel="stylesheet" type="text/css" href="../main.css">
+  <script src="../lib/cg.js"></script>
+</head>
+
+<body>
+  <main>
+    <canvas id="container"></canvas>
+  </main>
+  <div class="menu">
+    <button id="btn_refresh">refresh</button>
+    <button id="btn_start">start</button>
+    <button id="btn_pause">pause</button>
+    <button id="btn_prev">prev</button>
+    <button id="btn_next">next</button>
+  </div>
+  <script>
+    const { Geometry: { Util, Point, Segment, Polygon }, DCEL, CanvasRender } = CG;
+    const canvasEle = document.getElementById('container');
+    const render = new CanvasRender(canvasEle);
+    let anim;
+
+    // let points = [
+    //   [5, 0], [102, 70], [120, 30], [200, 80], [130, 170], [110, 120],
+    //   [120, 140], [140, 90], [80, 93], [60, 140], [95, 150], [70, 180],
+    //   [0, 160], [10, 130], [30, 140], [54, 80], [7, 90], [47, 50]
+    // ];
+    // points = points.map(p => new Point(p[0] * 3, p[1] * 3));
+    // const boundary = new Polygon([[0, 0], [1000, 0], [1000, 600], [0, 600]].map(p => new Point(p[0], p[1])));
+
+    const MAX = 1e8;
+    const boundary = new Polygon([[-MAX, -MAX], [MAX, -MAX], [MAX, MAX], [-MAX, MAX]].map(p => new Point(p[0], p[1])));
+
+    sweepVD();
+    function sweepVD() {
+      let points = [];
+      for (let i = 0; i < 80; i++) {
+        points[i] = randomPoint();
+      }
+      const dcel = CG.sweepVD(points, boundary);
+      const voronoiPolygons = dcel.faces.filter(cell => !cell.getVertices().some(p => !p)).map(cell => new Polygon(cell.getVertices()));
+
+      render.clearCanvas();
+      render.drawPolygons(voronoiPolygons);
+      render.drawPoints(points);
+
+      // const voronoiVertices = dcel.vertices.map(vertex => vertex.coord);
+      // render.drawPoints(voronoiVertices, 3, '#00ff00');
+
+      anim = new CG.Animation((step) => {
+        render.clearCanvas();
+        render.drawPolygons(voronoiPolygons.slice(0, step));
+        render.drawPolygon(voronoiPolygons[step], { style: { fillColor: '#7F3C8D55'}});
+        render.drawPoints(points);
+        // render.drawPoint(points[step], 5, '#f00')
+      }, { frameCount: voronoiPolygons.length, frameDuration: 400, recycle: false});
+    }
+
+    const refreshElem = document.getElementById('btn_refresh');
+    const startElem = document.getElementById('btn_start');
+    const pauseElem = document.getElementById('btn_pause');
+    const prevElem = document.getElementById('btn_prev');
+    const nextElem = document.getElementById('btn_next');
+    refreshElem.addEventListener('click', () => {
+      anim.pause();
+      sweepVD();
+    });
+    startElem.addEventListener('click', () => anim.start());
+    pauseElem.addEventListener('click', () => anim.pause());
+    prevElem.addEventListener('click', () => anim.prev());
+    nextElem.addEventListener('click', () => anim.next());
+
+    function randomPoint() {
+      return new Point(Math.random() * (canvasEle.offsetWidth - 5), Math.random() * (canvasEle.offsetHeight - 5));
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Voronoi Diagram: Incremental Algorithm</title>
+
+  <link rel="stylesheet" type="text/css" href="../main.css">
+  <script src="../lib/cg.js"></script>
+</head>
+
+<body>
+  <main>
+    <canvas id="container"></canvas>
+  </main>
+  <div class="menu">
+    <button id="btn_refresh">refresh</button>
+    <button id="btn_start">start</button>
+    <button id="btn_pause">pause</button>
+    <!-- <button id="btn_prev">prev</button> -->
+    <button id="btn_next">next</button>
+  </div>
+  <script>
+    const { Geometry: { Util, Point, Segment, Polygon }, DCEL, CanvasRender } = CG;
+    const canvasEle = document.getElementById('container');
+    const render = new CanvasRender(canvasEle);
+    let anim;
+
+    // let points = [
+    //   [5, 0], [102, 70], [120, 30], [200, 80], [130, 170], [110, 120],
+    //   [120, 140], [140, 90], [80, 93], [60, 140], [95, 150], [70, 180],
+    //   [0, 160], [10, 130], [30, 140], [54, 80], [7, 90], [47, 50]
+    // ];
+    // points = points.map(p => new Point(p[0] * 3, p[1] * 3));
+    const MAX = 1e10;
+    const boundary = new Polygon([[-MAX, -MAX], [MAX, -MAX], [MAX, MAX], [-MAX, MAX]].map(p => new Point(p[0], p[1])));
+
+    // const sortPoints = points.slice();
+    // sortPoints.splice(6, 1);
+    // const centerPoint = points[6];
+    // sortPoints.sort((a, b) => Util.area2(centerPoint, b, a));
+    // console.log(sortPoints);
+
+    // let points = [
+    //   {"x":1.6209255769415876,"y":346.86471180847326},
+    //   {"x":581.5193238373027,"y":104.19626032949961},
+    //   {"x":343.0468022457072,"y":583.4476767406612},
+    //   {"x":8.170743355393368,"y":418.67892222221076},
+    //   {"x":588.6178784807028,"y":519.6638330801916}
+    // ]
+    // let points = [
+    //   {"x":62.639599106587475,"y":323.7292625522983},
+    //   {"x":887.7311348802291,"y":54.13269394845049},
+    //   {"x":275.14414036281704,"y":513.3827797900291},
+    //   {"x":584.4302285513054,"y":109.0709019657844},
+    //   {"x":307.86410833035745,"y":555.7799121489877}
+    // ]
+    // points = points.map(p => new Point(p.x, p.y));
+
+
+    incrementalVD();
+    function incrementalVD() {
+      let points = [];
+      for (let i = 0; i < 80; i++) {
+        points[i] = randomPoint();
+      }
+      let dcel = new DCEL();
+      for (let i = 0; i < points.length; i++) {
+        CG.incrementalVD(points[i], dcel);
+      }
+      CG.clipVoronoi(dcel, boundary);
+      const voronoiPolygons = dcel.faces.filter(cell => !cell.getVertices().some(p => !p)).map(cell => new Polygon(cell.getVertices()));
+
+      render.clearCanvas();
+      render.drawPolygons(voronoiPolygons);
+      render.drawPoints(points);
+      // const voronoiVertices = dcel.vertices.map(vertex => vertex.coord);
+      // render.drawPoints(voronoiVertices, 3, '#00ff00');
+
+      anim = new CG.Animation((step) => {
+        if (step > 2) {
+          dcel = new DCEL();
+          for (let i = 0; i < step + 1; i++) {
+            CG.incrementalVD(points[i], dcel);
+          }
+          CG.clipVoronoi(dcel, boundary);
+          const voronoiPolygons = dcel.faces.filter(cell => !cell.getVertices().some(p => !p)).map(cell => new Polygon(cell.getVertices()));
+          render.clearCanvas();
+          render.drawPolygons(voronoiPolygons);
+          render.drawPoints(points.slice(0, step));
+          render.drawPoint(points[step], 5, '#f00')
+        }
+      }, { frameCount: points.length, frameDuration: 300, recycle: false});
+    }
+
+    const refreshElem = document.getElementById('btn_refresh');
+    const startElem = document.getElementById('btn_start');
+    const pauseElem = document.getElementById('btn_pause');
+    // const prevElem = document.getElementById('btn_prev');
+    const nextElem = document.getElementById('btn_next');
+    refreshElem.addEventListener('click', () => incrementalVD());
+    startElem.addEventListener('click', () => anim.start());
+    pauseElem.addEventListener('click', () => anim.pause());
+    // prevElem.addEventListener('click', () => anim.prev());
+    nextElem.addEventListener('click', () => anim.next());
+
+    function randomPoint() {
+      return new Point(Math.random() * (canvasEle.offsetWidth - 5), Math.random() * (canvasEle.offsetHeight - 5));
+    }
+  </script>
+</body>
+</html>
