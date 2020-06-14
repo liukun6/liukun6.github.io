@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Delaunay Trianglation: Randomized Incremental Algorithm</title>
+
+  <link rel="stylesheet" type="text/css" href="../main.css">
+  <script src="../lib/cg.js"></script>
+</head>
+
+<body>
+  <main>
+    <canvas id="container"></canvas>
+  </main>
+  <div class="menu">
+    <button id="btn_refresh">refresh</button>
+    <button id="btn_start">start</button>
+    <button id="btn_pause">pause</button>
+    <button id="btn_prev">prev</button>
+    <button id="btn_next">next</button>
+  </div>
+  <script>
+    const { Geometry: { Util, Point, Segment, Polygon }, DCEL, CanvasRender } = CG;
+    const canvasEle = document.getElementById('container');
+    const render = new CanvasRender(canvasEle);
+    let anim;
+
+    // let points = [
+    //   [102, 70], [5, 3], [120, 30], [200, 80], [130, 170], [110, 120],
+    //   [120, 140], [140, 90], [80, 93], [60, 140], [95, 150], [70, 180],
+    //   [0, 160], [10, 130], [30, 140], [54, 80], [7, 90], [47, 50]
+    // ];
+    // points = points.map(p => new Point(p[0] * 3, p[1] * 3));
+
+    ric();
+    function ric() {
+      const points = [];
+      for (let i = 0; i < 80; i++) {
+        points[i] = randomPoint();
+      }
+      const records = [];
+      const dcel = CG.incrementalDT(points, records);
+      const voronoiPolygons = dcel.faces.map(cell => new Polygon(cell.getVertices()));
+
+      render.clearCanvas();
+      render.drawPolygons(voronoiPolygons);
+      render.drawPoints(points);
+
+      anim = new CG.Animation((step) => {
+        render.clearCanvas();
+        render.drawPolygons(records[step].triangles);
+        render.drawPoints(points.slice(0, step));
+        render.drawSegments(records[step].filpEdges, 3, '#F2B701');
+        render.drawSegments(records[step].splitEdges, 3);
+        render.drawPoint(records[step].point, 5, '#f00');
+      }, { frameCount: records.length, frameDuration: 500, recycle: false});
+    }
+
+    const refreshElem = document.getElementById('btn_refresh');
+    const startElem = document.getElementById('btn_start');
+    const pauseElem = document.getElementById('btn_pause');
+    const prevElem = document.getElementById('btn_prev');
+    const nextElem = document.getElementById('btn_next');
+    refreshElem.addEventListener('click', () => ric());
+    startElem.addEventListener('click', () => anim.start());
+    pauseElem.addEventListener('click', () => anim.pause());
+    prevElem.addEventListener('click', () => anim.prev());
+    nextElem.addEventListener('click', () => anim.next());
+
+    function randomPoint() {
+      return new Point(Math.random() * (canvasEle.offsetWidth - 5), Math.random() * (canvasEle.offsetHeight - 5));
+    }
+  </script>
+</body>
+</html>
