@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>DGGS</title>
+
+  <link rel="stylesheet" type="text/css" href="./main.css">
+  <script src="lib/dggs.js"></script>
+</head>
+<body>
+  <main>
+    <canvas id="container" width="700" height="700"></canvas>
+  </main>
+  <aside>
+    <div class="title">
+      <h2>Discrete Global Grid System</h2>
+    </div>
+    <div class="control-group" id="control">
+      <div class="control-item">
+        <span class="name">Partition</span>
+        <div class="content">
+          <input type="radio" checked id="Triangle" name="partition">
+          <label for="Triangle">Triangle</label><br/>
+
+          <input type="radio" id="Diamond" name="partition">
+          <label for="Diamond">Diamond</label><br/>
+
+          <input type="radio" id="Hexagon" name="partition">
+          <label for="Hexagon">Hexagon</label>
+        </div>
+      </div>
+
+      <div class="control-item">
+        <span class="name">Level</span>
+        <div class="content">
+          <input type="range" id="level" name="level" value=7 min=0 max=7 step=1>
+          <div class="range-list">
+            <li>0</li>
+            <li>1</li>
+            <li>2</li>
+            <li>3</li>
+            <li>4</li>
+            <li>5</li>
+            <li>6</li>
+            <li>7</li>
+          </div>
+        </div>
+      </div>
+
+      <div class="control-item">
+        <span class="name">Mode</span>
+        <div class="content">
+          <input type="checkbox" id="wireframe" name="mode">
+          <label for="wireframe">Wireframe</label><br/>
+
+          <!-- <input type="checkbox" id="terrain" name="mode"> -->
+          <label for="terrain">Terrain Elevation Scale</label><br/>
+
+          <input type="range" id="terrainScale" name="mode" value=0 min=0 max=100 step=20>
+          <div class="range-list">
+            <li>0</li>
+            <li>20</li>
+            <li>40</li>
+            <li>60</li>
+            <li>80</li>
+            <li>100</li>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+  <script>
+    let FIELD_DATA = [];
+    const COLOURS = [
+          // { offset: -6471, color: '#79B2DE' },
+          // { offset: -5392, color: '#84B9E3' },
+          // { offset: -4312, color: '#8DC1EA' },
+          // { offset: -3233, color: '#96C9F0' },
+
+          // { offset: -2154, color: '#A1D2F7' },
+          // { offset: -858, color: '#ACDBFB' },
+          // { offset: -427, color: '#B9E3FF' },
+          // { offset: 0, color: '#C8EBFF' },
+
+          // { offset: 5, color: '#D8F2FE' },
+          // { offset: 220, color: '#ACD0A5' },
+          // { offset: 436, color: '#94BF8B' },
+          // { offset: 867, color: '#A8C68F' },
+
+          // { offset: 1731, color: '#BDCC96' },
+          // { offset: 2594, color: '#D1D7AB' },
+          // { offset: 3458, color: '#EFEBC0' },
+          // { offset: 4321, color: '#DED6A3' },
+
+          // { offset: 5185, color: '#CAB982' },
+          // { offset: 6000, color: '#C09A53' },
+
+          { offset: -10000, color: '#79B2DE' },
+          { offset: -6471, color: '#84B9E3' },
+          { offset: -5392, color: '#8DC1EA' },
+          { offset: -4312, color: '#96C9F0' },
+
+          { offset: -3233, color: '#A1D2F7' },
+          { offset: -2154, color: '#ACDBFB' },
+          { offset: -858, color: '#B9E3FF' },
+          { offset: -427, color: '#C8EBFF' },
+
+          { offset: 0, color: '#D8F2FE' },
+          { offset: 5, color: '#ACD0A5' },
+          { offset: 220, color: '#94BF8B' },
+          { offset: 436, color: '#A8C68F' },
+
+          { offset: 867, color: '#BDCC96' },
+          { offset: 1731, color: '#D1D7AB' },
+          { offset: 2594, color: '#EFEBC0' },
+          { offset: 3458, color: '#DED6A3' },
+
+          { offset: 4321, color: '#CAB982' },
+          { offset: 5185, color: '#C09A53' },
+          { offset: 10000, color: '#C09A53' }
+        ];
+
+    let POLYHEDRON_CONFIG = {
+      partition: 'Triangle',
+      level: 7,
+      colours: COLOURS,
+      wireframe: false,
+      terrain: false,
+    };
+    (function() {
+      fetch('./data/dem_7.json')
+        .then(response => response.json())
+        .then(data => {
+          FIELD_DATA = data;
+          initPolyhedron(POLYHEDRON_CONFIG);
+          initControl();
+        });
+    })();
+
+    const canvas = document.getElementById('container');
+    const { WebGLRenderer, Polyhedron, Animation, RADIUS, standardVertex, standardFrament, } = DGGS;
+    const camera = new WebGLRenderer.Camera({
+      type: 'OrthoCamera',
+      left: -RADIUS,
+      right: RADIUS,
+      top: RADIUS,
+      bottom: -RADIUS,
+      near: 0,
+      far: 10 * RADIUS,
+    });
+    camera.setPosition(2 * RADIUS, 0.3 * RADIUS, 0);
+    camera.lookAt(0, 0, 0);
+    const control = new WebGLRenderer.Control(camera, canvas);
+    control.start();
+
+    const light = new WebGLRenderer.Light({
+      // ambientColor: [1, 1, 1],
+      ambientIntensity: 0.4,
+      // diffuseColor: [1, 1, 1]
+      diffuseIntensity: 0.6,
+      // positon: camera.positon
+    })
+    light.setPosition(10 * RADIUS, 4 * RADIUS, -4 * RADIUS);
+
+    const renderer = new WebGLRenderer.Renderer({
+      canvas,
+      camera,
+      light,
+      vertexShader: standardVertex,
+      fragmentShader: standardFrament,
+    });
+
+    const animation = new Animation({
+      frameCount: 360,
+      circulation: true,
+      animCallback: function(step) {
+        renderer.render()
+      }
+    });
+
+    let polyhedron;
+    function initPolyhedron({ partition, level, colours, wireframe, terrain }) {
+      polyhedron = new Polyhedron({
+        field: FIELD_DATA[`level${level}`],
+        // Triangle Diamond Hexagon
+        partition: partition,
+        level,
+        colours,
+        wireframe,
+        terrain
+      });
+
+      renderer.clearGeometry();
+      renderer.addGeometry(polyhedron);
+      animation.start();
+    }
+
+    function initControl() {
+      const controlEle = document.getElementById('control');
+      controlEle.addEventListener('change', (event) => {
+        switch(event.target.name) {
+          case 'partition':
+            changeParition(event);
+            break;
+          case 'level':
+            changeLevel(event);
+            break;
+          case 'mode':
+            changeMode(event);
+            break;
+          default:
+        }
+      });
+    }
+
+    function changeParition(event) {
+      polyhedron.updatePartition(event.target.id);
+    }
+
+    function changeLevel(event) {
+      const level = parseInt(event.target.value, 10);
+      polyhedron.updateLevel(level, FIELD_DATA[`level${level}`]);
+    }
+
+    function changeMode(event) {
+      const  { id: targetId, checked } = event.target;
+
+      if (targetId === 'wireframe') {
+        polyhedron.updateWireframe(checked);
+      }
+
+      if (targetId === 'terrainScale') {
+        const terrainScale = parseInt(event.target.value, 10);
+        if (terrainScale === 0) {
+          polyhedron.updateTerrain(false);
+        } else {
+          polyhedron.updateTerrain(true, terrainScale);
+        }
+      }
+    }
+  </script>
+</body>
+</html>

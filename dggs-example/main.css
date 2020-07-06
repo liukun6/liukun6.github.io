@@ -1,0 +1,55 @@
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  display: flex;
+  color: #494e52;
+  background-color: #eee;
+  line-height: 1.5;
+  font-size: 18px;
+}
+
+main {
+  margin: auto;
+  margin-right: 1em;
+}
+
+aside {
+  width: 400px;
+  height: 700px;
+  margin: auto;
+  margin-left: 1em;
+}
+
+main>canvas {
+  width: 700px;
+  height: 700px;
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.24);
+}
+
+.control-item {
+  margin: 2em 0;
+}
+
+.control-item .name {
+  color: #000;
+  font-size: 1.2em;
+}
+
+.control-item .content {
+  margin-top: 0.6em;
+}
+
+.control-item .content input[type=range] {
+  width: 100%;
+}
+
+.control-item .content .range-list {
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+}
