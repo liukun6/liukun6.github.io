@@ -99,7 +99,10 @@
     const pauseElem = document.getElementById('btn_pause');
     // const prevElem = document.getElementById('btn_prev');
     const nextElem = document.getElementById('btn_next');
-    refreshElem.addEventListener('click', () => incrementalVD());
+    refreshElem.addEventListener('click', () => {
+      anim.pause();
+      incrementalVD();
+    });
     startElem.addEventListener('click', () => anim.start());
     pauseElem.addEventListener('click', () => anim.pause());
     // prevElem.addEventListener('click', () => anim.prev());

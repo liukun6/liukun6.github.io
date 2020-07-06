@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>K Dimensional Tree</title>
+
+  <link rel="stylesheet" type="text/css" href="../main.css">
+  <script src="../lib/cg.js"></script>
+</head>
+<body>
+  <main>
+    <canvas id="container"></canvas>
+  </main>
+  <div class="menu">
+    <button id="btn_refresh">refresh</button>
+    <button id="btn_start">start</button>
+    <button id="btn_pause">pause</button>
+    <button id="btn_prev">prev</button>
+    <button id="btn_next">next</button>
+  </div>
+
+  <script>
+    const { Geometry: { Util, Point, Segment }, CanvasRender, KDTree } = CG;
+    const canvasEle = document.getElementById('container');
+    const render = new CanvasRender(canvasEle);
+
+    buildKDTree();
+    function buildKDTree() {
+      const points = new Array(100).fill(0).map(() => randomPoint());
+      const kdTree = new KDTree(points);
+      const splitSegments = computeSplitSegment(kdTree.root, {minX: 0, maxX: canvasEle.offsetWidth, minY: 0, maxY: canvasEle.offsetHeight});
+      render.clearCanvas();
+      render.drawPoints(points);
+      render.drawSegments(splitSegments);
+
+      anim = new CG.Animation((step) => {
+        render.clearCanvas();
+        render.drawPoints(points);
+        render.drawSegments(splitSegments.slice(0, step + 1));
+      }, { frameCount: splitSegments.length, frameDuration: 300, recycle: false});
+    }
+
+
+    function computeSplitSegment(root, region = {}, result = []) {
+      const queue = [{node: root, region}];
+
+      while (queue.length > 0) {
+        const { node, region: nodeRegion } = queue.shift();
+
+        if (node.left || node.right) {
+          let leftNodeRegion, rightNodeRegion;
+          const { splitX, splitY } = node.value;
+          if (splitX !== undefined) {
+            result.push(new Segment({x: splitX, y: nodeRegion.maxY}, {x: splitX, y: nodeRegion.minY}));
+            leftNodeRegion = { ...nodeRegion, maxX: splitX };
+            rightNodeRegion = { ...nodeRegion, minX: splitX };
+          } else if (splitY !== undefined) {
+            result.push(new Segment({y: splitY, x: nodeRegion.maxX}, {y: splitY, x: nodeRegion.minX}));
+            leftNodeRegion = { ...nodeRegion, maxY: splitY };
+            rightNodeRegion = { ...nodeRegion, minY: splitY };
+          } else {
+            throw Error('KDTree inner node must has split line');
+          }
+
+          node.left && queue.push({ node: node.left, region: leftNodeRegion });
+          node.right && queue.push({ node: node.right, region: rightNodeRegion});
+        }
+      }
+
+      return result;
+    }
+
+    function randomPoint() {
+      return new Point(Math.random() * (canvasEle.offsetWidth - 5), Math.random() * (canvasEle.offsetHeight - 5));
+    }
+
+    const refreshElem = document.getElementById('btn_refresh');
+    const startElem = document.getElementById('btn_start');
+    const pauseElem = document.getElementById('btn_pause');
+    const prevElem = document.getElementById('btn_prev');
+    const nextElem = document.getElementById('btn_next');
+    refreshElem.addEventListener('click', () => {
+      anim.pause();
+      buildKDTree();
+    });
+    startElem.addEventListener('click', () => anim.start());
+    pauseElem.addEventListener('click', () => anim.pause());
+    prevElem.addEventListener('click', () => anim.prev());
+    nextElem.addEventListener('click', () => anim.next());
+  </script>
+</body>
+</html>
