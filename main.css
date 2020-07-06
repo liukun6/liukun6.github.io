@@ -63,15 +63,23 @@ main {
   padding: 0 10px;
 }
 
-#main-container {
-}
-
 #main-container .item {
   margin: 1em 0;
 }
 
-#main-container a {
-  margin: 0.25em 0;
+#main-container img {
+  width: 25%;
+  padding: 0.25em;
+  border: 1px solid #dee2e6;
+  border-radius: 0.25em;
+}
+
+#main-container .content {
+  vertical-align: top;
+  margin-left: 1em;
+}
+
+#main-container .content a {
   color: #52adc8;
 }
 

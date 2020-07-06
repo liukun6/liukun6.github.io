@@ -12,6 +12,7 @@
     <nav>
       <ul id="nav-menu">
         <li id="cg-example">Computational Geometry</li>
+        <li id="dggs-example">DGGS</li>
         <li id="about">About</li>
       </ul>
     </nav>
@@ -34,102 +35,106 @@
     const aboutEle = document.getElementById('main-about');
     const navMenuEle = document.getElementById('nav-menu');
 
-    const allExamples = [
-      {
-        type: 'cg-example',
-        groups: [
-          {
-            name: 'convexHull',
-            methods: [
-              {
-                file: 'grahamScanCH',
-                title: "Convex Hulls in Two Dimensions: Graham's Algorithm"
-              },
-              {
-                file: 'upperLowerCH',
-                title: 'Convex Hulls in Two Dimensions: Lower Bound'
-              },
-              {
-                file: 'incrementalCH',
-                title: 'Convex Hulls in Two Dimensions: Incremental Algorithm'
-              },
-              {
-                file: 'incremental3DCH',
-                title: 'Convex Hulls in Three Dimensions: Incremental Algorithm'
-              }
-            ]
-          },
-          {
-            name: 'intersection',
-            methods: [
-              {
-                file: 'convexIntersect',
-                title: 'Intersection of Convex Polygons'
-              },
-              {
-                file: 'segmentsIntersect',
-                title: 'Intersection of Segments'
-              }
-            ]
-          },
-          {
-            name: 'triangulation',
-            methods: [
-              {
-                file: 'earTriangulate',
-                title: 'Triangulation by Ear Removal'
-              },
-              {
-                file: 'trapezoidTriangulate',
-                title: 'Trapezoidalization & Monotone Polygon Triangulation'
-              }
-            ]
-          },
-          {
-            name: 'voronoi',
-            methods: [
-              {
-                file: 'halfplanesVD',
-                title: 'Voronoi Diagram: Intersection of Halfplanes'
-              },
-              {
-                file: 'incrementalVD',
-                title: 'Voronoi Diagram: Incremental Algorithm'
-              },
-              {
-                file: 'sweepVD',
-                title: "Voronoi Diagram: Sweep/Fortune's Algorithm"
-              }
-            ]
-          },
-          {
-            name: 'delaunay',
-            methods: [
-              {
-                file: 'incrementalDT',
-                title: 'Delaunay Trianglation: Randomized Incremental Algorithm'
-              }
-            ]
-          },
-          {
-            name: 'spaceTree',
-            methods: [
-              {
-                file: 'KDTree',
-                title: 'K Dimensional Tree'
-              }
-            ]
-          }
-        ]
-      }
-    ];
+    const CG_EXAMPLE = {
+      type: 'cg-example',
+      groups: [
+        {
+          name: 'convexHull',
+          methods: [
+            {
+              file: 'grahamScanCH',
+              title: "Convex Hulls in Two Dimensions: Graham's Algorithm"
+            },
+            {
+              file: 'upperLowerCH',
+              title: 'Convex Hulls in Two Dimensions: Lower Bound'
+            },
+            {
+              file: 'incrementalCH',
+              title: 'Convex Hulls in Two Dimensions: Incremental Algorithm'
+            },
+            {
+              file: 'incremental3DCH',
+              title: 'Convex Hulls in Three Dimensions: Incremental Algorithm'
+            }
+          ]
+        },
+        {
+          name: 'intersection',
+          methods: [
+            {
+              file: 'convexIntersect',
+              title: 'Intersection of Convex Polygons'
+            },
+            {
+              file: 'segmentsIntersect',
+              title: 'Intersection of Segments'
+            }
+          ]
+        },
+        {
+          name: 'triangulation',
+          methods: [
+            {
+              file: 'earTriangulate',
+              title: 'Triangulation by Ear Removal'
+            },
+            {
+              file: 'trapezoidTriangulate',
+              title: 'Trapezoidalization & Monotone Polygon Triangulation'
+            }
+          ]
+        },
+        {
+          name: 'voronoi',
+          methods: [
+            {
+              file: 'halfplanesVD',
+              title: 'Voronoi Diagram: Intersection of Halfplanes'
+            },
+            {
+              file: 'incrementalVD',
+              title: 'Voronoi Diagram: Incremental Algorithm'
+            },
+            {
+              file: 'sweepVD',
+              title: "Voronoi Diagram: Sweep/Fortune's Algorithm"
+            }
+          ]
+        },
+        {
+          name: 'delaunay',
+          methods: [
+            {
+              file: 'incrementalDT',
+              title: 'Delaunay Trianglation: Randomized Incremental Algorithm'
+            }
+          ]
+        },
+        {
+          name: 'spaceTree',
+          methods: [
+            {
+              file: 'KDTree',
+              title: 'K Dimensional Tree'
+            }
+          ]
+        }
+      ]
+    };
+
+    const DGGS_EXAMPLE = {
+      type: 'dggs-example',
+      file: 'dggs',
+      title: 'Discrete Global Grid System',
+    };
 
     const exampleTemplate = `
       <div class="item">
-        <a href="#{url}">
-          <img src="#{src}" alt="">
-          <span class="title">#{title}</span>
-        </a>
+        <img src="#{src}" alt="">
+        <span class="content">
+          <a href="#{url}">#{title}</a><br>
+        </span>
       </div>`
     function init() {
       renderContainer();
@@ -139,29 +144,37 @@
         if (targetId === 'about') {
           renderAbout();
         } else {
-          const menuIndex = allExamples.findIndex(e => e.type === targetId);
-          renderContainer(Math.min(menuIndex, 0));
+          renderContainer(targetId);
         }
       });
     }
 
-    function renderContainer(index = 0) {
+    function renderContainer(page = 'cg-example') {
       const items = [];
-      let path;
-      allExamples[index].groups.forEach((group) => {
-        group.methods.forEach((item) => {
-          path = `${allExamples[index].type}/${group.name}/${item.file}`
-          items.push({
-            ...item,
-            url: path + '.html',
-            src: path + '.gif',
-          })
+      if (page === 'cg-example') {
+        let path;
+        CG_EXAMPLE.groups.forEach((group) => {
+          group.methods.forEach((item) => {
+            path = `cg-example/${group.name}/${item.file}`
+            items.push({
+              ...item,
+              url: path + '.html',
+              imgSrc: path + '.png',
+            })
+          });
         });
-      });
+      } else if (page === 'dggs-example') {
+        const { file, title } = DGGS_EXAMPLE;
+        items.push({
+          title,
+          url: `dggs-example/${file}.html`,
+          imgSrc: `dggs-example/${file}.png`,
+        });
+      }
 
       const content = items.map(item =>
         exampleTemplate.replace('#{url}', item.url)
-          // .replace('#{src}', item.src)
+          .replace('#{src}', item.imgSrc)
           .replace('#{title}', item.title)
       ).join('');
       containerEle.innerHTML = content;
