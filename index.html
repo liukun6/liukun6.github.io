@@ -141,9 +141,10 @@
 
       navMenuEle.addEventListener('click', (event) => {
         const targetId = event.target.id;
+        const pages = ['cg-example', 'dggs-example'];
         if (targetId === 'about') {
           renderAbout();
-        } else {
+        } else if (pages.includes(targetId)) {
           renderContainer(targetId);
         }
       });
