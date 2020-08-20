@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shading Model</title>
+
+  <link rel="stylesheet" type="text/css" href="./main.css">
+  <script src="lib/WebGLRenderer.js"></script>
+</head>
+<body>
+  <main>
+    <canvas id="container"></canvas>
+  </main>
+
+  <script>
+    const vertexShader = `
+      #ifdef GL_ES
+      precision mediump float;
+      #endif
+      attribute vec3 aVertexPosition;
+      attribute vec3 aVertexNormal;
+
+      attribute vec2 aTextureCoord;
+      attribute vec3 aDiffuse;
+      attribute vec3 aSpecular;
+      attribute float aSpecularExponent;
+
+      uniform mat4 u_modelMatrix;
+      uniform mat4 u_viewMatrix;
+      uniform mat4 u_projectionMatrix;
+
+      // light
+      uniform vec3 u_ambientProduct;
+      uniform vec3 u_diffuseProduct;
+      uniform vec3 u_specularProduct;
+      uniform float u_shininess;
+      uniform vec3 u_lightPosition;
+
+      // shading mode: flat 0, gouraud 1, phong 3
+      uniform lowp int u_shadingMode;
+
+      varying vec3 vColor;
+      varying vec3 vNormal;
+      varying vec3 vLightDirection;
+      varying vec3 vEyeDirection;
+
+      void main() {
+        gl_Position = u_projectionMatrix * u_viewMatrix * u_modelMatrix * vec4(aVertexPosition, 1.0);
+
+        vNormal = aVertexNormal;
+        vLightDirection = normalize(u_lightPosition - aVertexPosition);
+        vec4 eyeDirection4 = u_viewMatrix * u_modelMatrix * vec4(aVertexPosition, 1.0);
+        vEyeDirection = -eyeDirection4.xyz / eyeDirection4.w;
+
+        // vec3 lightDirection = normalize(u_lightPosition - aVertexPosition);
+        // vec3 normal;
+        // if (u_shadingMode == 0) {
+        //   // ???
+        //   normal = normalize(aVertexNormal);
+        // } else if (u_shadingMode == 1) {
+        //   normal = normalize(aVertexPosition);
+        // }
+
+        // vec4 eyeDirection4 = u_viewMatrix * u_modelMatrix * vec4(aVertexPosition, 1.0);
+        // vec3 eyeDirection = -normalize(eyeDirection4.xyz / eyeDirection4.w);
+        // vec3 halfwayVector = normalize(eyeDirection + lightDirection);
+
+        // vec3 ambient = u_ambientProduct;
+        // vec3 diffuse = u_diffuseProduct * max(dot(lightDirection, normal), 0.0);
+        // vec3 specular = u_specularProduct * pow(max(dot(halfwayVector, normal), 0.0), u_shininess);
+        // if (dot(lightDirection, normal) < 0.0) {
+        //   specular = vec3(0.0, 0.0, 0.0);
+        // }
+
+        // vColor = ambient + diffuse + specular;
+      }
+    `;
+    const fragmentShader = `
+      #ifdef GL_ES
+      precision mediump float;
+      #endif
+
+      // light
+      uniform vec3 u_ambientProduct;
+      uniform vec3 u_diffuseProduct;
+      uniform vec3 u_specularProduct;
+      uniform float u_shininess;
+      // uniform vec3 u_lightPosition;
+
+      varying vec3 vColor;
+      varying vec3 vNormal;
+      varying vec3 vLightDirection;
+      varying vec3 vEyeDirection;
+
+      void main() {
+        vec3 vNormal_n = normalize(vNormal);
+        vec3 vLightDirection_n = normalize(vLightDirection);
+        vec3 vEyeDirection_n = normalize(vEyeDirection);
+        vec3 halfwayVector = normalize(vLightDirection_n + vEyeDirection_n);
+        vec3 ambient = u_ambientProduct;
+        vec3 diffuse = u_diffuseProduct * max(dot(vLightDirection_n, vNormal_n), 0.0);
+        vec3 specular = u_specularProduct * pow(max(dot(halfwayVector, vNormal_n), 0.0), u_shininess);
+        if (dot(vLightDirection_n, vNormal_n) < 0.0) {
+          specular = vec3(0.0, 0.0, 0.0);
+        }
+
+        vec3 color = ambient + diffuse + specular;
+        gl_FragColor = vec4(color, 1.0);
+      }
+    `;
+    const canvas = document.getElementById('container');
+    const camera = new WebGLRenderer.Camera({
+      type: 'PerspectiveCamera',
+      fov: 45,
+      aspect: canvas.offsetWidth / canvas.offsetHeight,
+      near: 0.01,
+      far: 100,
+    });
+    camera.setPosition(2, 0, 4);
+    camera.lookAt(0, 0, 0);
+
+    const light = new WebGLRenderer.Light({
+      // ambientColor: [1, 1, 1],
+      ambientIntensity: 0.2,
+      // diffuseColor: [1, 1, 1]
+      diffuseIntensity: 0.4,
+      specularIntensity: 0.5,
+      shininess: 64,
+      position: [2, 3, 2],
+    });
+
+    const renderer = new WebGLRenderer.Renderer({
+      canvas,
+      camera,
+      light,
+      vertexShader,
+      fragmentShader,
+    });
+
+    const gl = renderer.gl;
+    const { OBJ } = WebGLRenderer;
+    const attrs = {
+      aVertexPosition: OBJ.Layout.POSITION.key,
+      aVertexNormal: OBJ.Layout.NORMAL.key,
+    };
+    const layout = new OBJ.Layout(
+      OBJ.Layout.POSITION,
+      OBJ.Layout.NORMAL,
+    );
+    (function() {
+      OBJ.downloadModels([
+        {
+          obj: "./data/suzanne.obj",
+          mtl: true
+        }
+      ]).then(models => {
+        renderer.render();
+        models.suzanne.needUpdate = true;
+        renderer.renderOBJ(models.suzanne, layout, attrs);
+      });
+    })();
+
+  </script>
+</body>
+</html>

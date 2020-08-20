@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ray Tracing</title>
+
+  <link rel="stylesheet" type="text/css" href="./main.css">
+  <script src="lib/WebGLRenderer.js"></script>
+</head>
+<body>
+  <main>
+    <canvas id="container"></canvas>
+  </main>
+
+  <script>
+    const vertexShader = `
+      attribute vec2 aVertexPosition;
+      attribute vec4 aVertexRay;
+
+      uniform mat4 uRayMatrix;
+
+      varying vec3 vVertexRay;
+
+      void main(void) {
+        vec4 rayDir = uRayMatrix * aVertexRay;
+        vVertexRay = normalize(rayDir.xyz / rayDir.w);
+        gl_Position = vec4(aVertexPosition, 0.0, 1.0);
+      }
+    `;
+    const fragmentShader = `
+      #ifdef GL_ES
+      precision mediump float;
+      #endif
+
+      uniform vec3 uEyePosition;
+      uniform float uMaxDist;
+
+      varying vec3 vVertexRay;
+
+      // float uMaxDist = 2048.0;
+      // vec3 uEyePosition = vec3(0.0, 2.0, 20.0);
+
+      vec3 uLightPosition = vec3(3, 4, 3);
+      vec3 ambient = vec3(0.3, 0.3, 0.3);
+      float uShininess = 256.0;
+      vec3 bgColor = vec3(0.235294, 0.67451, 0.843137);
+
+      // type 0: triangle, 1: sphere
+      struct Sphere {
+        int type;
+        vec3 pos;
+        float radius;
+        vec3 color;
+        int materialType;
+      };
+
+      Sphere sphere0 = Sphere(
+        1,
+        vec3(0.0, 2.0, 0.0),
+        1.0,
+        vec3(0.0, 0.8, 0.0),
+        0
+      );
+      Sphere sphere1 = Sphere(
+        1,
+        vec3(-1.5, 2.0, 3),
+        1.0,
+        vec3(0.235294, 0.67451, 0.843137),
+        2
+      );
+      Sphere sphere2 = Sphere(
+        1,
+        vec3(2.5, 1.5, 1.5),
+        1.0,
+        vec3(0.5, 0.5, 0.5),
+        1
+      );
+
+      Sphere spheres[3];
+      vec3 floorVertices[6];
+
+      // struct Triangle {
+      //   int type;
+      //   vec3 vertices[3];
+      // };
+
+      // Triangle tri0 = Triangle(
+      //   0,
+      //   [vec3(-1, 0, -1), vec3(-1, 0, 1), vec3(1, 0, 1))]
+      // );
+      // Triangle tri1 = Triangle(
+      //   0,
+      //   [vec3(1, 0, 1), vec3(1, 0, -1), vec3(-1, 0, -1))]
+      // );
+
+      void initFloor(inout vec3 vertices[6]) {
+        vertices[0] = vec3(-4, 0, -4);
+        vertices[1] = vec3(-4, 0, 4);
+        vertices[2] = vec3(4, 0, 4);
+
+        vertices[3] = vec3(4, 0, 4);
+        vertices[4] = vec3(4, 0, -4);
+        vertices[5] = vec3(-4, 0, -4);
+      }
+
+
+      // ro is the ray origin, rd is the ray direction, and s is the sphere
+      float sphereInter( vec3 ro, vec3 rd, vec3 s, float r ) {
+          // Transform the ray into object space
+          vec3 oro = ro - s;
+
+          float a = dot(rd, rd);
+          float b = 2.0 * dot(oro, rd);
+          float c = dot(oro, oro) - r * r; // w is the sphere radius
+
+          float d = b * b - 4.0 * a * c;
+
+          if(d < 0.0) return d; // No intersection
+
+          return (-b - sqrt(d)) / 2.0;
+      }
+
+      float triangleInter( vec3 ro, vec3 rd, vec3 v0, vec3 v1, vec3 v2 ) {
+        float a = v0.x - v1.x;
+        float b = v0.y - v1.y;
+        float c = v0.z - v1.z;
+        float d = v0.x - v2.x;
+        float e = v0.y - v2.y;
+        float f = v0.z - v2.z;
+        float g = rd.x;
+        float h = rd.y;
+        float i = rd.z;
+
+        float j = v0.x - ro.x;
+        float k = v0.y - ro.y;
+        float l = v0.z - ro.z;
+
+        float M = a * (e*i - h*f) + b * (g*f - d*i) + c * (d*h - e*g);
+
+        float beta = (j * (e*i - h*f) + k * (g*f - d*i) + l * (d*h - e*g)) / M;
+        float gamma = (i * (a*k - j*b) + h * (j*c - a*l) + g * (b*l - k*c)) / M;
+
+        if (gamma < 0.0 || gamma > 1.0 || beta < 0.0 || beta > 1.0-gamma) {
+          return uMaxDist;
+        }
+        float t = - (f * (a*k - j*b) + e * (j*c - a*l) + d * (b*l - k*c)) / M;
+        return t;
+      }
+
+      // Test intersection between a ray and a triangle using Möller–Trumbore algorithm.
+
+      // float triangleInter( vec3 ro, vec3 rd, vec3 v0, vec3 v1, vec3 v2 ) {
+
+      // }
+
+      vec3 sphereNorm( vec3 pt, vec3 s, float r ) {
+        return ( pt - s ) / r;
+      }
+
+      vec3 triangleNorm( vec3 v0, vec3 v1, vec3 v2 ) {
+        return normalize(cross(v1 - v0, v2 - v1));
+      }
+
+      float intersect( vec3 ro, vec3 rd, out vec3 intersection, out vec3 norm, out vec3 color, out int materialType ) {
+          Sphere hitSphere;
+          float hitSphereDist = uMaxDist;
+          for (int i = 0; i < 3; i++) {
+            float interDist = sphereInter( ro, rd, spheres[i].pos, spheres[i].radius );
+            if ( interDist > 0.0 && interDist < hitSphereDist ) {
+              hitSphereDist = interDist;
+              hitSphere = spheres[i];
+            }
+          }
+
+          vec3 tri[3];
+          float hitTriDist = hitSphereDist;
+          for (int i = 0; i < 2; i++) {
+            float interDist = triangleInter( ro, rd, floorVertices[i*3], floorVertices[i*3 + 1], floorVertices[i*3 + 2] );
+            if ( interDist > 0.0 && interDist < hitTriDist ) {
+              hitTriDist = interDist;
+              tri[0] = floorVertices[i*3];
+              tri[1] = floorVertices[i*3 + 1];
+              tri[2] = floorVertices[i*3 + 2];
+            }
+          }
+
+          float dist = min(hitSphereDist, hitTriDist);
+
+          if ( dist > 0.0 && dist < uMaxDist ) {
+            // Point of intersection
+            intersection = ro + dist * rd;
+            if (dist == hitSphereDist) {
+              // 相交于球体
+              norm = sphereNorm(intersection, hitSphere.pos, hitSphere.radius);
+              color = hitSphere.color;
+              materialType = hitSphere.materialType;
+            } else {
+              // 相交于平面
+              norm = triangleNorm(tri[0], tri[1], tri[2]);
+              // 格网
+              if (fract(intersection.x) > 0.5 == fract(intersection.z) > 0.5) {
+                color = vec3(0.815, 0.235, 0.031);
+              } else {
+                color = vec3(0.937, 0.937, 0.231);
+              }
+              materialType = 0;
+            }
+          }
+
+          return dist;
+      }
+
+      // vec3 rayColor() {
+      // }
+
+      void main() {
+        spheres[0] = sphere0;
+        spheres[1] = sphere1;
+        spheres[2] = sphere2;
+        initFloor(floorVertices);
+
+        vec3 rayOrigin = uEyePosition;
+        vec3 rayDirection = normalize(vVertexRay);
+        vec3 rayColor = bgColor;
+
+        vec3 objIntersect, objNorm, objColor;
+        int materialType;
+        float t = intersect(rayOrigin, rayDirection, objIntersect, objNorm, objColor, materialType);
+
+        if ( t < uMaxDist ) {
+          vec3 lightDir = normalize(uLightPosition - objIntersect);
+          vec3 eyeDir = normalize(rayOrigin - objIntersect);
+          vec3 halfwayVector = normalize(eyeDir + lightDir);
+
+          float diffuse = max(dot(lightDir, objNorm), 0.0);
+          float specular = pow(max(dot(halfwayVector, objNorm), 0.0), uShininess);
+
+          // 平面背面
+          if (dot(rayDirection, objNorm) > 0.0) {
+            diffuse = diffuse * 0.5;
+            specular = specular * 0.5;
+            // objColor = vec3(0, 0, 0);
+          }
+
+          // 阴影
+          bool isShadow = false;
+          vec3 temp;
+          int materialTepeTemp;
+          float lightDist = intersect(objIntersect + lightDir * 0.01, lightDir, temp, temp, temp, materialTepeTemp);
+          if (lightDist > 0.0 && lightDist < uMaxDist) {
+            isShadow = true;
+          }
+
+          // 反射
+          vec3 reflectColor = vec3(0.0, 0.0, 0.0);
+          float reflectDist;
+          if (materialType == 1) {
+            vec3 reflectDir = reflect(-eyeDir, objNorm);
+            vec3 reflectIntersect, reflectNorm;
+            int materialTepeTemp;
+            reflectDist = intersect(objIntersect + reflectDir * 0.01, reflectDir, reflectIntersect, reflectNorm, reflectColor, materialTepeTemp);
+          }
+
+          // 折射
+          vec3 refractColor = vec3(0.0, 0.0, 0.0);
+          float refractDist;
+          if (materialType == 2) {
+            vec3 refractDir0 = refract(-eyeDir, objNorm, 0.55);
+            vec3 refractIntersect, refractNorm, temp;
+            int materialTepeTemp;
+            // refractDist = intersect(objIntersect + refractDir0 * 0.01, refractDir0, refractIntersect, refractNorm, refractColor, materialTepeTemp);
+            // 球体内折射光线离开球体交点与向量（朝向球心）
+            vec3 refractOut = objIntersect + refractDir0 * dot(refractDir0, -objNorm) * 2.0 * 1.0;
+            refractNorm = objIntersect - objNorm * 1.0 - refractOut;
+            vec3 refractDir1 = refract(refractDir0, refractNorm, 1.8);
+
+            refractDist = intersect(refractOut + refractDir1 * 0.01, refractDir1, refractIntersect, refractNorm, refractColor, materialTepeTemp);
+          }
+
+          if (materialType == 1) {
+            if (reflectDist < uMaxDist) {
+              rayColor = reflectColor * 0.8 + ambient; //objColor * (diffuse + specular ) + // (0.8 + specular)
+            } else {
+              rayColor = bgColor * 0.8 + ambient;
+            }
+          }
+          else if (materialType == 2) {
+            if (refractDist < uMaxDist) {
+              rayColor = bgColor * (0.2 + specular) + refractColor * 0.5; // + vec3(0.5, 0.5, 0.5) * specular;
+            } else {
+              rayColor = bgColor * (0.8 + specular); // + vec3(0.5, 0.5, 0.5) * specular;
+            }
+          } else {
+            if (isShadow) {
+              rayColor = objColor * 0.2 + ambient;
+            } else {
+              rayColor = objColor * (diffuse + specular ) + ambient;
+            }
+          }
+        }
+
+        gl_FragColor = vec4(rayColor, 1.0);
+      }
+    `
+    const canvas = document.getElementById('container');
+    const camera = new WebGLRenderer.Camera({
+      type: 'PerspectiveCamera',
+      fov: 90,
+      aspect: canvas.offsetWidth / canvas.offsetHeight,
+      // near: 1,
+      far: 1000,
+    });
+    camera.setPosition(0, 3.0, 7.0);
+    camera.lookAt(0, 0, 0);
+    const renderer = new WebGLRenderer.Renderer({
+      canvas,
+      camera,
+      vertexShader,
+      fragmentShader,
+    });
+    const gl = renderer.gl;
+    const programAttribs = renderer.program.attributes;
+    const programUniforms = renderer.program.uniforms;
+    const control = new WebGLRenderer.Control(camera, canvas);
+    control.start();
+
+    function rayTracing() {
+      const quadVertices = new Float32Array([
+        -1.0, -1.0,
+        1.0, -1.0,
+        -1.0,  1.0,
+
+        -1.0,  1.0,
+        1.0, -1.0,
+        1.0,  1.0
+      ]);
+
+      const radian = Math.PI / 180;
+      const viewportH = Math.tan(camera.fov / 2 * radian);
+      const viewportW = viewportH * camera.aspect;
+
+      const quadRays = new Float32Array([
+        -viewportW, -viewportH, -1.0,
+        viewportW, -viewportH, -1.0,
+        -viewportW,  viewportH, -1.0,
+
+        -viewportW,  viewportH, -1.0,
+        viewportW, -viewportH, -1.0,
+        viewportW,  viewportH, -1.0
+      ]);
+
+      // const quadRays = new Float32Array([
+      //   -1.0, -1.0, -1.0,
+      //    1.0, -1.0, -1.0,
+      //   -1.0,  1.0, -1.0,
+
+      //   -1.0,  1.0, -1.0,
+      //    1.0, -1.0, -1.0,
+      //    1.0,  1.0, -1.0
+      // ]);
+
+      gl.uniform3fv(programUniforms.uEyePosition, camera.position);
+      gl.uniform1f(programUniforms.uMaxDist, camera.far);
+      const { mat4 } = WebGLRenderer;
+      const rayMatrix = mat4.invert([], mat4.transpose([], mat4.invert([], camera.viewMatrix)));
+      gl.uniformMatrix4fv(programUniforms.uRayMatrix, false, rayMatrix);
+
+      const quadVerticesBuffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, quadVerticesBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, quadVertices, gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(programAttribs.aVertexPosition);
+      gl.vertexAttribPointer(programAttribs.aVertexPosition, 2, gl.FLOAT, false, 0, 0);
+
+      const quadRaysBuffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, quadRaysBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, quadRays, gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(programAttribs.aVertexRay);
+      gl.vertexAttribPointer(programAttribs.aVertexRay, 3, gl.FLOAT, false, 0, 0);
+
+      gl.drawArrays(gl.TRIANGLES, 0, quadVertices.length / 2);
+    }
+
+    function anim() {
+      rayTracing();
+      requestAnimationFrame(anim);
+    }
+    requestAnimationFrame(anim);
+  </script>
+</body>
+</html>

@@ -12,6 +12,7 @@
     <nav>
       <ul id="nav-menu">
         <li id="cg-example">Computational Geometry</li>
+        <li id="webgl-example">WebGL</li>
         <li id="dggs-example">DGGS</li>
         <li id="about">About</li>
       </ul>
@@ -129,11 +130,46 @@
       title: 'Discrete Global Grid System',
     };
 
+    const WEBGL_EXAMPLES = [
+      {
+        file: 'depthBuffer',
+        title: 'Depth Buffer'
+      },
+      {
+        file: 'shading',
+        title: 'Blinn-Phong Shading'
+      },
+      {
+        file: 'shadingModel',
+        title: 'Blinn-Phong Shading Model'
+      },
+      {
+        file: 'texture',
+        title: 'Texture Shading'
+      },
+      {
+        file: 'bumpMapping',
+        title: 'Bump/Normal Mapping,'
+      },
+      {
+        file: 'parallaxMapping',
+        title: 'Parallax Mapping'
+      },
+      {
+        file: 'shadow',
+        title: 'Shadow Mapping'
+      },
+      {
+        file: 'rayTracing',
+        title: 'Whitted-Style Ray Tracing'
+      },
+    ];
+
     const exampleTemplate = `
       <div class="item">
         <img src="#{src}" alt="">
         <span class="content">
-          <a href="#{url}">#{title}</a><br>
+          <a href="#{url}" target= "_blank">#{title}</a><br>
         </span>
       </div>`
     function init() {
@@ -141,7 +177,7 @@
 
       navMenuEle.addEventListener('click', (event) => {
         const targetId = event.target.id;
-        const pages = ['cg-example', 'dggs-example'];
+        const pages = ['cg-example', 'dggs-example', 'webgl-example'];
         if (targetId === 'about') {
           renderAbout();
         } else if (pages.includes(targetId)) {
@@ -170,6 +206,14 @@
           title,
           url: `dggs-example/${file}.html`,
           imgSrc: `dggs-example/${file}.png`,
+        });
+      } else if (page === 'webgl-example') {
+        WEBGL_EXAMPLES.forEach(({title, file}) => {
+          items.push({
+            title,
+            url: `webgl-example/${file}.html`,
+            imgSrc: `webgl-example/${file}.png`,
+          });
         });
       }
 

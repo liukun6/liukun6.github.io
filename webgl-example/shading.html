@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shading</title>
+
+  <link rel="stylesheet" type="text/css" href="./main.css">
+  <script src="lib/WebGLRenderer.js"></script>
+</head>
+<body>
+  <main>
+    <canvas id="container"></canvas>
+
+    <div id="control">
+      <div class="item">
+        <input type="radio" checked id="Flat" name="mode">
+        <label for="Flat">Flat</label>
+      </div>
+
+      <div class="item">
+        <input type="radio" id="Gouranud" name="mode">
+        <label for="Gouranud">Gouranud</label>
+      </div>
+
+      <div class="item">
+        <input type="radio" id="Phong" name="mode">
+        <label for="Phong">Phong</label>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const vertexShader = `
+      #ifdef GL_ES
+      precision mediump float;
+      #endif
+      attribute vec3 a_position;
+      attribute vec3 a_normal;
+
+      uniform mat4 u_modelMatrix;
+      uniform mat4 u_viewMatrix;
+      uniform mat4 u_projectionMatrix;
+
+      // light
+      uniform vec3 u_ambientProduct;
+      uniform vec3 u_diffuseProduct;
+      uniform vec3 u_specularProduct;
+      uniform float u_shininess;
+      uniform vec3 u_lightPosition;
+
+      // shading mode: flat 0, gouraud 1, phong 3
+      uniform lowp int u_shadingMode;
+
+      varying vec3 v_color;
+      varying vec3 v_normal;
+      varying vec3 v_lightDirection;
+      varying vec3 v_eyeDirection;
+
+      void main() {
+        gl_Position = u_projectionMatrix * u_viewMatrix * u_modelMatrix * vec4(a_position, 1.0);
+
+        if (u_shadingMode == 2) {
+          v_normal = a_position;
+          v_lightDirection = normalize(u_lightPosition - a_position);
+          vec4 eyeDirection4 = u_viewMatrix * u_modelMatrix * vec4(a_position, 1.0);
+          v_eyeDirection = -eyeDirection4.xyz / eyeDirection4.w;
+          return;
+        }
+
+        vec3 lightDirection = normalize(u_lightPosition - a_position);
+        vec3 normal;
+        if (u_shadingMode == 0) {
+          // ???
+          normal = normalize(a_normal);
+        } else if (u_shadingMode == 1) {
+          normal = normalize(a_position);
+        }
+
+        vec4 eyeDirection4 = u_viewMatrix * u_modelMatrix * vec4(a_position, 1.0);
+        vec3 eyeDirection = -normalize(eyeDirection4.xyz / eyeDirection4.w);
+        vec3 halfwayVector = normalize(eyeDirection + lightDirection);
+
+        vec3 ambient = u_ambientProduct;
+        vec3 diffuse = u_diffuseProduct * max(dot(lightDirection, normal), 0.0);
+        vec3 specular = u_specularProduct * pow(max(dot(halfwayVector, normal), 0.0), u_shininess);
+        if (dot(lightDirection, normal) < 0.0) {
+          specular = vec3(0.0, 0.0, 0.0);
+        }
+
+        v_color = ambient + diffuse + specular;
+      }
+    `;
+    const fragmentShader = `
+      #ifdef GL_ES
+      precision mediump float;
+      #endif
+
+      uniform lowp int u_shadingMode;
+
+      // light
+      uniform vec3 u_ambientProduct;
+      uniform vec3 u_diffuseProduct;
+      uniform vec3 u_specularProduct;
+      uniform float u_shininess;
+      // uniform vec3 u_lightPosition;
+
+      varying vec3 v_color;
+      varying vec3 v_normal;
+      varying vec3 v_lightDirection;
+      varying vec3 v_eyeDirection;
+
+      void main() {
+        if (u_shadingMode == 0 || u_shadingMode == 1) {
+          gl_FragColor = vec4(v_color, 1.0);
+        } else {
+          vec3 v_normal_n = normalize(v_normal);
+          vec3 v_lightDirection_n = normalize(v_lightDirection);
+          vec3 v_eyeDirection_n = normalize(v_eyeDirection);
+          vec3 halfwayVector = normalize(v_lightDirection_n + v_eyeDirection_n);
+          vec3 ambient = u_ambientProduct;
+          vec3 diffuse = u_diffuseProduct * max(dot(v_lightDirection_n, v_normal_n), 0.0);
+          vec3 specular = u_specularProduct * pow(max(dot(halfwayVector, v_normal_n), 0.0), u_shininess);
+          if (dot(v_lightDirection_n, v_normal_n) < 0.0) {
+            specular = vec3(0.0, 0.0, 0.0);
+          }
+
+          vec3 color = ambient + diffuse + specular;
+          gl_FragColor = vec4(color, 1.0);
+        }
+      }
+    `;
+    const canvas = document.getElementById('container');
+    const camera = new WebGLRenderer.Camera({
+      type: 'PerspectiveCamera',
+      fov: 30,
+      aspect: canvas.offsetWidth / canvas.offsetHeight,
+      near: 1,
+      far: 1000,
+    });
+    camera.setPosition(0, 300, 250);
+    camera.lookAt(0, 0, 0);
+
+    const light = new WebGLRenderer.Light({
+      // ambientColor: [1, 1, 1],
+      ambientIntensity: 0.2,
+      // diffuseColor: [1, 1, 1]
+      diffuseIntensity: 0.4,
+      specularIntensity: 0.5,
+      shininess: 256,
+      position: [400, 500, 600]
+    });
+
+    const renderer = new WebGLRenderer.Renderer({
+      canvas,
+      camera,
+      light,
+      vertexShader,
+      fragmentShader,
+    });
+
+    const icosahedron_vertices = [
+      [0.0, 90.0], [72.0, 90.0], [144.0, 90.0], [-144.0, 90.0], [-72.0, 90.0],
+      [-36.0, 26.56], [36.0, 26.56], [108.0, 26.56], [180.0, 26.56], [-108.0, 26.56], [-36.0, 26.56],
+      [0.0, -26.56], [72.0, -26.56], [144.0, -26.56], [-144.0, -26.56], [-72.0, -26.56], [0.0, -26.56],
+      [36.0, -90.0], [108.0, -90.0], [180.0, -90.0], [-108.0, -90.0], [-36.0, -90.0],
+    ];
+
+    const icosahedron_indices = [
+      0, 5, 6,
+      1, 6, 7,
+      2, 7, 8,
+      3, 8, 9,
+      4, 9, 10,
+
+      6, 5, 11,
+      7, 6, 12,
+      8, 7, 13,
+      9, 8, 14,
+      10, 9, 15,
+
+      11, 12, 6,
+      12, 13, 7,
+      13, 14, 8,
+      14, 15, 9,
+      15, 16, 10,
+
+      12, 11, 17,
+      13, 12, 18,
+      14, 13, 19,
+      15, 14, 20,
+      16, 15, 21,
+    ];
+
+    const icosahedron_position = icosahedron_indices.map(index => cartesianXYZ(icosahedron_vertices[index]));
+
+    const icosahedron_normal = [];
+    for (let i = 0, len = icosahedron_position.length / 3; i < len; i++) {
+      const normal = triangleCenter(...icosahedron_position.slice(i, i + 3));
+      icosahedron_normal.push(normal, normal, normal);
+    }
+
+    const geometry = {
+      attributes: {
+        position: new WebGLRenderer.BufferAttribute(new Float32Array(icosahedron_position.flat()), 3, false),
+        normal: new WebGLRenderer.BufferAttribute(new Float32Array(icosahedron_normal.flat()), 3, false),
+      }
+    }
+    renderer.addGeometry(geometry);
+
+    function cartesianXYZ(latlon, radius = 100) {
+      const lambda = latlon[0] / 180 * Math.PI;
+      const theta = latlon[1] / 180 * Math.PI;
+      const cosTheta = Math.cos(theta);
+      const cosLambda = Math.cos(lambda);
+      const sinTheta = Math.sin(theta);
+      const sinLambda = Math.sin(lambda);
+      const x = radius * cosTheta * sinLambda;
+      const y = radius * sinTheta;
+      const z = radius * cosTheta * cosLambda;
+
+      return [x, y, z];
+    }
+
+    function triangleCenter(a, b, c) {
+      return [(a[0], b[0], c[0]) / 3, (a[1], b[1], c[1]) / 3, (a[2], b[2], c[2]) / 3];
+    }
+
+    function initControl() {
+      const controlEle = document.getElementById('control');
+      controlEle.addEventListener('change', (e) => {
+        const { id } = e.target;
+        let mode;
+        if (id === 'Flat') {
+          mode = 0;
+        } else if (id === 'Gouranud') {
+          mode = 1;
+        } else if (id === 'Phong') {
+          mode = 2;
+        }
+        render(mode)
+      });
+    }
+
+    function render(mode = 0) {
+      renderer.gl.uniform1i(renderer.program.uniforms.u_shadingMode, mode);
+      renderer.render();
+    }
+
+    render(0);
+    initControl();
+  </script>
+</body>
+</html>

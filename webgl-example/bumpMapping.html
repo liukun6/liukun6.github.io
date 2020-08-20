@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bump Mapping</title>
+
+  <link rel="stylesheet" type="text/css" href="./main.css">
+  <script src="lib/WebGLRenderer.js"></script>
+</head>
+<body>
+  <main>
+    <canvas id="container"></canvas>
+  </main>
+
+  <script>
+    const vertexShader = `
+      #extension GL_OES_standard_derivatives : enable
+      #ifdef GL_ES
+      precision mediump float;
+      #endif
+      attribute vec4 aVertexPosition;
+      attribute vec3 aVertexNormal;
+      attribute vec2 aTextureCoord;
+
+      uniform mat4 u_modelMatrix;
+      uniform mat4 u_viewMatrix;
+      uniform mat4 u_projectionMatrix;
+      uniform mat3 u_normalMatrix;
+
+      // light
+      uniform vec3 u_lightPosition;
+
+      varying vec3 vNormal;
+      varying vec3 vPosition;
+      varying vec3 vLightDirection;
+      varying vec3 vEyeDirection;
+
+      varying vec2 vTextureCoord;
+
+      void main() {
+        gl_Position = u_projectionMatrix * u_viewMatrix * u_modelMatrix * aVertexPosition;
+
+        vTextureCoord = aTextureCoord;
+
+        vNormal = normalize((u_normalMatrix * aVertexNormal).xyz);
+        // mat3 vTBNInverse = TBNInverse(aVertexPosition.xyz, aTextureCoord, vNormal);
+
+        vPosition = (u_viewMatrix * u_modelMatrix * aVertexPosition).xyz;
+        vEyeDirection = -(vPosition);
+
+        vLightDirection = normalize(u_lightPosition - vPosition);
+      }
+    `;
+    const fragmentShader = `
+      #extension GL_OES_standard_derivatives : enable
+      #ifdef GL_ES
+      precision mediump float;
+      #endif
+
+      uniform vec3 u_ambientProduct;
+      uniform vec3 u_diffuseProduct;
+      uniform vec3 u_specularProduct;
+      uniform float u_shininess;
+
+      uniform sampler2D uSampler;
+      uniform sampler2D uNormalSampler;
+
+      varying vec3 vNormal;
+      varying vec3 vPosition;
+      varying vec3 vLightDirection;
+      varying vec3 vEyeDirection;
+      varying vec2 vTextureCoord;
+
+
+      mat3 TBN(vec3 vPosition, vec2 vTextureCood, vec3 normal) {
+        vec3  N       = normalize(normal);
+        vec3  dp1     = dFdx(vPosition);
+        vec3  dp2     = dFdy(vPosition);
+        vec2  duv1    = dFdx(vTextureCood);
+        vec2  duv2    = dFdy(vTextureCood);
+        vec3  dp2perp = cross(dp2, N);
+        vec3  dp1perp = cross(N, dp1);
+        vec3  T       = dp2perp * duv1.x + dp1perp * duv2.x;
+        vec3  B       = dp2perp * duv1.y + dp1perp * duv2.y;
+        float invmax  = inversesqrt(max(dot(T, T), dot(B, B)));
+        mat3  tm      = mat3(T * invmax, B * invmax, N);
+        // mat3  tbn_inv = mat3(vec3(tm[0].x, tm[1].x, tm[2].x), vec3(tm[0].y, tm[1].y, tm[2].y), vec3(tm[0].z, tm[1].z, tm[2].z));
+
+        return tm;
+      }
+
+      void main() {
+        vec3 perturbedNormal = texture2D(uNormalSampler, vTextureCoord).rgb * 2.0 - 1.0;
+        mat3 tbn = TBN(normalize(vPosition), vTextureCoord, normalize(vNormal));
+        vec3 vNormal_n = normalize(tbn * perturbedNormal);
+
+        vec3 vLightDirection_n = normalize(vLightDirection);
+        vec3 vEyeDirection_n = normalize(vEyeDirection);
+        vec3 halfwayVector = normalize(vLightDirection_n + vEyeDirection_n);
+        vec3 ambient = u_ambientProduct;
+        vec3 diffuse = u_diffuseProduct * max(dot(vLightDirection_n, vNormal_n), 0.0);
+        vec3 specular = u_specularProduct * pow(max(dot(halfwayVector, vNormal_n), 0.0), u_shininess);
+        if (dot(vLightDirection_n, vNormal_n) < 0.0) {
+          specular = vec3(0.0, 0.0, 0.0);
+        }
+
+        vec3 color = ambient + diffuse + specular;
+        vec4 texelColor = texture2D(uSampler, vTextureCoord);
+
+        gl_FragColor = vec4(color * texelColor.rgb, 1.0);
+      }
+    `;
+    const canvas = document.getElementById('container');
+    const camera = new WebGLRenderer.Camera({
+      type: 'PerspectiveCamera',
+      fov: 45,
+      aspect: canvas.offsetWidth / canvas.offsetHeight,
+      near: 0.01,
+      far: 100,
+    });
+    camera.setPosition(-1.5, 0.5, -2);
+    camera.lookAt(0, 0, 0);
+
+    const light = new WebGLRenderer.Light({
+      // ambientColor: [1, 1, 1],
+      ambientIntensity: 0.2,
+      // diffuseColor: [1, 1, 1]
+      diffuseIntensity: 0.6,
+      specularIntensity: 0.6,
+      shininess: 24,
+      position: [2, 6, 10],
+    });
+
+    const renderer = new WebGLRenderer.Renderer({
+      canvas,
+      camera,
+      light,
+      vertexShader,
+      fragmentShader,
+    });
+
+    const gl = renderer.gl;
+    gl.getExtension("OES_standard_derivatives");
+    const { OBJ } = WebGLRenderer;
+    const attrs = {
+      aVertexPosition: OBJ.Layout.POSITION.key,
+      aVertexNormal: OBJ.Layout.NORMAL.key,
+      aTextureCoord: OBJ.Layout.UV.key,
+      // aDiffuse: OBJ.Layout.DIFFUSE.key,
+      // aSpecular: OBJ.Layout.SPECULAR.key,
+      // aSpecularExponent: OBJ.Layout.SPECULAR_EXPONENT.key
+    };
+    const layout = new OBJ.Layout(
+      OBJ.Layout.POSITION,
+      OBJ.Layout.NORMAL,
+      OBJ.Layout.UV,
+      // OBJ.Layout.DIFFUSE,
+      // OBJ.Layout.SPECULAR,
+      // OBJ.Layout.SPECULAR_EXPONENT
+    );
+
+    function fetchImage(url) {
+      return new Promise(resolve => {
+        fetch(url)
+          .then(response => response.blob())
+          .then(data => {
+            const image = new Image();
+            image.onload = () => {
+              resolve(image);
+            }
+            image.src = URL.createObjectURL(data);
+          })
+          .catch(() => {
+            console.error(`Unable to download texture image: ${url}`);
+          })
+      });
+    }
+
+    (function() {
+      Promise.all([
+        OBJ.downloadModels([
+          {
+            obj: "./data/spot/spot_triangulated_good.obj",
+          }
+        ]),
+        fetchImage('./data/spot/spot_texture.png'),
+        fetchImage('./data/spot/hmap.jpg')
+      ]).then(([models, textureImage, normalTextureImage]) => {
+        renderer.render();
+
+        const programUniforms = renderer.program.uniforms;
+        const texture = createTexture(textureImage);
+        const normalTexture = createTexture(normalTextureImage);
+        bindTexture(texture, programUniforms.uSampler, 0);
+        bindTexture(normalTexture, programUniforms.uNormalSampler, 1);
+        // model matrix 单位向量 特殊处理
+        const normalMatrix = WebGLRenderer.mat3.create();
+        const mvMatrix = renderer.camera.viewMatrix;
+        WebGLRenderer.mat3.fromMat4(normalMatrix, WebGLRenderer.mat4.invert([], mvMatrix));
+        WebGLRenderer.mat3.transpose(normalMatrix, normalMatrix);
+        gl.uniformMatrix3fv(programUniforms.u_normalMatrix, false, normalMatrix)
+
+        models.spot_triangulated_good.needUpdate = true;
+        renderer.renderOBJ(models.spot_triangulated_good, layout, attrs);
+      });
+    })();
+
+    function bindTexture(texture, samplerLocation, index) {
+      gl.activeTexture(gl[`TEXTURE${index}`]);
+      // Bind the texture object to the target
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.uniform1i(samplerLocation, index);
+    }
+
+    function createTexture(image) {
+      const texture = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+
+      // gl.generateMipmap(gl.TEXTURE_2D);
+
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.bindTexture(gl.TEXTURE_2D, null);
+
+      return texture;
+    }
+
+  </script>
+</body>
+</html>
