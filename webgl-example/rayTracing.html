@@ -322,7 +322,10 @@
     const gl = renderer.gl;
     const programAttribs = renderer.program.attributes;
     const programUniforms = renderer.program.uniforms;
-    const control = new WebGLRenderer.Control(camera, canvas);
+    const control = new WebGLRenderer.Control(camera, canvas, {
+      minZoom: 0.6,
+      maxZoom: 8,
+    });
     control.start();
 
     function rayTracing() {
@@ -337,7 +340,8 @@
       ]);
 
       const radian = Math.PI / 180;
-      const viewportH = Math.tan(camera.fov / 2 * radian);
+      const fovRadians = camera.fov / camera.zoom * radian;
+      const viewportH = Math.tan(fovRadians / 2);
       const viewportW = viewportH * camera.aspect;
 
       const quadRays = new Float32Array([
