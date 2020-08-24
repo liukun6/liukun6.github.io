@@ -152,7 +152,9 @@
     });
     camera.setPosition(2 * RADIUS, 0.3 * RADIUS, 0);
     camera.lookAt(0, 0, 0);
-    const control = new WebGLRenderer.Control(camera, canvas);
+    const control = new WebGLRenderer.Control(camera, canvas, {
+      zoomScale: 0.08
+    });
     control.start();
 
     const light = new WebGLRenderer.Light({
