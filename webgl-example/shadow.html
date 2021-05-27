@@ -6,7 +6,6 @@
   <title>Shadow</title>
 
   <link rel="stylesheet" type="text/css" href="./main.css">
-  <script src="lib/WebGLRenderer.js"></script>
 </head>
 <body>
   <main>
@@ -22,17 +21,50 @@
     </div>
   </main>
 
-  <script>
-    const vertexShader = `
-      #ifdef GL_ES
-      precision mediump float;
-      #endif
-      attribute vec4 aVertexPosition;
-      attribute vec4 aVertexNormal;
-      // attribute vec2 aTextureCoord;
-      attribute vec3 aDiffuse;
-      attribute vec3 aSpecular;
-      attribute float aSpecularExponent;
+  <script id="shadow-vs" type="notjs">#version 300 es
+    precision highp float;
+
+    in vec4 a_position;
+
+    uniform mat4 u_mvpMatrixFromLight;
+
+    void main() {
+      gl_Position = u_mvpMatrixFromLight * a_position;
+    }
+  </script>
+
+  <script id="shadow-fs" type="notjs">#version 300 es
+    precision highp float;
+
+    out vec4 o_FragColor;
+
+    vec4 packDepth(float depth) {
+      const vec4 bitShift = vec4(1.0, 256.0, 256.0 * 256.0, 256.0 * 256.0 * 256.0);
+      const vec4 bitMask = vec4(1.0/256.0, 1.0/256.0, 1.0/256.0, 0.0);
+
+      vec4 rgbaDepth = fract(depth * bitShift); // Calculate the value stored into each byte
+      rgbaDepth -= rgbaDepth.gbaa * bitMask; // Cut off the value which do not fit in 8 bits
+
+      return rgbaDepth;
+    }
+
+    void main() {
+      float depth = gl_FragCoord.z * 0.5 + 0.5;
+
+      // o_FragColor = vec4(depth, depth, depth, 1.0);
+      o_FragColor = packDepth(depth);
+    }
+  </script>
+
+  <script type="module">
+    import { twgl, glMatrix, Camera, OBJ } from './lib/bundle.js';
+    const { mat4, vec3 } = glMatrix
+
+    const vs = `#version 300 es
+      precision highp float;
+
+      in vec4 a_position;
+      in vec3 a_normal;
 
       uniform mat4 u_modelMatrix;
       uniform mat4 u_viewMatrix;
@@ -42,56 +74,46 @@
       uniform mat4 u_mvpMatrixFromLight;
 
       // light
-      uniform vec3 u_lightPosition;
+      uniform vec3 u_lightPositionEye;
 
-      varying vec3 vNormal;
-      varying vec3 vLightDirection;
-      varying vec3 vEyeDirection;
+      out vec3 v_normal;
+      out vec3 v_eyeDirection;
+      out vec3 v_lightDirection;
 
-      varying vec3 vDiffuse;
-      varying vec3 vSpecular;
-      varying float vSpecularExponent;
-
-      varying vec4 vPositionFromLight;
+      out vec4 v_PositionFromLight;
 
       void main() {
-        gl_Position = u_projectionMatrix * u_viewMatrix * u_modelMatrix * aVertexPosition;
+        gl_Position = u_projectionMatrix * u_viewMatrix * u_modelMatrix * a_position;
 
-        vDiffuse = aDiffuse;
-        vSpecular = aSpecular;
-        vSpecularExponent = aSpecularExponent;
+        v_normal = normalize(mat3(u_normalMatrix) * a_normal);
 
-        vec3 vPosition = (u_viewMatrix * u_modelMatrix * aVertexPosition).xyz;
+        vec4 positionEye4 = u_viewMatrix * u_modelMatrix * a_position;
+        vec3 positionEye = positionEye4.xyz / positionEye4.w;
+        v_eyeDirection = -positionEye;
+        v_lightDirection = normalize(u_lightPositionEye - positionEye);
 
-        vEyeDirection = -vPosition;
-        vec4 normal = u_normalMatrix * aVertexNormal;
-        vNormal = normal.xyz / normal.w;
-        vLightDirection = normalize(u_lightPosition - vPosition);
-
-        vPositionFromLight = u_mvpMatrixFromLight * aVertexPosition;
+        v_PositionFromLight = u_mvpMatrixFromLight * a_position;
       }
-    `;
-    const fragmentShader = `
-      #ifdef GL_ES
-      precision mediump float;
-      #endif
+    `
 
-      uniform vec3 u_ambientProduct;
-      uniform vec3 u_diffuseProduct;
-      uniform vec3 u_specularProduct;
-      uniform float u_shininess;
+    const fs = `#version 300 es
+      precision highp float;
 
-      varying vec3 vNormal;
-      varying vec3 vLightDirection;
-      varying vec3 vEyeDirection;
+      #define EPS 1e-7
 
-      varying vec3 vDiffuse;
-      varying vec3 vSpecular;
-      varying float vSpecularExponent;
+      uniform vec3 ambient;
+      uniform vec3 diffuse;
+      uniform vec3 specular;
+      uniform float specularExponent;
 
-      varying vec4 vPositionFromLight;
+      uniform sampler2D u_shadowMap;
 
-      uniform sampler2D uShadowMap;
+      in vec3 v_normal;
+      in vec3 v_eyeDirection;
+      in vec3 v_lightDirection;
+      in vec4 v_PositionFromLight;
+
+      out vec4 o_FragColor;
 
       float unpackDepth(const in vec4 rgbaDepth) {
         const vec4 bitShift = vec4(1.0, 1.0/256.0, 1.0/(256.0*256.0), 1.0/(256.0*256.0*256.0));
@@ -99,79 +121,62 @@
         return depth;
       }
 
+      float useShadowMap(sampler2D shadowMap, vec3 shadowCoord) {
+        bool inShadowMapRange = shadowCoord.x > 0.0 && shadowCoord.x < 1.0 && shadowCoord.y > 0.0 && shadowCoord.y < 1.0;
+        if (!inShadowMapRange) return 1.0;
+
+        vec4 rgbaDepth = texture(shadowMap, shadowCoord.xy);
+        float depth = unpackDepth(rgbaDepth);
+        float visibility = (shadowCoord.z > depth + EPS) ? 0.0 : 1.0;
+
+        return visibility;
+      }
+
+      float PCF(sampler2D shadowMap, vec3 shadowCoord, float filterSize) {
+        // visibility = 0.0;
+        // vec2 texelSize = 1.0 / vec2(2048.0, 2048.0); // textureSize(shadowMap, 0);
+        // for(int x = -2; x <= 2; ++x)
+        // {
+        //   for(int y = -2; y <= 2; ++y)
+        //   {
+        //     vec2 offset = shadowCoord.xy + vec2(x, y) * texelSize;
+        //     vec4 pcfDepth = texture(shadowMap, offset);
+        //     float depth = unpackDepth(pcfDepth);
+        //     visibility += (shadowCoord.z > depth + EPS) ? 0.0 : 1.0;
+        //   }
+        // }
+        // visibility /= 25.0;
+        return 1.0;
+      }
+
       void main() {
-        vec3 vNormal_n = normalize(vNormal);
-        vec3 vLightDirection_n = normalize(vLightDirection);
-        vec3 vEyeDirection_n = normalize(vEyeDirection);
-        vec3 halfwayVector = normalize(vLightDirection_n + vEyeDirection_n);
-        // vec3 ambient = u_ambientProduct;
-        vec3 diffuse = vDiffuse * max(dot(vLightDirection_n, vNormal_n), 0.0);
-        vec3 specular = vSpecular * pow(max(dot(halfwayVector, vNormal_n), 0.0), vSpecularExponent);
-        if (dot(vLightDirection_n, vNormal_n) < 0.0) {
+        vec3 v_normal_n = normalize(v_normal);
+        vec3 v_lightDirection_n = normalize(v_lightDirection);
+        vec3 v_eyeDirection_n = normalize(v_eyeDirection);
+        vec3 halfwayVector = normalize(v_lightDirection_n + v_eyeDirection_n);
+
+        vec3 diffuse = diffuse * max(dot(v_lightDirection_n, v_normal_n), 0.0);
+        vec3 specular = specular * pow(max(dot(halfwayVector, v_normal_n), 0.0), specularExponent);
+        if (dot(v_lightDirection_n, v_normal_n) < 0.0) {
           specular = vec3(0.0, 0.0, 0.0);
         }
-
         vec3 color = diffuse + specular;
 
-        float visibility = 1.0;
-        vec3 shadowCoord = (vPositionFromLight.xyz / vPositionFromLight.w) * 0.5 + 0.5;
-        // 超出阴影纹理范围不进行深度测试
-        if (shadowCoord.x > 0.0 && shadowCoord.x < 1.0 && shadowCoord.y > 0.0 && shadowCoord.y < 1.0) {
-          visibility = 0.0;
-          vec2 texelSize = 1.0 / vec2(2048.0, 2048.0); // textureSize(uShadowMap, 0);
-          for(int x = -2; x <= 2; ++x)
-          {
-            for(int y = -2; y <= 2; ++y)
-            {
-              vec2 offset = shadowCoord.xy + vec2(x, y) * texelSize;
-              vec4 pcfDepth = texture2D(uShadowMap, offset);
-              float depth = unpackDepth(pcfDepth);
-              visibility += (shadowCoord.z > depth + 0.00000015) ? 0.7 : 1.0;
-            }
-          }
-          visibility /= 25.0;
-        }
+        vec3 shadowCoord = (v_PositionFromLight.xyz / v_PositionFromLight.w) * 0.5 + 0.5;
+        float visibility = useShadowMap(u_shadowMap, shadowCoord);
+        o_FragColor = vec4(color * visibility, 1.0);
 
-        //
         // float lightDepth = shadowCoord.z * 0.5;
         // float testD = depth * 0.5;
-        gl_FragColor = vec4(color * visibility, 1.0);
       }
-    `;
-
-    const shadowVertexShader = `
-      #ifdef GL_ES
-      precision mediump float;
-      #endif
-      attribute vec4 aVertexPosition;
-
-      uniform mat4 u_mvpMatrix;
-
-      void main() {
-        gl_Position = u_mvpMatrix * aVertexPosition;
-      }
-    `;
-
-    const shadowFragmentShader = `
-      #ifdef GL_ES
-      precision mediump float;
-      #endif
-
-      void main() {
-        const vec4 bitShift = vec4(1.0, 256.0, 256.0 * 256.0, 256.0 * 256.0 * 256.0);
-        const vec4 bitMask = vec4(1.0/256.0, 1.0/256.0, 1.0/256.0, 0.0);
-        float depth = gl_FragCoord.z * 0.5 + 0.5;
-        vec4 rgbaDepth = fract(depth * bitShift); // Calculate the value stored into each byte
-        rgbaDepth -= rgbaDepth.gbaa * bitMask; // Cut off the value which do not fit in 8 bits
-        gl_FragColor = rgbaDepth;
-
-        // float depth = gl_FragCoord.z * 0.5 + 0.5;
-        // gl_FragColor = vec4(depth, depth, depth, 1.0);
-      }
-    `;
+    `
 
     const canvas = document.getElementById('container');
-    const camera = new WebGLRenderer.Camera({
+    const gl = canvas.getContext("webgl2");
+
+    const OFFSCREEN_WIDTH = 2048, OFFSCREEN_HEIGHT = 2048;
+
+    const camera = new Camera({
       type: 'PerspectiveCamera',
       fov: 45,
       aspect: canvas.offsetWidth / canvas.offsetHeight,
@@ -181,30 +186,95 @@
     camera.setPosition(0, 8, 16);
     camera.lookAt(0, 0, 0);
 
-    const light = new WebGLRenderer.Light({
-      // ambientColor: [1, 1, 1],
-      ambientIntensity: 0.2,
-      // diffuseColor: [1, 1, 1]
-      diffuseIntensity: 0.4,
-      specularIntensity: 0.5,
-      shininess: 64,
-      position: [0, 5, 0]//[0, 5, -2],
-    });
+    const programOptions = {
+      attribLocations: {
+        'a_position': 0,
+        'a_normal':   1,
+      },
+    };
+    const lightProgramInfo = twgl.createProgramInfo(gl, ['shadow-vs', 'shadow-fs'], programOptions);
+    const shadowprogramInfo = twgl.createProgramInfo(gl, [vs, fs], programOptions);
 
-    const renderer = new WebGLRenderer.Renderer({
-      canvas,
-      camera,
-      light,
-      vertexShader,
-      fragmentShader,
-    });
-    const gl = renderer.gl;
-    const { OBJ } = WebGLRenderer;
+    function drawScene(programInfo, meshes) {
+      gl.useProgram(programInfo.program);
+
+      meshes.forEach((mesh) => {
+        gl.bindVertexArray(mesh.vao)
+        // todo: ubo
+        twgl.setUniforms(programInfo, mesh.uniforms)
+
+        if (mesh.materialNames && mesh.materialNames.length > 0) {
+          // multiple material
+          let byteOffset = 0;
+          Object.entries(mesh.materialsByIndex).forEach(([key, material]) => {
+            const numElements = mesh.indicesPerMaterial[key].length;
+            twgl.setUniforms(programInfo, material);
+            gl.drawElements(gl.TRIANGLES, numElements, gl.UNSIGNED_SHORT, byteOffset);
+            // Byte size of gl.UNSIGNED_SHORT is 2
+            byteOffset += numElements * 2;
+          })
+        } else {
+          twgl.drawBufferInfo(gl, mesh.bufferInfo);
+        }
+      });
+    }
+
+    function render(mesh) {
+      twgl.resizeCanvasToDisplaySize(gl.canvas);
+      gl.enable(gl.DEPTH_TEST);
+      gl.enable(gl.CULL_FACE);
+
+      const geometry = {
+        a_position: mesh.vertices,
+        a_normal: mesh.vertexNormals,
+        // all indices
+        indices: mesh.indicesPerMaterial.flat()
+      }
+      mesh.bufferInfo = twgl.createBufferInfoFromArrays(gl, geometry);
+      mesh.vao = twgl.createVAOFromBufferInfo(gl, shadowprogramInfo,  mesh.bufferInfo);
+      // shadow uniforms
+
+      const modelMatrix = mat4.create()
+      const projectMatrix = mat4.perspective([], 90.0, OFFSCREEN_WIDTH / OFFSCREEN_HEIGHT, 0.1, 50.0);
+      const viewMatrix = mat4.lookAt([], LightPosition, camera.target, camera.up);
+      const viewProjMatrixFromLight = mat4.multiply([], mat4.multiply([], projectMatrix, viewMatrix), modelMatrix);
+      mesh.uniforms = {
+        u_mvpMatrixFromLight: viewProjMatrixFromLight
+      }
+
+      const attachments = [
+        { format: gl.RGBA, type: gl.UNSIGNED_BYTE, min: gl.LINEAR, wrap: gl.CLAMP_TO_EDGE },
+        { format: gl.DEPTH_STENCIL, },
+      ];
+      const framebufferInfo = twgl.createFramebufferInfo(gl, attachments, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
+      // console.log(framebufferInfo);
+
+      // light pass
+      gl.bindFramebuffer(gl.FRAMEBUFFER, framebufferInfo.framebuffer);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      gl.viewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
+      drawScene(lightProgramInfo, [mesh]);
+
+      // shadow pass
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+
+      Object.assign(mesh.uniforms, {
+        u_modelMatrix: modelMatrix,
+        u_viewMatrix: camera.viewMatrix,
+        u_projectionMatrix: camera.projectionMatrix,
+        u_normalMatrix: mat4.transpose([], mat4.invert([], mat4.multiply([], modelMatrix, camera.viewMatrix))),
+        // light
+        // u_ambientLight: 0.2,
+        u_LEye: vec3.transformMat4([], LightPosition, camera.viewMatrix)
+      });
+      drawScene(shadowprogramInfo, [mesh]);
+    }
+
+
+    const LightPosition = [0, 6, 0];
     let APP_MODEL;
-    let FBO;
-
-    const OFFSCREEN_WIDTH = 2048, OFFSCREEN_HEIGHT = 2048;
-    let viewProjMatrixFromLight;
     (function() {
       OBJ.downloadModels([
         {
@@ -213,166 +283,24 @@
         }
       ]).then(models => {
         APP_MODEL = models.plane;
-        APP_MODEL.needUpdate = true;
-        // requestAnimationFrame(anim);
         render(APP_MODEL);
         initControl();
       });
     })();
-
-    function render(model) {
-      const attrs = {
-        aVertexPosition: OBJ.Layout.POSITION.key,
-        aVertexNormal: OBJ.Layout.NORMAL.key,
-        // aTextureCoord: OBJ.Layout.UV.key,
-        aDiffuse: OBJ.Layout.DIFFUSE.key,
-        aSpecular: OBJ.Layout.SPECULAR.key,
-        aSpecularExponent: OBJ.Layout.SPECULAR_EXPONENT.key
-      };
-      const layout = new OBJ.Layout(
-        OBJ.Layout.POSITION,
-        OBJ.Layout.NORMAL,
-        // OBJ.Layout.UV,
-        OBJ.Layout.DIFFUSE,
-        OBJ.Layout.SPECULAR,
-        OBJ.Layout.SPECULAR_EXPONENT
-      );
-      // renderShadow
-      const shadowProgram = new WebGLRenderer.Program(gl, shadowVertexShader, shadowFragmentShader);
-      renderer.program = shadowProgram;
-      gl.useProgram(shadowProgram.program);
-
-      if (!FBO) {
-        FBO = initFramebufferObject();
-      }
-      if (!FBO) {
-        console.log('Failed to initialize frame buffer object');
-        return;
-      }
-      gl.activeTexture(gl.TEXTURE0); // Set a texture object to the texture unit
-      gl.bindTexture(gl.TEXTURE_2D, FBO.texture);
-      gl.bindFramebuffer(gl.FRAMEBUFFER, FBO);               // Change the drawing destination to FBO
-
-      const { mat4 } = WebGLRenderer;
-      const projectMatrix = mat4.perspective([], 90.0, OFFSCREEN_WIDTH / OFFSCREEN_HEIGHT, 0.1, 100.0);
-      const viewMatrix = mat4.lookAt([], light.position, camera.target, camera.up);
-      viewProjMatrixFromLight = mat4.multiply([], projectMatrix, viewMatrix);
-      gl.uniformMatrix4fv(shadowProgram.uniforms.u_mvpMatrix, false, viewProjMatrixFromLight);
-
-      gl.clearColor(1.0, 1.0, 1.0, 1.0);
-      gl.enable(gl.DEPTH_TEST);
-      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);   // Clear FBO
-      gl.viewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);  // Set view port for FBO
-
-      renderer.renderOBJ(model, layout, attrs);
-
-      // render
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);               // Change the drawing destination to color buffer
-      gl.viewport(0, 0, canvas.width, canvas.height);
-      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);    // Clear color and depth buffer
-
-      const program = new WebGLRenderer.Program(gl, vertexShader, fragmentShader);
-      renderer.program = program;
-      gl.useProgram(program.program); // Set the shader for regular drawing
-
-      // const programAttribs = renderer.program.attributes;
-      const programUniforms = renderer.program.uniforms;
-      gl.uniform1i(programUniforms.uShadowMap, 0);  // Pass 0 because gl.TEXTURE0 is enabledする
-      gl.uniformMatrix4fv(programUniforms.u_mvpMatrixFromLight, false, viewProjMatrixFromLight);
-
-      const mvMatrix = renderer.camera.viewMatrix;
-      const normalMatrix = mat4.transpose([], mat4.invert([], mvMatrix));
-      gl.uniformMatrix4fv(programUniforms.u_normalMatrix, false, normalMatrix)
-
-      camera.needUpdateViewMat = true;
-      camera.needUpdateProjMat = true;
-      light.needUpdatePosition = true;
-
-      renderer.render();
-      renderer.renderOBJ(model, layout, attrs);
-    }
-
-    function initFramebufferObject() {
-      var framebuffer, texture, depthBuffer;
-
-      // Define the error handling function
-      var error = function() {
-        if (framebuffer) gl.deleteFramebuffer(framebuffer);
-        if (texture) gl.deleteTexture(texture);
-        if (depthBuffer) gl.deleteRenderbuffer(depthBuffer);
-        return null;
-      }
-
-      // Create a framebuffer object (FBO)
-      framebuffer = gl.createFramebuffer();
-      if (!framebuffer) {
-        console.log('Failed to create frame buffer object');
-        return error();
-      }
-
-      // Create a texture object and set its size and parameters
-      texture = gl.createTexture(); // Create a texture object
-      if (!texture) {
-        console.log('Failed to create texture object');
-        return error();
-      }
-      gl.bindTexture(gl.TEXTURE_2D, texture);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-      // Create a renderbuffer object and Set its size and parameters
-      depthBuffer = gl.createRenderbuffer(); // Create a renderbuffer object
-      if (!depthBuffer) {
-        console.log('Failed to create renderbuffer object');
-        return error();
-      }
-      gl.bindRenderbuffer(gl.RENDERBUFFER, depthBuffer);
-      gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
-
-      // Attach the texture and the renderbuffer object to the FBO
-      gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
-      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
-      gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depthBuffer);
-
-      // Check if FBO is configured correctly
-      var e = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
-      if (gl.FRAMEBUFFER_COMPLETE !== e) {
-        console.log('Frame buffer object is incomplete: ' + e.toString());
-        return error();
-      }
-
-      framebuffer.texture = texture; // keep the required object
-
-      // Unbind the buffer object
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-      gl.bindTexture(gl.TEXTURE_2D, null);
-      gl.bindRenderbuffer(gl.RENDERBUFFER, null);
-
-      return framebuffer;
-    }
-
-    // function anim() {
-    //   render(APP_MODEL);
-    //   requestAnimationFrame(anim);
-    // }
 
     function initControl() {
       const controlEle = document.getElementById('control');
       controlEle.addEventListener('change', (e) => {
         const { value, id } = e.target;
         const coordValue = parseFloat(value);
-        const lightPosition = light.position;
         if (id === 'lightX') {
-          lightPosition[0] = coordValue;
+          LightPosition[0] = coordValue;
         } else if (id === 'lightZ') {
-          lightPosition[2] = coordValue;
+          LightPosition[2] = coordValue;
         } else if (id === 'lightY') {
-          lightPosition[1] = coordValue;
+          LightPosition[1] = coordValue;
         }
-        light.setPosition(...lightPosition);
+
         render(APP_MODEL);
       });
     }

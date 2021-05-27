@@ -6,82 +6,51 @@
   <title>Depth Buffer</title>
 
   <link rel="stylesheet" type="text/css" href="./main.css">
-  <script src="lib/WebGLRenderer.js"></script>
 </head>
 <body>
   <main>
     <canvas id="container"></canvas>
   </main>
 
-  <script>
-    const vertexShader = `
-      attribute vec4 a_position;
-      attribute vec4 a_color;
+  <script id="vs" type="notjs">#version 300 es
+    in vec4 a_position;
+    in vec4 a_color;
 
-      uniform mat4 u_modelMatrix;
-      uniform mat4 u_viewMatrix;
-      uniform mat4 u_projectionMatrix;
+    uniform mat4 u_modelMatrix;
+    uniform mat4 u_viewMatrix;
+    uniform mat4 u_projectionMatrix;
 
-      varying vec4 vColor;
-      varying vec4 vPos;
+    out vec4 v_color;
 
-      void main() {
-        gl_Position = u_projectionMatrix * u_viewMatrix * u_modelMatrix * a_position;
-        vColor = a_color;
+    void main() {
+      gl_Position = u_projectionMatrix * u_viewMatrix * u_modelMatrix * a_position;
+      v_color = a_color;
+    }
+  </script>
 
-        vPos = gl_Position;
+  <script id="fs" type="notjs">#version 300 es
+    precision highp float;
+
+    in vec4 v_color;
+
+    out vec4 o_FragColor;
+
+    void main() {
+      if (gl_FragCoord.x > 480.0) {
+        o_FragColor = vec4(vec3(gl_FragCoord.z), 1.0);
       }
-    `;
-    const fragmentShader = `
-      #ifdef GL_ES
-      precision mediump float;
-      #endif
-
-      varying vec4 vColor;
-      varying vec4 vPos;
-
-      void main() {
-        float depth = gl_FragCoord.z * 0.5 + 0.5;
-        // float depth = vPos.z * 0.5 + 0.5;
-        vec3 cubePosition = vPos.xyz / vPos.w * 0.5 + 0.5;
-        float x = cubePosition.x;
-        float y = cubePosition.y;
-        float z = cubePosition.z;
-
-        if (cubePosition.x > 0.5) {
-          gl_FragColor = vec4(z, z, z, 1.0);
-        }
-        else {
-          gl_FragColor = vColor;
-        }
+      else {
+        o_FragColor = v_color;
       }
-    `
+    }
+  </script>
+
+  <script type="module">
+    import { twgl, glMatrix, Camera } from './lib/bundle.js';
+
     const canvas = document.getElementById('container');
-    const camera = new WebGLRenderer.Camera({
-      type: 'PerspectiveCamera',
-      fov: 30,
-      aspect: canvas.offsetWidth / canvas.offsetHeight,
-      near: 2,
-      far: 100,
-    });
-    camera.setPosition(0, 0, 5);
-    camera.lookAt(0, 0, -100);
-
-    // const light = new WebGLRenderer.Light({
-    //   // ambientColor: [1, 1, 1],
-    //   ambientIntensity: 0.4,
-    //   // diffuseColor: [1, 1, 1]
-    //   diffuseIntensity: 0.6,
-    //   // positon: camera.positon
-    // })
-    // light.setPosition(10 * RADIUS, 4 * RADIUS, -4 * RADIUS);
-
-    const renderer = new WebGLRenderer.Renderer({
-      canvas,
-      camera,
-      vertexShader,
-      fragmentShader,
-    });
+    const gl = canvas.getContext("webgl2")
+    const programInfo = twgl.createProgramInfo(gl, ['vs', 'fs'])
 
     const positionArray = new Float32Array([
        0.0,  1.0,   0.0,
@@ -110,18 +79,45 @@
       1.0,  0.4,  0.4,
     ]);
     const geometry = {
-      attributes: {
-        position: new WebGLRenderer.BufferAttribute(positionArray, 3, false),
-        color: new WebGLRenderer.BufferAttribute(colorArray, 3, false),
-      }
+      a_position: { numComponents: 3, data: positionArray },
+      a_color: { numComponents: 3, data: colorArray },
     }
-    const { mat4 } = WebGLRenderer;
-    geometry.modelMatrix = mat4.translate([], mat4.create(), [0.75, 0, 0]);
-    renderer.addGeometry(geometry);
-    renderer.render();
+    const bufferInfo = twgl.createBufferInfoFromArrays(gl, geometry);
 
-    geometry.modelMatrix = mat4.translate([], mat4.create(), [-0.75, 0, 0]);
-    renderer.renderGeometry(geometry);
+    const camera = new Camera({
+      type: 'PerspectiveCamera',
+      fov: 30,
+      aspect: canvas.offsetWidth / canvas.offsetHeight,
+      near: 2,
+      far: 100,
+    });
+    camera.setPosition(0, 0, 5);
+    camera.lookAt(0, 0, -100);
+    const { mat4 } = glMatrix;
+    const uniforms = {
+      u_modelMatrix: mat4.translate([], mat4.create(), [0.75, 0, 0]),
+      u_viewMatrix: camera.viewMatrix,
+      u_projectionMatrix: camera.projectionMatrix,
+    }
+
+    // render
+    twgl.resizeCanvasToDisplaySize(gl.canvas);
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.CULL_FACE);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    gl.useProgram(programInfo.program);
+    twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
+    twgl.setUniforms(programInfo, uniforms);
+    gl.drawArrays(gl.TRIANGLES, 0, bufferInfo.numElements);
+
+    // left color triangle
+    const updateUnifroms = {
+      u_modelMatrix: mat4.translate([], mat4.create(), [-0.75, 0, 0]),
+    }
+    twgl.setUniforms(programInfo, updateUnifroms)
+    gl.drawArrays(gl.TRIANGLES, 0, bufferInfo.numElements);
 
   </script>
 </body>
