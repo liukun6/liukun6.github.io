@@ -4469,7 +4469,7 @@ var sqrLen$4 = squaredLength$4;
  * @function
  */
 
-var forEach$2 = function () {
+var forEach$3 = function () {
   var vec = create$5();
   return function (a, stride, offset, count, fn, arg) {
     var i, l;
@@ -4551,7 +4551,7 @@ var vec3 = /*#__PURE__*/Object.freeze({
   sqrDist: sqrDist$2,
   len: len$4,
   sqrLen: sqrLen$4,
-  forEach: forEach$2
+  forEach: forEach$3
 });
 
 /**
@@ -5182,7 +5182,7 @@ var sqrLen$3 = squaredLength$3;
  * @function
  */
 
-var forEach$1 = function () {
+var forEach$2 = function () {
   var vec = create$4();
   return function (a, stride, offset, count, fn, arg) {
     var i, l;
@@ -5259,7 +5259,7 @@ var vec4 = /*#__PURE__*/Object.freeze({
   sqrDist: sqrDist$1,
   len: len$3,
   sqrLen: sqrLen$3,
-  forEach: forEach$1
+  forEach: forEach$2
 });
 
 /**
@@ -7481,7 +7481,7 @@ var sqrLen = squaredLength;
  * @function
  */
 
-var forEach = function () {
+var forEach$1 = function () {
   var vec = create$1();
   return function (a, stride, offset, count, fn, arg) {
     var i, l;
@@ -7558,10 +7558,10 @@ var vec2 = /*#__PURE__*/Object.freeze({
   dist: dist,
   sqrDist: sqrDist,
   sqrLen: sqrLen,
-  forEach: forEach
+  forEach: forEach$1
 });
 
-var index = /*#__PURE__*/Object.freeze({
+var index$2 = /*#__PURE__*/Object.freeze({
   __proto__: null,
   glMatrix: common,
   mat2: mat2,
@@ -9556,7 +9556,7 @@ function warn(...args) {
   console.warn(...args);
 }
 
-function isBuffer(gl, t) {
+function isBuffer$1(gl, t) {
   return typeof WebGLBuffer !== 'undefined' && t instanceof WebGLBuffer;
 }
 
@@ -9659,7 +9659,7 @@ function setBufferFromTypedArray(gl, type, buffer, array, drawType) {
  * @memberOf module:twgl/attributes
  */
 function createBufferFromTypedArray(gl, typedArray, type, drawType) {
-  if (isBuffer(gl, typedArray)) {
+  if (isBuffer$1(gl, typedArray)) {
     return typedArray;
   }
   type = type || ARRAY_BUFFER;
@@ -13582,7 +13582,7 @@ function setToAnonymousIfUndefinedAndURLIsNotSameOrigin(url, crossOrigin) {
  * @return {HTMLImageElement} the image being loaded.
  * @private
  */
-function loadImage(url, crossOrigin, callback) {
+function loadImage$1(url, crossOrigin, callback) {
   callback = callback || noop;
   let img;
   crossOrigin = crossOrigin !== undefined ? crossOrigin : defaults$1.crossOrigin;
@@ -13684,7 +13684,7 @@ function loadAndUseImage(obj, crossOrigin, callback) {
     return obj;
   }
 
-  return loadImage(obj, crossOrigin, callback);
+  return loadImage$1(obj, crossOrigin, callback);
 }
 
 /**
@@ -17164,6 +17164,10489 @@ var twglFull_module = /*#__PURE__*/Object.freeze({
   vertexArrays: vertexArrays
 });
 
+function assert$2(condition, message) {
+  if (!condition) {
+    throw new Error(message || 'loader assertion failed.');
+  }
+}
+
+function _typeof(obj) {
+  "@babel/helpers - typeof";
+
+  if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
+    _typeof = function _typeof(obj) {
+      return typeof obj;
+    };
+  } else {
+    _typeof = function _typeof(obj) {
+      return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+    };
+  }
+
+  return _typeof(obj);
+}
+
+var globals$1 = {
+  self: typeof self !== 'undefined' && self,
+  window: typeof window !== 'undefined' && window,
+  global: typeof global !== 'undefined' && global,
+  document: typeof document !== 'undefined' && document
+};
+var self_ = globals$1.self || globals$1.window || globals$1.global;
+var window_ = globals$1.window || globals$1.self || globals$1.global;
+var global_$1 = globals$1.global || globals$1.self || globals$1.window;
+var document_ = globals$1.document || {};
+var isBrowser$1 = (typeof process === "undefined" ? "undefined" : _typeof(process)) !== 'object' || String(process) !== '[object process]' || process.browser;
+var isWorker = typeof importScripts === 'function';
+var matches$1 = typeof process !== 'undefined' && process.version && process.version.match(/v([0-9]*)/);
+var nodeVersion = matches$1 && parseFloat(matches$1[1]) || 0;
+
+function _defineProperty$1(obj, key, value) {
+  if (key in obj) {
+    Object.defineProperty(obj, key, {
+      value: value,
+      enumerable: true,
+      configurable: true,
+      writable: true
+    });
+  } else {
+    obj[key] = value;
+  }
+
+  return obj;
+}
+
+var runtime_1 = createCommonjsModule(function (module) {
+/**
+ * Copyright (c) 2014-present, Facebook, Inc.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
+var runtime = (function (exports) {
+
+  var Op = Object.prototype;
+  var hasOwn = Op.hasOwnProperty;
+  var undefined$1; // More compressible than void 0.
+  var $Symbol = typeof Symbol === "function" ? Symbol : {};
+  var iteratorSymbol = $Symbol.iterator || "@@iterator";
+  var asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator";
+  var toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag";
+
+  function define(obj, key, value) {
+    Object.defineProperty(obj, key, {
+      value: value,
+      enumerable: true,
+      configurable: true,
+      writable: true
+    });
+    return obj[key];
+  }
+  try {
+    // IE 8 has a broken Object.defineProperty that only works on DOM objects.
+    define({}, "");
+  } catch (err) {
+    define = function(obj, key, value) {
+      return obj[key] = value;
+    };
+  }
+
+  function wrap(innerFn, outerFn, self, tryLocsList) {
+    // If outerFn provided and outerFn.prototype is a Generator, then outerFn.prototype instanceof Generator.
+    var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator;
+    var generator = Object.create(protoGenerator.prototype);
+    var context = new Context(tryLocsList || []);
+
+    // The ._invoke method unifies the implementations of the .next,
+    // .throw, and .return methods.
+    generator._invoke = makeInvokeMethod(innerFn, self, context);
+
+    return generator;
+  }
+  exports.wrap = wrap;
+
+  // Try/catch helper to minimize deoptimizations. Returns a completion
+  // record like context.tryEntries[i].completion. This interface could
+  // have been (and was previously) designed to take a closure to be
+  // invoked without arguments, but in all the cases we care about we
+  // already have an existing method we want to call, so there's no need
+  // to create a new function object. We can even get away with assuming
+  // the method takes exactly one argument, since that happens to be true
+  // in every case, so we don't have to touch the arguments object. The
+  // only additional allocation required is the completion record, which
+  // has a stable shape and so hopefully should be cheap to allocate.
+  function tryCatch(fn, obj, arg) {
+    try {
+      return { type: "normal", arg: fn.call(obj, arg) };
+    } catch (err) {
+      return { type: "throw", arg: err };
+    }
+  }
+
+  var GenStateSuspendedStart = "suspendedStart";
+  var GenStateSuspendedYield = "suspendedYield";
+  var GenStateExecuting = "executing";
+  var GenStateCompleted = "completed";
+
+  // Returning this object from the innerFn has the same effect as
+  // breaking out of the dispatch switch statement.
+  var ContinueSentinel = {};
+
+  // Dummy constructor functions that we use as the .constructor and
+  // .constructor.prototype properties for functions that return Generator
+  // objects. For full spec compliance, you may wish to configure your
+  // minifier not to mangle the names of these two functions.
+  function Generator() {}
+  function GeneratorFunction() {}
+  function GeneratorFunctionPrototype() {}
+
+  // This is a polyfill for %IteratorPrototype% for environments that
+  // don't natively support it.
+  var IteratorPrototype = {};
+  IteratorPrototype[iteratorSymbol] = function () {
+    return this;
+  };
+
+  var getProto = Object.getPrototypeOf;
+  var NativeIteratorPrototype = getProto && getProto(getProto(values([])));
+  if (NativeIteratorPrototype &&
+      NativeIteratorPrototype !== Op &&
+      hasOwn.call(NativeIteratorPrototype, iteratorSymbol)) {
+    // This environment has a native %IteratorPrototype%; use it instead
+    // of the polyfill.
+    IteratorPrototype = NativeIteratorPrototype;
+  }
+
+  var Gp = GeneratorFunctionPrototype.prototype =
+    Generator.prototype = Object.create(IteratorPrototype);
+  GeneratorFunction.prototype = Gp.constructor = GeneratorFunctionPrototype;
+  GeneratorFunctionPrototype.constructor = GeneratorFunction;
+  GeneratorFunction.displayName = define(
+    GeneratorFunctionPrototype,
+    toStringTagSymbol,
+    "GeneratorFunction"
+  );
+
+  // Helper for defining the .next, .throw, and .return methods of the
+  // Iterator interface in terms of a single ._invoke method.
+  function defineIteratorMethods(prototype) {
+    ["next", "throw", "return"].forEach(function(method) {
+      define(prototype, method, function(arg) {
+        return this._invoke(method, arg);
+      });
+    });
+  }
+
+  exports.isGeneratorFunction = function(genFun) {
+    var ctor = typeof genFun === "function" && genFun.constructor;
+    return ctor
+      ? ctor === GeneratorFunction ||
+        // For the native GeneratorFunction constructor, the best we can
+        // do is to check its .name property.
+        (ctor.displayName || ctor.name) === "GeneratorFunction"
+      : false;
+  };
+
+  exports.mark = function(genFun) {
+    if (Object.setPrototypeOf) {
+      Object.setPrototypeOf(genFun, GeneratorFunctionPrototype);
+    } else {
+      genFun.__proto__ = GeneratorFunctionPrototype;
+      define(genFun, toStringTagSymbol, "GeneratorFunction");
+    }
+    genFun.prototype = Object.create(Gp);
+    return genFun;
+  };
+
+  // Within the body of any async function, `await x` is transformed to
+  // `yield regeneratorRuntime.awrap(x)`, so that the runtime can test
+  // `hasOwn.call(value, "__await")` to determine if the yielded value is
+  // meant to be awaited.
+  exports.awrap = function(arg) {
+    return { __await: arg };
+  };
+
+  function AsyncIterator(generator, PromiseImpl) {
+    function invoke(method, arg, resolve, reject) {
+      var record = tryCatch(generator[method], generator, arg);
+      if (record.type === "throw") {
+        reject(record.arg);
+      } else {
+        var result = record.arg;
+        var value = result.value;
+        if (value &&
+            typeof value === "object" &&
+            hasOwn.call(value, "__await")) {
+          return PromiseImpl.resolve(value.__await).then(function(value) {
+            invoke("next", value, resolve, reject);
+          }, function(err) {
+            invoke("throw", err, resolve, reject);
+          });
+        }
+
+        return PromiseImpl.resolve(value).then(function(unwrapped) {
+          // When a yielded Promise is resolved, its final value becomes
+          // the .value of the Promise<{value,done}> result for the
+          // current iteration.
+          result.value = unwrapped;
+          resolve(result);
+        }, function(error) {
+          // If a rejected Promise was yielded, throw the rejection back
+          // into the async generator function so it can be handled there.
+          return invoke("throw", error, resolve, reject);
+        });
+      }
+    }
+
+    var previousPromise;
+
+    function enqueue(method, arg) {
+      function callInvokeWithMethodAndArg() {
+        return new PromiseImpl(function(resolve, reject) {
+          invoke(method, arg, resolve, reject);
+        });
+      }
+
+      return previousPromise =
+        // If enqueue has been called before, then we want to wait until
+        // all previous Promises have been resolved before calling invoke,
+        // so that results are always delivered in the correct order. If
+        // enqueue has not been called before, then it is important to
+        // call invoke immediately, without waiting on a callback to fire,
+        // so that the async generator function has the opportunity to do
+        // any necessary setup in a predictable way. This predictability
+        // is why the Promise constructor synchronously invokes its
+        // executor callback, and why async functions synchronously
+        // execute code before the first await. Since we implement simple
+        // async functions in terms of async generators, it is especially
+        // important to get this right, even though it requires care.
+        previousPromise ? previousPromise.then(
+          callInvokeWithMethodAndArg,
+          // Avoid propagating failures to Promises returned by later
+          // invocations of the iterator.
+          callInvokeWithMethodAndArg
+        ) : callInvokeWithMethodAndArg();
+    }
+
+    // Define the unified helper method that is used to implement .next,
+    // .throw, and .return (see defineIteratorMethods).
+    this._invoke = enqueue;
+  }
+
+  defineIteratorMethods(AsyncIterator.prototype);
+  AsyncIterator.prototype[asyncIteratorSymbol] = function () {
+    return this;
+  };
+  exports.AsyncIterator = AsyncIterator;
+
+  // Note that simple async functions are implemented on top of
+  // AsyncIterator objects; they just return a Promise for the value of
+  // the final result produced by the iterator.
+  exports.async = function(innerFn, outerFn, self, tryLocsList, PromiseImpl) {
+    if (PromiseImpl === void 0) PromiseImpl = Promise;
+
+    var iter = new AsyncIterator(
+      wrap(innerFn, outerFn, self, tryLocsList),
+      PromiseImpl
+    );
+
+    return exports.isGeneratorFunction(outerFn)
+      ? iter // If outerFn is a generator, return the full iterator.
+      : iter.next().then(function(result) {
+          return result.done ? result.value : iter.next();
+        });
+  };
+
+  function makeInvokeMethod(innerFn, self, context) {
+    var state = GenStateSuspendedStart;
+
+    return function invoke(method, arg) {
+      if (state === GenStateExecuting) {
+        throw new Error("Generator is already running");
+      }
+
+      if (state === GenStateCompleted) {
+        if (method === "throw") {
+          throw arg;
+        }
+
+        // Be forgiving, per 25.3.3.3.3 of the spec:
+        // https://people.mozilla.org/~jorendorff/es6-draft.html#sec-generatorresume
+        return doneResult();
+      }
+
+      context.method = method;
+      context.arg = arg;
+
+      while (true) {
+        var delegate = context.delegate;
+        if (delegate) {
+          var delegateResult = maybeInvokeDelegate(delegate, context);
+          if (delegateResult) {
+            if (delegateResult === ContinueSentinel) continue;
+            return delegateResult;
+          }
+        }
+
+        if (context.method === "next") {
+          // Setting context._sent for legacy support of Babel's
+          // function.sent implementation.
+          context.sent = context._sent = context.arg;
+
+        } else if (context.method === "throw") {
+          if (state === GenStateSuspendedStart) {
+            state = GenStateCompleted;
+            throw context.arg;
+          }
+
+          context.dispatchException(context.arg);
+
+        } else if (context.method === "return") {
+          context.abrupt("return", context.arg);
+        }
+
+        state = GenStateExecuting;
+
+        var record = tryCatch(innerFn, self, context);
+        if (record.type === "normal") {
+          // If an exception is thrown from innerFn, we leave state ===
+          // GenStateExecuting and loop back for another invocation.
+          state = context.done
+            ? GenStateCompleted
+            : GenStateSuspendedYield;
+
+          if (record.arg === ContinueSentinel) {
+            continue;
+          }
+
+          return {
+            value: record.arg,
+            done: context.done
+          };
+
+        } else if (record.type === "throw") {
+          state = GenStateCompleted;
+          // Dispatch the exception by looping back around to the
+          // context.dispatchException(context.arg) call above.
+          context.method = "throw";
+          context.arg = record.arg;
+        }
+      }
+    };
+  }
+
+  // Call delegate.iterator[context.method](context.arg) and handle the
+  // result, either by returning a { value, done } result from the
+  // delegate iterator, or by modifying context.method and context.arg,
+  // setting context.delegate to null, and returning the ContinueSentinel.
+  function maybeInvokeDelegate(delegate, context) {
+    var method = delegate.iterator[context.method];
+    if (method === undefined$1) {
+      // A .throw or .return when the delegate iterator has no .throw
+      // method always terminates the yield* loop.
+      context.delegate = null;
+
+      if (context.method === "throw") {
+        // Note: ["return"] must be used for ES3 parsing compatibility.
+        if (delegate.iterator["return"]) {
+          // If the delegate iterator has a return method, give it a
+          // chance to clean up.
+          context.method = "return";
+          context.arg = undefined$1;
+          maybeInvokeDelegate(delegate, context);
+
+          if (context.method === "throw") {
+            // If maybeInvokeDelegate(context) changed context.method from
+            // "return" to "throw", let that override the TypeError below.
+            return ContinueSentinel;
+          }
+        }
+
+        context.method = "throw";
+        context.arg = new TypeError(
+          "The iterator does not provide a 'throw' method");
+      }
+
+      return ContinueSentinel;
+    }
+
+    var record = tryCatch(method, delegate.iterator, context.arg);
+
+    if (record.type === "throw") {
+      context.method = "throw";
+      context.arg = record.arg;
+      context.delegate = null;
+      return ContinueSentinel;
+    }
+
+    var info = record.arg;
+
+    if (! info) {
+      context.method = "throw";
+      context.arg = new TypeError("iterator result is not an object");
+      context.delegate = null;
+      return ContinueSentinel;
+    }
+
+    if (info.done) {
+      // Assign the result of the finished delegate to the temporary
+      // variable specified by delegate.resultName (see delegateYield).
+      context[delegate.resultName] = info.value;
+
+      // Resume execution at the desired location (see delegateYield).
+      context.next = delegate.nextLoc;
+
+      // If context.method was "throw" but the delegate handled the
+      // exception, let the outer generator proceed normally. If
+      // context.method was "next", forget context.arg since it has been
+      // "consumed" by the delegate iterator. If context.method was
+      // "return", allow the original .return call to continue in the
+      // outer generator.
+      if (context.method !== "return") {
+        context.method = "next";
+        context.arg = undefined$1;
+      }
+
+    } else {
+      // Re-yield the result returned by the delegate method.
+      return info;
+    }
+
+    // The delegate iterator is finished, so forget it and continue with
+    // the outer generator.
+    context.delegate = null;
+    return ContinueSentinel;
+  }
+
+  // Define Generator.prototype.{next,throw,return} in terms of the
+  // unified ._invoke helper method.
+  defineIteratorMethods(Gp);
+
+  define(Gp, toStringTagSymbol, "Generator");
+
+  // A Generator should always return itself as the iterator object when the
+  // @@iterator function is called on it. Some browsers' implementations of the
+  // iterator prototype chain incorrectly implement this, causing the Generator
+  // object to not be returned from this call. This ensures that doesn't happen.
+  // See https://github.com/facebook/regenerator/issues/274 for more details.
+  Gp[iteratorSymbol] = function() {
+    return this;
+  };
+
+  Gp.toString = function() {
+    return "[object Generator]";
+  };
+
+  function pushTryEntry(locs) {
+    var entry = { tryLoc: locs[0] };
+
+    if (1 in locs) {
+      entry.catchLoc = locs[1];
+    }
+
+    if (2 in locs) {
+      entry.finallyLoc = locs[2];
+      entry.afterLoc = locs[3];
+    }
+
+    this.tryEntries.push(entry);
+  }
+
+  function resetTryEntry(entry) {
+    var record = entry.completion || {};
+    record.type = "normal";
+    delete record.arg;
+    entry.completion = record;
+  }
+
+  function Context(tryLocsList) {
+    // The root entry object (effectively a try statement without a catch
+    // or a finally block) gives us a place to store values thrown from
+    // locations where there is no enclosing try statement.
+    this.tryEntries = [{ tryLoc: "root" }];
+    tryLocsList.forEach(pushTryEntry, this);
+    this.reset(true);
+  }
+
+  exports.keys = function(object) {
+    var keys = [];
+    for (var key in object) {
+      keys.push(key);
+    }
+    keys.reverse();
+
+    // Rather than returning an object with a next method, we keep
+    // things simple and return the next function itself.
+    return function next() {
+      while (keys.length) {
+        var key = keys.pop();
+        if (key in object) {
+          next.value = key;
+          next.done = false;
+          return next;
+        }
+      }
+
+      // To avoid creating an additional object, we just hang the .value
+      // and .done properties off the next function object itself. This
+      // also ensures that the minifier will not anonymize the function.
+      next.done = true;
+      return next;
+    };
+  };
+
+  function values(iterable) {
+    if (iterable) {
+      var iteratorMethod = iterable[iteratorSymbol];
+      if (iteratorMethod) {
+        return iteratorMethod.call(iterable);
+      }
+
+      if (typeof iterable.next === "function") {
+        return iterable;
+      }
+
+      if (!isNaN(iterable.length)) {
+        var i = -1, next = function next() {
+          while (++i < iterable.length) {
+            if (hasOwn.call(iterable, i)) {
+              next.value = iterable[i];
+              next.done = false;
+              return next;
+            }
+          }
+
+          next.value = undefined$1;
+          next.done = true;
+
+          return next;
+        };
+
+        return next.next = next;
+      }
+    }
+
+    // Return an iterator with no values.
+    return { next: doneResult };
+  }
+  exports.values = values;
+
+  function doneResult() {
+    return { value: undefined$1, done: true };
+  }
+
+  Context.prototype = {
+    constructor: Context,
+
+    reset: function(skipTempReset) {
+      this.prev = 0;
+      this.next = 0;
+      // Resetting context._sent for legacy support of Babel's
+      // function.sent implementation.
+      this.sent = this._sent = undefined$1;
+      this.done = false;
+      this.delegate = null;
+
+      this.method = "next";
+      this.arg = undefined$1;
+
+      this.tryEntries.forEach(resetTryEntry);
+
+      if (!skipTempReset) {
+        for (var name in this) {
+          // Not sure about the optimal order of these conditions:
+          if (name.charAt(0) === "t" &&
+              hasOwn.call(this, name) &&
+              !isNaN(+name.slice(1))) {
+            this[name] = undefined$1;
+          }
+        }
+      }
+    },
+
+    stop: function() {
+      this.done = true;
+
+      var rootEntry = this.tryEntries[0];
+      var rootRecord = rootEntry.completion;
+      if (rootRecord.type === "throw") {
+        throw rootRecord.arg;
+      }
+
+      return this.rval;
+    },
+
+    dispatchException: function(exception) {
+      if (this.done) {
+        throw exception;
+      }
+
+      var context = this;
+      function handle(loc, caught) {
+        record.type = "throw";
+        record.arg = exception;
+        context.next = loc;
+
+        if (caught) {
+          // If the dispatched exception was caught by a catch block,
+          // then let that catch block handle the exception normally.
+          context.method = "next";
+          context.arg = undefined$1;
+        }
+
+        return !! caught;
+      }
+
+      for (var i = this.tryEntries.length - 1; i >= 0; --i) {
+        var entry = this.tryEntries[i];
+        var record = entry.completion;
+
+        if (entry.tryLoc === "root") {
+          // Exception thrown outside of any try block that could handle
+          // it, so set the completion value of the entire function to
+          // throw the exception.
+          return handle("end");
+        }
+
+        if (entry.tryLoc <= this.prev) {
+          var hasCatch = hasOwn.call(entry, "catchLoc");
+          var hasFinally = hasOwn.call(entry, "finallyLoc");
+
+          if (hasCatch && hasFinally) {
+            if (this.prev < entry.catchLoc) {
+              return handle(entry.catchLoc, true);
+            } else if (this.prev < entry.finallyLoc) {
+              return handle(entry.finallyLoc);
+            }
+
+          } else if (hasCatch) {
+            if (this.prev < entry.catchLoc) {
+              return handle(entry.catchLoc, true);
+            }
+
+          } else if (hasFinally) {
+            if (this.prev < entry.finallyLoc) {
+              return handle(entry.finallyLoc);
+            }
+
+          } else {
+            throw new Error("try statement without catch or finally");
+          }
+        }
+      }
+    },
+
+    abrupt: function(type, arg) {
+      for (var i = this.tryEntries.length - 1; i >= 0; --i) {
+        var entry = this.tryEntries[i];
+        if (entry.tryLoc <= this.prev &&
+            hasOwn.call(entry, "finallyLoc") &&
+            this.prev < entry.finallyLoc) {
+          var finallyEntry = entry;
+          break;
+        }
+      }
+
+      if (finallyEntry &&
+          (type === "break" ||
+           type === "continue") &&
+          finallyEntry.tryLoc <= arg &&
+          arg <= finallyEntry.finallyLoc) {
+        // Ignore the finally entry if control is not jumping to a
+        // location outside the try/catch block.
+        finallyEntry = null;
+      }
+
+      var record = finallyEntry ? finallyEntry.completion : {};
+      record.type = type;
+      record.arg = arg;
+
+      if (finallyEntry) {
+        this.method = "next";
+        this.next = finallyEntry.finallyLoc;
+        return ContinueSentinel;
+      }
+
+      return this.complete(record);
+    },
+
+    complete: function(record, afterLoc) {
+      if (record.type === "throw") {
+        throw record.arg;
+      }
+
+      if (record.type === "break" ||
+          record.type === "continue") {
+        this.next = record.arg;
+      } else if (record.type === "return") {
+        this.rval = this.arg = record.arg;
+        this.method = "return";
+        this.next = "end";
+      } else if (record.type === "normal" && afterLoc) {
+        this.next = afterLoc;
+      }
+
+      return ContinueSentinel;
+    },
+
+    finish: function(finallyLoc) {
+      for (var i = this.tryEntries.length - 1; i >= 0; --i) {
+        var entry = this.tryEntries[i];
+        if (entry.finallyLoc === finallyLoc) {
+          this.complete(entry.completion, entry.afterLoc);
+          resetTryEntry(entry);
+          return ContinueSentinel;
+        }
+      }
+    },
+
+    "catch": function(tryLoc) {
+      for (var i = this.tryEntries.length - 1; i >= 0; --i) {
+        var entry = this.tryEntries[i];
+        if (entry.tryLoc === tryLoc) {
+          var record = entry.completion;
+          if (record.type === "throw") {
+            var thrown = record.arg;
+            resetTryEntry(entry);
+          }
+          return thrown;
+        }
+      }
+
+      // The context.catch method must only be called with a location
+      // argument that corresponds to a known catch block.
+      throw new Error("illegal catch attempt");
+    },
+
+    delegateYield: function(iterable, resultName, nextLoc) {
+      this.delegate = {
+        iterator: values(iterable),
+        resultName: resultName,
+        nextLoc: nextLoc
+      };
+
+      if (this.method === "next") {
+        // Deliberately forget the last sent value so that we don't
+        // accidentally pass it on to the delegate.
+        this.arg = undefined$1;
+      }
+
+      return ContinueSentinel;
+    }
+  };
+
+  // Regardless of whether this script is executing as a CommonJS module
+  // or not, return the runtime object so that we can declare the variable
+  // regeneratorRuntime in the outer scope, which allows this module to be
+  // injected easily by `bin/regenerator --include-runtime script.js`.
+  return exports;
+
+}(
+  // If this script is executing as a CommonJS module, use module.exports
+  // as the regeneratorRuntime namespace. Otherwise create a new empty
+  // object. Either way, the resulting object will be used to initialize
+  // the regeneratorRuntime variable at the top of this file.
+  module.exports 
+));
+
+try {
+  regeneratorRuntime = runtime;
+} catch (accidentalStrictMode) {
+  // This module should not be running in strict mode, so the above
+  // assignment should always work unless something is misconfigured. Just
+  // in case runtime.js accidentally runs in strict mode, we can escape
+  // strict mode using a global Function call. This could conceivably fail
+  // if a Content Security Policy forbids using Function, but in that case
+  // the proper solution is to fix the accidental strict mode problem. If
+  // you've misconfigured your bundler to force strict mode and applied a
+  // CSP to forbid Function, and you're not willing to fix either of those
+  // problems, please detail your unique predicament in a GitHub issue.
+  Function("r", "regeneratorRuntime = r")(runtime);
+}
+});
+
+var regenerator = runtime_1;
+
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) {
+  try {
+    var info = gen[key](arg);
+    var value = info.value;
+  } catch (error) {
+    reject(error);
+    return;
+  }
+
+  if (info.done) {
+    resolve(value);
+  } else {
+    Promise.resolve(value).then(_next, _throw);
+  }
+}
+
+function _asyncToGenerator(fn) {
+  return function () {
+    var self = this,
+        args = arguments;
+    return new Promise(function (resolve, reject) {
+      var gen = fn.apply(self, args);
+
+      function _next(value) {
+        asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value);
+      }
+
+      function _throw(err) {
+        asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err);
+      }
+
+      _next(undefined);
+    });
+  };
+}
+
+function getTransferList(object) {
+  var recursive = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+  var transfers = arguments.length > 2 ? arguments[2] : undefined;
+  var transfersSet = transfers || new Set();
+
+  if (!object) ; else if (isTransferable(object)) {
+    transfersSet.add(object);
+  } else if (isTransferable(object.buffer)) {
+    transfersSet.add(object.buffer);
+  } else if (ArrayBuffer.isView(object)) ; else if (recursive && _typeof(object) === 'object') {
+    for (var key in object) {
+      getTransferList(object[key], recursive, transfersSet);
+    }
+  }
+
+  return transfers === undefined ? Array.from(transfersSet) : [];
+}
+
+function isTransferable(object) {
+  if (!object) {
+    return false;
+  }
+
+  if (object instanceof ArrayBuffer) {
+    return true;
+  }
+
+  if (typeof MessagePort !== 'undefined' && object instanceof MessagePort) {
+    return true;
+  }
+
+  if (typeof ImageBitmap !== 'undefined' && object instanceof ImageBitmap) {
+    return true;
+  }
+
+  if (typeof OffscreenCanvas !== 'undefined' && object instanceof OffscreenCanvas) {
+    return true;
+  }
+
+  return false;
+}
+
+var VERSION$7 = "2.3.13" ;
+function validateLoaderVersion(loader) {
+  var coreVersion = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : VERSION$7;
+  assert$2(loader, 'no loader provided');
+  var loaderVersion = loader.version;
+
+  if (!coreVersion || !loaderVersion) {
+    return;
+  }
+
+  coreVersion = parseVersion(coreVersion);
+  loaderVersion = parseVersion(loaderVersion);
+}
+
+function parseVersion(version) {
+  var parts = version.split('.').map(Number);
+  return {
+    major: parts[0],
+    minor: parts[1]
+  };
+}
+
+function _AwaitValue(value) {
+  this.wrapped = value;
+}
+
+function _awaitAsyncGenerator(value) {
+  return new _AwaitValue(value);
+}
+
+function AsyncGenerator(gen) {
+  var front, back;
+
+  function send(key, arg) {
+    return new Promise(function (resolve, reject) {
+      var request = {
+        key: key,
+        arg: arg,
+        resolve: resolve,
+        reject: reject,
+        next: null
+      };
+
+      if (back) {
+        back = back.next = request;
+      } else {
+        front = back = request;
+        resume(key, arg);
+      }
+    });
+  }
+
+  function resume(key, arg) {
+    try {
+      var result = gen[key](arg);
+      var value = result.value;
+      var wrappedAwait = value instanceof _AwaitValue;
+      Promise.resolve(wrappedAwait ? value.wrapped : value).then(function (arg) {
+        if (wrappedAwait) {
+          resume(key === "return" ? "return" : "next", arg);
+          return;
+        }
+
+        settle(result.done ? "return" : "normal", arg);
+      }, function (err) {
+        resume("throw", err);
+      });
+    } catch (err) {
+      settle("throw", err);
+    }
+  }
+
+  function settle(type, value) {
+    switch (type) {
+      case "return":
+        front.resolve({
+          value: value,
+          done: true
+        });
+        break;
+
+      case "throw":
+        front.reject(value);
+        break;
+
+      default:
+        front.resolve({
+          value: value,
+          done: false
+        });
+        break;
+    }
+
+    front = front.next;
+
+    if (front) {
+      resume(front.key, front.arg);
+    } else {
+      back = null;
+    }
+  }
+
+  this._invoke = send;
+
+  if (typeof gen["return"] !== "function") {
+    this["return"] = undefined;
+  }
+}
+
+if (typeof Symbol === "function" && Symbol.asyncIterator) {
+  AsyncGenerator.prototype[Symbol.asyncIterator] = function () {
+    return this;
+  };
+}
+
+AsyncGenerator.prototype.next = function (arg) {
+  return this._invoke("next", arg);
+};
+
+AsyncGenerator.prototype["throw"] = function (arg) {
+  return this._invoke("throw", arg);
+};
+
+AsyncGenerator.prototype["return"] = function (arg) {
+  return this._invoke("return", arg);
+};
+
+function _wrapAsyncGenerator(fn) {
+  return function () {
+    return new AsyncGenerator(fn.apply(this, arguments));
+  };
+}
+
+function _asyncIterator(iterable) {
+  var method;
+
+  if (typeof Symbol !== "undefined") {
+    if (Symbol.asyncIterator) {
+      method = iterable[Symbol.asyncIterator];
+      if (method != null) return method.call(iterable);
+    }
+
+    if (Symbol.iterator) {
+      method = iterable[Symbol.iterator];
+      if (method != null) return method.call(iterable);
+    }
+  }
+
+  throw new TypeError("Object is not async iterable");
+}
+
+function makeTransformIterator(_x, _x2, _x3) {
+  return _makeTransformIterator.apply(this, arguments);
+}
+
+function _makeTransformIterator() {
+  _makeTransformIterator = _wrapAsyncGenerator(regenerator.mark(function _callee(asyncIterator, IncrementalTransform, options) {
+    var transform, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, _value, chunk, _output, output;
+
+    return regenerator.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            transform = new IncrementalTransform(options);
+            _iteratorNormalCompletion = true;
+            _didIteratorError = false;
+            _context.prev = 3;
+            _iterator = _asyncIterator(asyncIterator);
+
+          case 5:
+            _context.next = 7;
+            return _awaitAsyncGenerator(_iterator.next());
+
+          case 7:
+            _step = _context.sent;
+            _iteratorNormalCompletion = _step.done;
+            _context.next = 11;
+            return _awaitAsyncGenerator(_step.value);
+
+          case 11:
+            _value = _context.sent;
+
+            if (_iteratorNormalCompletion) {
+              _context.next = 23;
+              break;
+            }
+
+            chunk = _value;
+            _context.next = 16;
+            return _awaitAsyncGenerator(transform.write(chunk));
+
+          case 16:
+            _output = _context.sent;
+
+            if (!_output) {
+              _context.next = 20;
+              break;
+            }
+
+            _context.next = 20;
+            return _output;
+
+          case 20:
+            _iteratorNormalCompletion = true;
+            _context.next = 5;
+            break;
+
+          case 23:
+            _context.next = 29;
+            break;
+
+          case 25:
+            _context.prev = 25;
+            _context.t0 = _context["catch"](3);
+            _didIteratorError = true;
+            _iteratorError = _context.t0;
+
+          case 29:
+            _context.prev = 29;
+            _context.prev = 30;
+
+            if (!(!_iteratorNormalCompletion && _iterator["return"] != null)) {
+              _context.next = 34;
+              break;
+            }
+
+            _context.next = 34;
+            return _awaitAsyncGenerator(_iterator["return"]());
+
+          case 34:
+            _context.prev = 34;
+
+            if (!_didIteratorError) {
+              _context.next = 37;
+              break;
+            }
+
+            throw _iteratorError;
+
+          case 37:
+            return _context.finish(34);
+
+          case 38:
+            return _context.finish(29);
+
+          case 39:
+            _context.next = 41;
+            return _awaitAsyncGenerator(transform.end());
+
+          case 41:
+            output = _context.sent;
+
+            if (!output) {
+              _context.next = 45;
+              break;
+            }
+
+            _context.next = 45;
+            return output;
+
+          case 45:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee, null, [[3, 25, 29, 39], [30,, 34, 38]]);
+  }));
+  return _makeTransformIterator.apply(this, arguments);
+}
+
+function _classCallCheck$1(instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
+}
+
+function _defineProperties$1(target, props) {
+  for (var i = 0; i < props.length; i++) {
+    var descriptor = props[i];
+    descriptor.enumerable = descriptor.enumerable || false;
+    descriptor.configurable = true;
+    if ("value" in descriptor) descriptor.writable = true;
+    Object.defineProperty(target, descriptor.key, descriptor);
+  }
+}
+
+function _createClass$1(Constructor, protoProps, staticProps) {
+  if (protoProps) _defineProperties$1(Constructor.prototype, protoProps);
+  if (staticProps) _defineProperties$1(Constructor, staticProps);
+  return Constructor;
+}
+
+var workerURLCache = new Map();
+function getWorkerURL(workerSource) {
+  assert$2(typeof workerSource === 'string', 'worker source');
+
+  if (workerSource.startsWith('url(') && workerSource.endsWith(')')) {
+    var workerUrl = workerSource.match(/^url\((.*)\)$/)[1];
+
+    if (workerUrl && !workerUrl.startsWith('http')) {
+      return workerUrl;
+    }
+
+    workerSource = buildScript(workerUrl);
+  }
+
+  var workerURL = workerURLCache.get(workerSource);
+
+  if (!workerURL) {
+    var blob = new Blob([workerSource], {
+      type: 'application/javascript'
+    });
+    workerURL = URL.createObjectURL(blob);
+    workerURLCache.set(workerSource, workerURL);
+  }
+
+  return workerURL;
+}
+
+function buildScript(workerUrl) {
+  return "try {\n  importScripts('".concat(workerUrl, "');\n} catch (error) {\n  console.error(error);\n}");
+}
+
+var count = 0;
+
+function defaultOnMessage(_ref) {
+  var data = _ref.data,
+      resolve = _ref.resolve;
+  resolve(data);
+}
+
+var WorkerThread = function () {
+  function WorkerThread(_ref2) {
+    var source = _ref2.source,
+        _ref2$name = _ref2.name,
+        name = _ref2$name === void 0 ? "web-worker-".concat(count++) : _ref2$name,
+        onMessage = _ref2.onMessage;
+
+    _classCallCheck$1(this, WorkerThread);
+
+    var url = getWorkerURL(source);
+    this.worker = new Worker(url, {
+      name: name
+    });
+    this.name = name;
+    this.onMessage = onMessage || defaultOnMessage;
+  }
+
+  _createClass$1(WorkerThread, [{
+    key: "process",
+    value: function () {
+      var _process = _asyncToGenerator(regenerator.mark(function _callee(data) {
+        var _this = this;
+
+        return regenerator.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                return _context.abrupt("return", new Promise(function (resolve, reject) {
+                  _this.worker.onmessage = function (event) {
+                    _this.onMessage({
+                      worker: _this.worker,
+                      data: event.data,
+                      resolve: resolve,
+                      reject: reject
+                    });
+                  };
+
+                  _this.worker.onerror = function (error) {
+                    var message = "".concat(_this.name, ": WorkerThread.process() failed");
+
+                    if (error.message) {
+                      message += " ".concat(error.message, " ").concat(error.filename, ":").concat(error.lineno, ":").concat(error.colno);
+                    }
+
+                    var betterError = new Error(message);
+                    console.error(error);
+                    reject(betterError);
+                  };
+
+                  var transferList = getTransferList(data);
+
+                  _this.worker.postMessage(data, transferList);
+                }));
+
+              case 1:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee);
+      }));
+
+      function process(_x) {
+        return _process.apply(this, arguments);
+      }
+
+      return process;
+    }()
+  }, {
+    key: "destroy",
+    value: function destroy() {
+      this.worker.terminate();
+      this.worker = null;
+    }
+  }]);
+
+  return WorkerThread;
+}();
+
+var WorkerPool = function () {
+  function WorkerPool(_ref) {
+    var source = _ref.source,
+        _ref$name = _ref.name,
+        name = _ref$name === void 0 ? 'unnamed' : _ref$name,
+        _ref$maxConcurrency = _ref.maxConcurrency,
+        maxConcurrency = _ref$maxConcurrency === void 0 ? 1 : _ref$maxConcurrency,
+        onMessage = _ref.onMessage,
+        _ref$onDebug = _ref.onDebug,
+        onDebug = _ref$onDebug === void 0 ? function () {} : _ref$onDebug,
+        _ref$reuseWorkers = _ref.reuseWorkers,
+        reuseWorkers = _ref$reuseWorkers === void 0 ? true : _ref$reuseWorkers;
+
+    _classCallCheck$1(this, WorkerPool);
+
+    this.source = source;
+    this.name = name;
+    this.maxConcurrency = maxConcurrency;
+    this.onMessage = onMessage;
+    this.onDebug = onDebug;
+    this.jobQueue = [];
+    this.idleQueue = [];
+    this.count = 0;
+    this.isDestroyed = false;
+    this.reuseWorkers = reuseWorkers;
+  }
+
+  _createClass$1(WorkerPool, [{
+    key: "destroy",
+    value: function destroy() {
+      this.idleQueue.forEach(function (worker) {
+        return worker.destroy();
+      });
+      this.isDestroyed = true;
+    }
+  }, {
+    key: "process",
+    value: function process(data, jobName) {
+      var _this = this;
+
+      return new Promise(function (resolve, reject) {
+        _this.jobQueue.push({
+          data: data,
+          jobName: jobName,
+          resolve: resolve,
+          reject: reject
+        });
+
+        _this._startQueuedJob();
+      });
+    }
+  }, {
+    key: "_startQueuedJob",
+    value: function () {
+      var _startQueuedJob2 = _asyncToGenerator(regenerator.mark(function _callee() {
+        var worker, job;
+        return regenerator.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                if (this.jobQueue.length) {
+                  _context.next = 2;
+                  break;
+                }
+
+                return _context.abrupt("return");
+
+              case 2:
+                worker = this._getAvailableWorker();
+
+                if (worker) {
+                  _context.next = 5;
+                  break;
+                }
+
+                return _context.abrupt("return");
+
+              case 5:
+                job = this.jobQueue.shift();
+                this.onDebug({
+                  message: 'processing',
+                  worker: worker.name,
+                  job: job.jobName,
+                  backlog: this.jobQueue.length
+                });
+                _context.prev = 7;
+                _context.t0 = job;
+                _context.next = 11;
+                return worker.process(job.data);
+
+              case 11:
+                _context.t1 = _context.sent;
+
+                _context.t0.resolve.call(_context.t0, _context.t1);
+
+                _context.next = 18;
+                break;
+
+              case 15:
+                _context.prev = 15;
+                _context.t2 = _context["catch"](7);
+                job.reject(_context.t2);
+
+              case 18:
+                _context.prev = 18;
+
+                this._onWorkerDone(worker);
+
+                return _context.finish(18);
+
+              case 21:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, this, [[7, 15, 18, 21]]);
+      }));
+
+      function _startQueuedJob() {
+        return _startQueuedJob2.apply(this, arguments);
+      }
+
+      return _startQueuedJob;
+    }()
+  }, {
+    key: "_onWorkerDone",
+    value: function _onWorkerDone(worker) {
+      if (this.isDestroyed) {
+        worker.destroy();
+        return;
+      }
+
+      if (this.reuseWorkers) {
+        this.idleQueue.push(worker);
+      } else {
+        worker.destroy();
+        this.count--;
+      }
+
+      this._startQueuedJob();
+    }
+  }, {
+    key: "_getAvailableWorker",
+    value: function _getAvailableWorker() {
+      if (this.idleQueue.length > 0) {
+        return this.idleQueue.shift();
+      }
+
+      if (this.count < this.maxConcurrency) {
+        this.count++;
+        var name = "".concat(this.name.toLowerCase(), " (#").concat(this.count, " of ").concat(this.maxConcurrency, ")");
+        return new WorkerThread({
+          source: this.source,
+          onMessage: this.onMessage,
+          name: name
+        });
+      }
+
+      return null;
+    }
+  }]);
+
+  return WorkerPool;
+}();
+
+var DEFAULT_MAX_CONCURRENCY = 5;
+
+var WorkerFarm = function () {
+  _createClass$1(WorkerFarm, null, [{
+    key: "isSupported",
+    value: function isSupported() {
+      return typeof Worker !== 'undefined';
+    }
+  }]);
+
+  function WorkerFarm(_ref) {
+    var _ref$maxConcurrency = _ref.maxConcurrency,
+        maxConcurrency = _ref$maxConcurrency === void 0 ? DEFAULT_MAX_CONCURRENCY : _ref$maxConcurrency,
+        _ref$onMessage = _ref.onMessage,
+        onMessage = _ref$onMessage === void 0 ? null : _ref$onMessage,
+        _ref$onDebug = _ref.onDebug,
+        onDebug = _ref$onDebug === void 0 ? function () {} : _ref$onDebug,
+        _ref$reuseWorkers = _ref.reuseWorkers,
+        reuseWorkers = _ref$reuseWorkers === void 0 ? true : _ref$reuseWorkers;
+
+    _classCallCheck$1(this, WorkerFarm);
+
+    this.maxConcurrency = maxConcurrency;
+    this.onMessage = onMessage;
+    this.onDebug = onDebug;
+    this.workerPools = new Map();
+    this.reuseWorkers = reuseWorkers;
+  }
+
+  _createClass$1(WorkerFarm, [{
+    key: "setProps",
+    value: function setProps(props) {
+      if ('maxConcurrency' in props) {
+        this.maxConcurrency = props.maxConcurrency;
+      }
+
+      if ('onDebug' in props) {
+        this.onDebug = props.onDebug;
+      }
+
+      if ('reuseWorkers' in props) {
+        this.reuseWorkers = props.reuseWorkers;
+      }
+    }
+  }, {
+    key: "destroy",
+    value: function destroy() {
+      this.workerPools.forEach(function (workerPool) {
+        return workerPool.destroy();
+      });
+    }
+  }, {
+    key: "process",
+    value: function () {
+      var _process = _asyncToGenerator(regenerator.mark(function _callee(workerSource, workerName, data) {
+        var workerPool;
+        return regenerator.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                workerPool = this._getWorkerPool(workerSource, workerName);
+                return _context.abrupt("return", workerPool.process(data));
+
+              case 2:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, this);
+      }));
+
+      function process(_x, _x2, _x3) {
+        return _process.apply(this, arguments);
+      }
+
+      return process;
+    }()
+  }, {
+    key: "_getWorkerPool",
+    value: function _getWorkerPool(workerSource, workerName) {
+      var workerPool = this.workerPools.get(workerName);
+
+      if (!workerPool) {
+        workerPool = new WorkerPool({
+          source: workerSource,
+          name: workerName,
+          onMessage: onWorkerMessage$1.bind(null, this.onMessage),
+          maxConcurrency: this.maxConcurrency,
+          onDebug: this.onDebug,
+          reuseWorkers: this.reuseWorkers
+        });
+        this.workerPools.set(workerName, workerPool);
+      }
+
+      return workerPool;
+    }
+  }]);
+
+  return WorkerFarm;
+}();
+
+function onWorkerMessage$1(onMessage, _ref2) {
+  var worker = _ref2.worker,
+      data = _ref2.data,
+      resolve = _ref2.resolve,
+      reject = _ref2.reject;
+
+  if (onMessage) {
+    onMessage({
+      worker: worker,
+      data: data,
+      resolve: resolve,
+      reject: reject
+    });
+    return;
+  }
+
+  switch (data.type) {
+    case 'done':
+      resolve(data.result);
+      break;
+
+    case 'error':
+      reject(data.message);
+      break;
+  }
+}
+
+var ChildProcess = {};
+
+var node = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  'default': ChildProcess
+});
+
+var VERSION$6 = "2.3.13" ;
+var loadLibraryPromises = {};
+function loadLibrary(_x) {
+  return _loadLibrary.apply(this, arguments);
+}
+
+function _loadLibrary() {
+  _loadLibrary = _asyncToGenerator(regenerator.mark(function _callee(libraryUrl) {
+    var moduleName,
+        options,
+        _args = arguments;
+    return regenerator.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            moduleName = _args.length > 1 && _args[1] !== undefined ? _args[1] : null;
+            options = _args.length > 2 && _args[2] !== undefined ? _args[2] : {};
+
+            if (moduleName) {
+              libraryUrl = getLibraryUrl(libraryUrl, moduleName, options);
+            }
+
+            loadLibraryPromises[libraryUrl] = loadLibraryPromises[libraryUrl] || loadLibraryFromFile(libraryUrl);
+            _context.next = 6;
+            return loadLibraryPromises[libraryUrl];
+
+          case 6:
+            return _context.abrupt("return", _context.sent);
+
+          case 7:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee);
+  }));
+  return _loadLibrary.apply(this, arguments);
+}
+
+function getLibraryUrl(library, moduleName, options) {
+  var modules = options.modules || {};
+
+  if (modules[library]) {
+    return modules[library];
+  }
+
+  if (!isBrowser$1) {
+    return "modules/".concat(moduleName, "/dist/libs/").concat(library);
+  }
+
+  if (options.CDN) {
+    assert$2(options.CDN.startsWith('http'));
+    return "".concat(options.CDN, "/").concat(moduleName, "@").concat(VERSION$6, "/dist/libs/").concat(library);
+  }
+
+  if (isWorker) {
+    return "../src/libs/".concat(library);
+  }
+
+  return "modules/".concat(moduleName, "/src/libs/").concat(library);
+}
+
+function loadLibraryFromFile(_x2) {
+  return _loadLibraryFromFile.apply(this, arguments);
+}
+
+function _loadLibraryFromFile() {
+  _loadLibraryFromFile = _asyncToGenerator(regenerator.mark(function _callee2(libraryUrl) {
+    var _response, response, scriptSource;
+
+    return regenerator.wrap(function _callee2$(_context2) {
+      while (1) {
+        switch (_context2.prev = _context2.next) {
+          case 0:
+            if (!libraryUrl.endsWith('wasm')) {
+              _context2.next = 7;
+              break;
+            }
+
+            _context2.next = 3;
+            return fetch(libraryUrl);
+
+          case 3:
+            _response = _context2.sent;
+            _context2.next = 6;
+            return _response.arrayBuffer();
+
+          case 6:
+            return _context2.abrupt("return", _context2.sent);
+
+          case 7:
+            if (isBrowser$1) {
+              _context2.next = 9;
+              break;
+            }
+
+            return _context2.abrupt("return", undefined && undefined(libraryUrl));
+
+          case 9:
+            if (!isWorker) {
+              _context2.next = 11;
+              break;
+            }
+
+            return _context2.abrupt("return", importScripts(libraryUrl));
+
+          case 11:
+            _context2.next = 13;
+            return fetch(libraryUrl);
+
+          case 13:
+            response = _context2.sent;
+            _context2.next = 16;
+            return response.text();
+
+          case 16:
+            scriptSource = _context2.sent;
+            return _context2.abrupt("return", loadLibraryFromString(scriptSource, libraryUrl));
+
+          case 18:
+          case "end":
+            return _context2.stop();
+        }
+      }
+    }, _callee2);
+  }));
+  return _loadLibraryFromFile.apply(this, arguments);
+}
+
+function loadLibraryFromString(scriptSource, id) {
+  if (!isBrowser$1) {
+    return undefined && undefined(scriptSource, id);
+  }
+
+  if (isWorker) {
+    eval.call(global_$1, scriptSource);
+    return null;
+  }
+
+  var script = document.createElement('script');
+  script.id = id;
+
+  try {
+    script.appendChild(document.createTextNode(scriptSource));
+  } catch (e) {
+    script.text = scriptSource;
+  }
+
+  document.body.appendChild(script);
+  return null;
+}
+
+function getFirstCharacters$1(data) {
+  var length = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 5;
+
+  if (typeof data === 'string') {
+    return data.slice(0, length);
+  } else if (ArrayBuffer.isView(data)) {
+    return getMagicString$2(data.buffer, data.byteOffset, length);
+  } else if (data instanceof ArrayBuffer) {
+    var byteOffset = 0;
+    return getMagicString$2(data, byteOffset, length);
+  }
+
+  return '';
+}
+function getMagicString$2(arrayBuffer, byteOffset, length) {
+  if (arrayBuffer.byteLength <= byteOffset + length) {
+    return '';
+  }
+
+  var dataView = new DataView(arrayBuffer);
+  var magic = '';
+
+  for (var i = 0; i < length; i++) {
+    magic += String.fromCharCode(dataView.getUint8(byteOffset + i));
+  }
+
+  return magic;
+}
+
+function parseJSON(string) {
+  try {
+    return JSON.parse(string);
+  } catch (_) {
+    throw new Error("Failed to parse JSON from data starting with \"".concat(getFirstCharacters$1(string), "\""));
+  }
+}
+
+function _createForOfIteratorHelper$a(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$c(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function _unsupportedIterableToArray$c(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$c(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$c(o, minLen); }
+
+function _arrayLikeToArray$c(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+function toArrayBuffer(data) {
+  if (undefined) {
+    data = undefined(data);
+  }
+
+  if (data instanceof ArrayBuffer) {
+    return data;
+  }
+
+  if (ArrayBuffer.isView(data)) {
+    return data.buffer;
+  }
+
+  if (typeof data === 'string') {
+    var text = data;
+    var uint8Array = new TextEncoder().encode(text);
+    return uint8Array.buffer;
+  }
+
+  if (data && _typeof(data) === 'object' && data._toArrayBuffer) {
+    return data._toArrayBuffer();
+  }
+
+  return assert$2(false);
+}
+function compareArrayBuffers(arrayBuffer1, arrayBuffer2, byteLength) {
+  byteLength = byteLength || arrayBuffer1.byteLength;
+
+  if (arrayBuffer1.byteLength < byteLength || arrayBuffer2.byteLength < byteLength) {
+    return false;
+  }
+
+  var array1 = new Uint8Array(arrayBuffer1);
+  var array2 = new Uint8Array(arrayBuffer2);
+
+  for (var i = 0; i < array1.length; ++i) {
+    if (array1[i] !== array2[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+function concatenateArrayBuffers() {
+  for (var _len = arguments.length, sources = new Array(_len), _key = 0; _key < _len; _key++) {
+    sources[_key] = arguments[_key];
+  }
+
+  var sourceArrays = sources.map(function (source2) {
+    return source2 instanceof ArrayBuffer ? new Uint8Array(source2) : source2;
+  });
+  var byteLength = sourceArrays.reduce(function (length, typedArray) {
+    return length + typedArray.byteLength;
+  }, 0);
+  var result = new Uint8Array(byteLength);
+  var offset = 0;
+
+  var _iterator = _createForOfIteratorHelper$a(sourceArrays),
+      _step;
+
+  try {
+    for (_iterator.s(); !(_step = _iterator.n()).done;) {
+      var sourceArray = _step.value;
+      result.set(sourceArray, offset);
+      offset += sourceArray.byteLength;
+    }
+  } catch (err) {
+    _iterator.e(err);
+  } finally {
+    _iterator.f();
+  }
+
+  return result.buffer;
+}
+function sliceArrayBuffer(arrayBuffer, byteOffset, byteLength) {
+  var subArray = byteLength !== undefined ? new Uint8Array(arrayBuffer).subarray(byteOffset, byteOffset + byteLength) : new Uint8Array(arrayBuffer).subarray(byteOffset);
+  var arrayCopy = new Uint8Array(subArray);
+  return arrayCopy.buffer;
+}
+
+function padTo4Bytes(byteLength) {
+  return byteLength + 3 & ~3;
+}
+function getZeroOffsetArrayBuffer(arrayBuffer, byteOffset, byteLength) {
+  return sliceArrayBuffer(arrayBuffer, byteOffset, byteLength);
+}
+function copyToArray(source, target, targetOffset) {
+  var sourceArray;
+
+  if (source instanceof ArrayBuffer) {
+    sourceArray = new Uint8Array(source);
+  } else {
+    var srcByteOffset = source.byteOffset;
+    var srcByteLength = source.byteLength;
+    sourceArray = new Uint8Array(source.buffer, srcByteOffset, srcByteLength);
+  }
+
+  target.set(sourceArray, targetOffset);
+  return targetOffset + padTo4Bytes(sourceArray.byteLength);
+}
+
+function copyPaddedArrayBufferToDataView(dataView, byteOffset, sourceBuffer) {
+  var paddedLength = padTo4Bytes(sourceBuffer.byteLength);
+  var padLength = paddedLength - sourceBuffer.byteLength;
+
+  if (dataView) {
+    var targetArray = new Uint8Array(dataView.buffer, dataView.byteOffset + byteOffset, sourceBuffer.byteLength);
+    var sourceArray = new Uint8Array(sourceBuffer);
+    targetArray.set(sourceArray);
+
+    for (var i = 0; i < padLength; ++i) {
+      dataView.setUint8(byteOffset + sourceBuffer.byteLength + i, 0x20);
+    }
+  }
+
+  byteOffset += paddedLength;
+  return byteOffset;
+}
+function copyPaddedStringToDataView(dataView, byteOffset, string) {
+  var textEncoder = new TextEncoder();
+  var stringBuffer = textEncoder.encode(string);
+  byteOffset = copyPaddedArrayBufferToDataView(dataView, byteOffset, stringBuffer);
+  return byteOffset;
+}
+
+var pathPrefix = '';
+var fileAliases = {};
+function setPathPrefix(prefix) {
+  pathPrefix = prefix;
+}
+function getPathPrefix() {
+  return pathPrefix;
+}
+function resolvePath(filename) {
+  for (var alias in fileAliases) {
+    if (filename.startsWith(alias)) {
+      var replacement = fileAliases[alias];
+      filename = filename.replace(alias, replacement);
+    }
+  }
+
+  if (!filename.startsWith('http://') && !filename.startsWith('https://')) {
+    filename = "".concat(pathPrefix).concat(filename);
+  }
+
+  return filename;
+}
+
+function makeTextDecoderIterator(_x, _x2) {
+  return _makeTextDecoderIterator.apply(this, arguments);
+}
+
+function _makeTextDecoderIterator() {
+  _makeTextDecoderIterator = _wrapAsyncGenerator(regenerator.mark(function _callee(arrayBufferIterator, options) {
+    var textDecoder, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, _value, arrayBuffer;
+
+    return regenerator.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            textDecoder = new TextDecoder(options);
+            _iteratorNormalCompletion = true;
+            _didIteratorError = false;
+            _context.prev = 3;
+            _iterator = _asyncIterator(arrayBufferIterator);
+
+          case 5:
+            _context.next = 7;
+            return _awaitAsyncGenerator(_iterator.next());
+
+          case 7:
+            _step = _context.sent;
+            _iteratorNormalCompletion = _step.done;
+            _context.next = 11;
+            return _awaitAsyncGenerator(_step.value);
+
+          case 11:
+            _value = _context.sent;
+
+            if (_iteratorNormalCompletion) {
+              _context.next = 19;
+              break;
+            }
+
+            arrayBuffer = _value;
+            _context.next = 16;
+            return typeof arrayBuffer === 'string' ? arrayBuffer : textDecoder.decode(arrayBuffer, {
+              stream: true
+            });
+
+          case 16:
+            _iteratorNormalCompletion = true;
+            _context.next = 5;
+            break;
+
+          case 19:
+            _context.next = 25;
+            break;
+
+          case 21:
+            _context.prev = 21;
+            _context.t0 = _context["catch"](3);
+            _didIteratorError = true;
+            _iteratorError = _context.t0;
+
+          case 25:
+            _context.prev = 25;
+            _context.prev = 26;
+
+            if (!(!_iteratorNormalCompletion && _iterator["return"] != null)) {
+              _context.next = 30;
+              break;
+            }
+
+            _context.next = 30;
+            return _awaitAsyncGenerator(_iterator["return"]());
+
+          case 30:
+            _context.prev = 30;
+
+            if (!_didIteratorError) {
+              _context.next = 33;
+              break;
+            }
+
+            throw _iteratorError;
+
+          case 33:
+            return _context.finish(30);
+
+          case 34:
+            return _context.finish(25);
+
+          case 35:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee, null, [[3, 21, 25, 35], [26,, 30, 34]]);
+  }));
+  return _makeTextDecoderIterator.apply(this, arguments);
+}
+
+function makeTextEncoderIterator(_x3, _x4) {
+  return _makeTextEncoderIterator.apply(this, arguments);
+}
+
+function _makeTextEncoderIterator() {
+  _makeTextEncoderIterator = _wrapAsyncGenerator(regenerator.mark(function _callee2(textIterator, options) {
+    var textEncoder, _iteratorNormalCompletion2, _didIteratorError2, _iteratorError2, _iterator2, _step2, _value2, text;
+
+    return regenerator.wrap(function _callee2$(_context2) {
+      while (1) {
+        switch (_context2.prev = _context2.next) {
+          case 0:
+            textEncoder = new TextEncoder();
+            _iteratorNormalCompletion2 = true;
+            _didIteratorError2 = false;
+            _context2.prev = 3;
+            _iterator2 = _asyncIterator(textIterator);
+
+          case 5:
+            _context2.next = 7;
+            return _awaitAsyncGenerator(_iterator2.next());
+
+          case 7:
+            _step2 = _context2.sent;
+            _iteratorNormalCompletion2 = _step2.done;
+            _context2.next = 11;
+            return _awaitAsyncGenerator(_step2.value);
+
+          case 11:
+            _value2 = _context2.sent;
+
+            if (_iteratorNormalCompletion2) {
+              _context2.next = 19;
+              break;
+            }
+
+            text = _value2;
+            _context2.next = 16;
+            return typeof text === 'string' ? textEncoder.encode(text) : text;
+
+          case 16:
+            _iteratorNormalCompletion2 = true;
+            _context2.next = 5;
+            break;
+
+          case 19:
+            _context2.next = 25;
+            break;
+
+          case 21:
+            _context2.prev = 21;
+            _context2.t0 = _context2["catch"](3);
+            _didIteratorError2 = true;
+            _iteratorError2 = _context2.t0;
+
+          case 25:
+            _context2.prev = 25;
+            _context2.prev = 26;
+
+            if (!(!_iteratorNormalCompletion2 && _iterator2["return"] != null)) {
+              _context2.next = 30;
+              break;
+            }
+
+            _context2.next = 30;
+            return _awaitAsyncGenerator(_iterator2["return"]());
+
+          case 30:
+            _context2.prev = 30;
+
+            if (!_didIteratorError2) {
+              _context2.next = 33;
+              break;
+            }
+
+            throw _iteratorError2;
+
+          case 33:
+            return _context2.finish(30);
+
+          case 34:
+            return _context2.finish(25);
+
+          case 35:
+          case "end":
+            return _context2.stop();
+        }
+      }
+    }, _callee2, null, [[3, 21, 25, 35], [26,, 30, 34]]);
+  }));
+  return _makeTextEncoderIterator.apply(this, arguments);
+}
+
+function makeLineIterator(_x5) {
+  return _makeLineIterator.apply(this, arguments);
+}
+
+function _makeLineIterator() {
+  _makeLineIterator = _wrapAsyncGenerator(regenerator.mark(function _callee3(textIterator) {
+    var previous, _iteratorNormalCompletion3, _didIteratorError3, _iteratorError3, _iterator3, _step3, _value3, textChunk, eolIndex, line;
+
+    return regenerator.wrap(function _callee3$(_context3) {
+      while (1) {
+        switch (_context3.prev = _context3.next) {
+          case 0:
+            previous = '';
+            _iteratorNormalCompletion3 = true;
+            _didIteratorError3 = false;
+            _context3.prev = 3;
+            _iterator3 = _asyncIterator(textIterator);
+
+          case 5:
+            _context3.next = 7;
+            return _awaitAsyncGenerator(_iterator3.next());
+
+          case 7:
+            _step3 = _context3.sent;
+            _iteratorNormalCompletion3 = _step3.done;
+            _context3.next = 11;
+            return _awaitAsyncGenerator(_step3.value);
+
+          case 11:
+            _value3 = _context3.sent;
+
+            if (_iteratorNormalCompletion3) {
+              _context3.next = 26;
+              break;
+            }
+
+            textChunk = _value3;
+            previous += textChunk;
+            eolIndex = void 0;
+
+          case 16:
+            if (!((eolIndex = previous.indexOf('\n')) >= 0)) {
+              _context3.next = 23;
+              break;
+            }
+
+            line = previous.slice(0, eolIndex + 1);
+            previous = previous.slice(eolIndex + 1);
+            _context3.next = 21;
+            return line;
+
+          case 21:
+            _context3.next = 16;
+            break;
+
+          case 23:
+            _iteratorNormalCompletion3 = true;
+            _context3.next = 5;
+            break;
+
+          case 26:
+            _context3.next = 32;
+            break;
+
+          case 28:
+            _context3.prev = 28;
+            _context3.t0 = _context3["catch"](3);
+            _didIteratorError3 = true;
+            _iteratorError3 = _context3.t0;
+
+          case 32:
+            _context3.prev = 32;
+            _context3.prev = 33;
+
+            if (!(!_iteratorNormalCompletion3 && _iterator3["return"] != null)) {
+              _context3.next = 37;
+              break;
+            }
+
+            _context3.next = 37;
+            return _awaitAsyncGenerator(_iterator3["return"]());
+
+          case 37:
+            _context3.prev = 37;
+
+            if (!_didIteratorError3) {
+              _context3.next = 40;
+              break;
+            }
+
+            throw _iteratorError3;
+
+          case 40:
+            return _context3.finish(37);
+
+          case 41:
+            return _context3.finish(32);
+
+          case 42:
+            if (!(previous.length > 0)) {
+              _context3.next = 45;
+              break;
+            }
+
+            _context3.next = 45;
+            return previous;
+
+          case 45:
+          case "end":
+            return _context3.stop();
+        }
+      }
+    }, _callee3, null, [[3, 28, 32, 42], [33,, 37, 41]]);
+  }));
+  return _makeLineIterator.apply(this, arguments);
+}
+
+function makeNumberedLineIterator(_x6) {
+  return _makeNumberedLineIterator.apply(this, arguments);
+}
+
+function _makeNumberedLineIterator() {
+  _makeNumberedLineIterator = _wrapAsyncGenerator(regenerator.mark(function _callee4(lineIterator) {
+    var counter, _iteratorNormalCompletion4, _didIteratorError4, _iteratorError4, _iterator4, _step4, _value4, line;
+
+    return regenerator.wrap(function _callee4$(_context4) {
+      while (1) {
+        switch (_context4.prev = _context4.next) {
+          case 0:
+            counter = 1;
+            _iteratorNormalCompletion4 = true;
+            _didIteratorError4 = false;
+            _context4.prev = 3;
+            _iterator4 = _asyncIterator(lineIterator);
+
+          case 5:
+            _context4.next = 7;
+            return _awaitAsyncGenerator(_iterator4.next());
+
+          case 7:
+            _step4 = _context4.sent;
+            _iteratorNormalCompletion4 = _step4.done;
+            _context4.next = 11;
+            return _awaitAsyncGenerator(_step4.value);
+
+          case 11:
+            _value4 = _context4.sent;
+
+            if (_iteratorNormalCompletion4) {
+              _context4.next = 20;
+              break;
+            }
+
+            line = _value4;
+            _context4.next = 16;
+            return {
+              counter: counter,
+              line: line
+            };
+
+          case 16:
+            counter++;
+
+          case 17:
+            _iteratorNormalCompletion4 = true;
+            _context4.next = 5;
+            break;
+
+          case 20:
+            _context4.next = 26;
+            break;
+
+          case 22:
+            _context4.prev = 22;
+            _context4.t0 = _context4["catch"](3);
+            _didIteratorError4 = true;
+            _iteratorError4 = _context4.t0;
+
+          case 26:
+            _context4.prev = 26;
+            _context4.prev = 27;
+
+            if (!(!_iteratorNormalCompletion4 && _iterator4["return"] != null)) {
+              _context4.next = 31;
+              break;
+            }
+
+            _context4.next = 31;
+            return _awaitAsyncGenerator(_iterator4["return"]());
+
+          case 31:
+            _context4.prev = 31;
+
+            if (!_didIteratorError4) {
+              _context4.next = 34;
+              break;
+            }
+
+            throw _iteratorError4;
+
+          case 34:
+            return _context4.finish(31);
+
+          case 35:
+            return _context4.finish(26);
+
+          case 36:
+          case "end":
+            return _context4.stop();
+        }
+      }
+    }, _callee4, null, [[3, 22, 26, 36], [27,, 31, 35]]);
+  }));
+  return _makeNumberedLineIterator.apply(this, arguments);
+}
+
+function forEach(_x, _x2) {
+  return _forEach.apply(this, arguments);
+}
+
+function _forEach() {
+  _forEach = _asyncToGenerator(regenerator.mark(function _callee(iterator, visitor) {
+    var _yield$iterator$next, done, value, cancel;
+
+    return regenerator.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+
+            _context.next = 3;
+            return iterator.next();
+
+          case 3:
+            _yield$iterator$next = _context.sent;
+            done = _yield$iterator$next.done;
+            value = _yield$iterator$next.value;
+
+            if (!done) {
+              _context.next = 9;
+              break;
+            }
+
+            iterator["return"]();
+            return _context.abrupt("return");
+
+          case 9:
+            cancel = visitor(value);
+
+            if (!cancel) {
+              _context.next = 12;
+              break;
+            }
+
+            return _context.abrupt("return");
+
+          case 12:
+            _context.next = 0;
+            break;
+
+          case 14:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee);
+  }));
+  return _forEach.apply(this, arguments);
+}
+
+function concatenateChunksAsync(_x3) {
+  return _concatenateChunksAsync.apply(this, arguments);
+}
+
+function _concatenateChunksAsync() {
+  _concatenateChunksAsync = _asyncToGenerator(regenerator.mark(function _callee2(asyncIterator) {
+    var arrayBuffers, strings, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, _value, chunk;
+
+    return regenerator.wrap(function _callee2$(_context2) {
+      while (1) {
+        switch (_context2.prev = _context2.next) {
+          case 0:
+            arrayBuffers = [];
+            strings = [];
+            _iteratorNormalCompletion = true;
+            _didIteratorError = false;
+            _context2.prev = 4;
+            _iterator = _asyncIterator(asyncIterator);
+
+          case 6:
+            _context2.next = 8;
+            return _iterator.next();
+
+          case 8:
+            _step = _context2.sent;
+            _iteratorNormalCompletion = _step.done;
+            _context2.next = 12;
+            return _step.value;
+
+          case 12:
+            _value = _context2.sent;
+
+            if (_iteratorNormalCompletion) {
+              _context2.next = 19;
+              break;
+            }
+
+            chunk = _value;
+
+            if (typeof chunk === 'string') {
+              strings.push(chunk);
+            } else {
+              arrayBuffers.push(chunk);
+            }
+
+          case 16:
+            _iteratorNormalCompletion = true;
+            _context2.next = 6;
+            break;
+
+          case 19:
+            _context2.next = 25;
+            break;
+
+          case 21:
+            _context2.prev = 21;
+            _context2.t0 = _context2["catch"](4);
+            _didIteratorError = true;
+            _iteratorError = _context2.t0;
+
+          case 25:
+            _context2.prev = 25;
+            _context2.prev = 26;
+
+            if (!(!_iteratorNormalCompletion && _iterator["return"] != null)) {
+              _context2.next = 30;
+              break;
+            }
+
+            _context2.next = 30;
+            return _iterator["return"]();
+
+          case 30:
+            _context2.prev = 30;
+
+            if (!_didIteratorError) {
+              _context2.next = 33;
+              break;
+            }
+
+            throw _iteratorError;
+
+          case 33:
+            return _context2.finish(30);
+
+          case 34:
+            return _context2.finish(25);
+
+          case 35:
+            if (!(strings.length > 0)) {
+              _context2.next = 38;
+              break;
+            }
+
+            assert$2(arrayBuffers.length === 0);
+            return _context2.abrupt("return", strings.join(''));
+
+          case 38:
+            return _context2.abrupt("return", concatenateArrayBuffers.apply(void 0, arrayBuffers));
+
+          case 39:
+          case "end":
+            return _context2.stop();
+        }
+      }
+    }, _callee2, null, [[4, 21, 25, 35], [26,, 30, 34]]);
+  }));
+  return _concatenateChunksAsync.apply(this, arguments);
+}
+
+function getHiResTimestamp() {
+  var timestamp;
+
+  if (typeof window !== 'undefined' && window.performance) {
+    timestamp = window.performance.now();
+  } else if (typeof process !== 'undefined' && process.hrtime) {
+    var timeParts = process.hrtime();
+    timestamp = timeParts[0] * 1000 + timeParts[1] / 1e6;
+  } else {
+    timestamp = Date.now();
+  }
+
+  return timestamp;
+}
+
+var Stat = function () {
+  function Stat(name, type) {
+    _classCallCheck$1(this, Stat);
+
+    this.name = name;
+    this.type = type;
+    this.sampleSize = 1;
+    this.reset();
+  }
+
+  _createClass$1(Stat, [{
+    key: "setSampleSize",
+    value: function setSampleSize(samples) {
+      this.sampleSize = samples;
+      return this;
+    }
+  }, {
+    key: "incrementCount",
+    value: function incrementCount() {
+      this.addCount(1);
+      return this;
+    }
+  }, {
+    key: "decrementCount",
+    value: function decrementCount() {
+      this.subtractCount(1);
+      return this;
+    }
+  }, {
+    key: "addCount",
+    value: function addCount(value) {
+      this._count += value;
+      this._samples++;
+
+      this._checkSampling();
+
+      return this;
+    }
+  }, {
+    key: "subtractCount",
+    value: function subtractCount(value) {
+      this._count -= value;
+      this._samples++;
+
+      this._checkSampling();
+
+      return this;
+    }
+  }, {
+    key: "addTime",
+    value: function addTime(time) {
+      this._time += time;
+      this.lastTiming = time;
+      this._samples++;
+
+      this._checkSampling();
+
+      return this;
+    }
+  }, {
+    key: "timeStart",
+    value: function timeStart() {
+      this._startTime = getHiResTimestamp();
+      this._timerPending = true;
+      return this;
+    }
+  }, {
+    key: "timeEnd",
+    value: function timeEnd() {
+      if (!this._timerPending) {
+        return this;
+      }
+
+      this.addTime(getHiResTimestamp() - this._startTime);
+      this._timerPending = false;
+
+      this._checkSampling();
+
+      return this;
+    }
+  }, {
+    key: "getSampleAverageCount",
+    value: function getSampleAverageCount() {
+      return this.sampleSize > 0 ? this.lastSampleCount / this.sampleSize : 0;
+    }
+  }, {
+    key: "getSampleAverageTime",
+    value: function getSampleAverageTime() {
+      return this.sampleSize > 0 ? this.lastSampleTime / this.sampleSize : 0;
+    }
+  }, {
+    key: "getSampleHz",
+    value: function getSampleHz() {
+      return this.lastSampleTime > 0 ? this.sampleSize / (this.lastSampleTime / 1000) : 0;
+    }
+  }, {
+    key: "getAverageCount",
+    value: function getAverageCount() {
+      return this.samples > 0 ? this.count / this.samples : 0;
+    }
+  }, {
+    key: "getAverageTime",
+    value: function getAverageTime() {
+      return this.samples > 0 ? this.time / this.samples : 0;
+    }
+  }, {
+    key: "getHz",
+    value: function getHz() {
+      return this.time > 0 ? this.samples / (this.time / 1000) : 0;
+    }
+  }, {
+    key: "reset",
+    value: function reset() {
+      this.time = 0;
+      this.count = 0;
+      this.samples = 0;
+      this.lastTiming = 0;
+      this.lastSampleTime = 0;
+      this.lastSampleCount = 0;
+      this._count = 0;
+      this._time = 0;
+      this._samples = 0;
+      this._startTime = 0;
+      this._timerPending = false;
+      return this;
+    }
+  }, {
+    key: "_checkSampling",
+    value: function _checkSampling() {
+      if (this._samples === this.sampleSize) {
+        this.lastSampleTime = this._time;
+        this.lastSampleCount = this._count;
+        this.count += this._count;
+        this.time += this._time;
+        this.samples += this._samples;
+        this._time = 0;
+        this._count = 0;
+        this._samples = 0;
+      }
+    }
+  }]);
+
+  return Stat;
+}();
+
+var Stats = function () {
+  function Stats(_ref) {
+    var id = _ref.id,
+        stats = _ref.stats;
+
+    _classCallCheck$1(this, Stats);
+
+    this.id = id;
+    this.stats = {};
+
+    this._initializeStats(stats);
+
+    Object.seal(this);
+  }
+
+  _createClass$1(Stats, [{
+    key: "get",
+    value: function get(name) {
+      var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'count';
+      return this._getOrCreate({
+        name: name,
+        type: type
+      });
+    }
+  }, {
+    key: "reset",
+    value: function reset() {
+      for (var key in this.stats) {
+        this.stats[key].reset();
+      }
+
+      return this;
+    }
+  }, {
+    key: "forEach",
+    value: function forEach(fn) {
+      for (var key in this.stats) {
+        fn(this.stats[key]);
+      }
+    }
+  }, {
+    key: "getTable",
+    value: function getTable() {
+      var table = {};
+      this.forEach(function (stat) {
+        table[stat.name] = {
+          time: stat.time || 0,
+          count: stat.count || 0,
+          average: stat.getAverageTime() || 0,
+          hz: stat.getHz() || 0
+        };
+      });
+      return table;
+    }
+  }, {
+    key: "_initializeStats",
+    value: function _initializeStats() {
+      var _this = this;
+
+      var stats = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+      stats.forEach(function (stat) {
+        return _this._getOrCreate(stat);
+      });
+    }
+  }, {
+    key: "_getOrCreate",
+    value: function _getOrCreate(stat) {
+      if (!stat || !stat.name) {
+        return null;
+      }
+
+      var name = stat.name,
+          type = stat.type;
+
+      if (!this.stats[name]) {
+        if (stat instanceof Stat) {
+          this.stats[name] = stat;
+        } else {
+          this.stats[name] = new Stat(name, type);
+        }
+      }
+
+      return this.stats[name];
+    }
+  }, {
+    key: "size",
+    get: function get() {
+      return Object.keys(this.stats).length;
+    }
+  }]);
+
+  return Stats;
+}();
+
+function ownKeys$b(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread$a(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys$b(Object(source), true).forEach(function (key) { _defineProperty$1(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys$b(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+var STAT_QUEUED_REQUESTS = 'Queued Requests';
+var STAT_ACTIVE_REQUESTS = 'Active Requests';
+var STAT_CANCELLED_REQUESTS = 'Cancelled Requests';
+var STAT_QUEUED_REQUESTS_EVER = 'Queued Requests Ever';
+var STAT_ACTIVE_REQUESTS_EVER = 'Active Requests Ever';
+var DEFAULT_PROPS = {
+  id: 'request-scheduler',
+  throttleRequests: true,
+  maxRequests: 6
+};
+
+var RequestScheduler = function () {
+  function RequestScheduler() {
+    var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+    _classCallCheck$1(this, RequestScheduler);
+
+    this.props = _objectSpread$a(_objectSpread$a({}, DEFAULT_PROPS), props);
+    this.requestQueue = [];
+    this.activeRequestCount = 0;
+    this.requestMap = new Map();
+    this.stats = new Stats({
+      id: props.id
+    });
+    this.stats.get(STAT_QUEUED_REQUESTS);
+    this.stats.get(STAT_ACTIVE_REQUESTS);
+    this.stats.get(STAT_CANCELLED_REQUESTS);
+    this.stats.get(STAT_QUEUED_REQUESTS_EVER);
+    this.stats.get(STAT_ACTIVE_REQUESTS_EVER);
+    this._deferredUpdate = null;
+  }
+
+  _createClass$1(RequestScheduler, [{
+    key: "scheduleRequest",
+    value: function scheduleRequest(handle) {
+      var getPriority = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : function () {
+        return 0;
+      };
+
+      if (!this.props.throttleRequests) {
+        return Promise.resolve({
+          done: function done() {}
+        });
+      }
+
+      if (this.requestMap.has(handle)) {
+        return this.requestMap.get(handle);
+      }
+
+      var request = {
+        handle: handle,
+        getPriority: getPriority
+      };
+      var promise = new Promise(function (resolve) {
+        request.resolve = resolve;
+        return request;
+      });
+      this.requestQueue.push(request);
+      this.requestMap.set(handle, promise);
+
+      this._issueNewRequests();
+
+      return promise;
+    }
+  }, {
+    key: "_issueRequest",
+    value: function _issueRequest(request) {
+      var _this = this;
+
+      var handle = request.handle,
+          resolve = request.resolve;
+      var isDone = false;
+
+      var done = function done() {
+        if (!isDone) {
+          isDone = true;
+
+          _this.requestMap["delete"](handle);
+
+          _this.activeRequestCount--;
+
+          _this._issueNewRequests();
+        }
+      };
+
+      this.activeRequestCount++;
+      return resolve ? resolve({
+        done: done
+      }) : Promise.resolve({
+        done: done
+      });
+    }
+  }, {
+    key: "_issueNewRequests",
+    value: function _issueNewRequests() {
+      var _this2 = this;
+
+      if (!this._deferredUpdate) {
+        this._deferredUpdate = setTimeout(function () {
+          return _this2._issueNewRequestsAsync();
+        }, 0);
+      }
+    }
+  }, {
+    key: "_issueNewRequestsAsync",
+    value: function _issueNewRequestsAsync() {
+      this._deferredUpdate = null;
+      var freeSlots = Math.max(this.props.maxRequests - this.activeRequestCount, 0);
+
+      if (freeSlots === 0) {
+        return;
+      }
+
+      this._updateAllRequests();
+
+      for (var i = 0; i < freeSlots; ++i) {
+        if (this.requestQueue.length > 0) {
+          var request = this.requestQueue.shift();
+
+          this._issueRequest(request);
+        }
+      }
+    }
+  }, {
+    key: "_updateAllRequests",
+    value: function _updateAllRequests() {
+      var requestQueue = this.requestQueue;
+
+      for (var i = 0; i < requestQueue.length; ++i) {
+        var request = requestQueue[i];
+
+        if (!this._updateRequest(request)) {
+          requestQueue.splice(i, 1);
+          this.requestMap["delete"](request.handle);
+          i--;
+        }
+      }
+
+      requestQueue.sort(function (a, b) {
+        return a.priority - b.priority;
+      });
+    }
+  }, {
+    key: "_updateRequest",
+    value: function _updateRequest(request) {
+      request.priority = request.getPriority(request.handle);
+
+      if (request.priority < 0) {
+        request.resolve(null);
+        return false;
+      }
+
+      return true;
+    }
+  }]);
+
+  return RequestScheduler;
+}();
+
+function _arrayLikeToArray$b(arr, len) {
+  if (len == null || len > arr.length) len = arr.length;
+
+  for (var i = 0, arr2 = new Array(len); i < len; i++) {
+    arr2[i] = arr[i];
+  }
+
+  return arr2;
+}
+
+function _arrayWithoutHoles$1(arr) {
+  if (Array.isArray(arr)) return _arrayLikeToArray$b(arr);
+}
+
+function _iterableToArray$1(iter) {
+  if (typeof Symbol !== "undefined" && Symbol.iterator in Object(iter)) return Array.from(iter);
+}
+
+function _unsupportedIterableToArray$b(o, minLen) {
+  if (!o) return;
+  if (typeof o === "string") return _arrayLikeToArray$b(o, minLen);
+  var n = Object.prototype.toString.call(o).slice(8, -1);
+  if (n === "Object" && o.constructor) n = o.constructor.name;
+  if (n === "Map" || n === "Set") return Array.from(o);
+  if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$b(o, minLen);
+}
+
+function _nonIterableSpread$1() {
+  throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+}
+
+function _toConsumableArray$1(arr) {
+  return _arrayWithoutHoles$1(arr) || _iterableToArray$1(arr) || _unsupportedIterableToArray$b(arr) || _nonIterableSpread$1();
+}
+
+function getMeshBoundingBox(attributes) {
+  if (!attributes || !attributes.POSITION) {
+    return null;
+  }
+
+  var minX = Infinity;
+  var minY = Infinity;
+  var minZ = Infinity;
+  var maxX = -Infinity;
+  var maxY = -Infinity;
+  var maxZ = -Infinity;
+  var positions = attributes.POSITION.value;
+  var len = positions && positions.length;
+
+  if (!len) {
+    return null;
+  }
+
+  for (var i = 0; i < len; i += 3) {
+    var x = positions[i];
+    var y = positions[i + 1];
+    var z = positions[i + 2];
+    minX = x < minX ? x : minX;
+    minY = y < minY ? y : minY;
+    minZ = z < minZ ? z : minZ;
+    maxX = x > maxX ? x : maxX;
+    maxY = y > maxY ? y : maxY;
+    maxZ = z > maxZ ? z : maxZ;
+  }
+
+  return [[minX, minY, minZ], [maxX, maxY, maxZ]];
+}
+
+var isBoolean = function isBoolean(x) {
+  return typeof x === 'boolean';
+};
+
+var isFunction = function isFunction(x) {
+  return typeof x === 'function';
+};
+
+var isObject = function isObject(x) {
+  return x !== null && _typeof(x) === 'object';
+};
+var isPureObject = function isPureObject(x) {
+  return isObject(x) && x.constructor === {}.constructor;
+};
+var isPromise = function isPromise(x) {
+  return isObject(x) && isFunction(x.then);
+};
+var isIterable = function isIterable(x) {
+  return x && typeof x[Symbol.iterator] === 'function';
+};
+var isAsyncIterable = function isAsyncIterable(x) {
+  return x && typeof x[Symbol.asyncIterator] === 'function';
+};
+var isIterator = function isIterator(x) {
+  return x && isFunction(x.next);
+};
+var isResponse = function isResponse(x) {
+  return typeof Response !== 'undefined' && x instanceof Response || x && x.arrayBuffer && x.text && x.json;
+};
+var isBlob = function isBlob(x) {
+  return typeof Blob !== 'undefined' && x instanceof Blob;
+};
+var isWritableDOMStream = function isWritableDOMStream(x) {
+  return isObject(x) && isFunction(x.abort) && isFunction(x.getWriter);
+};
+var isReadableDOMStream = function isReadableDOMStream(x) {
+  return typeof ReadableStream !== 'undefined' && x instanceof ReadableStream || isObject(x) && isFunction(x.tee) && isFunction(x.cancel) && isFunction(x.getReader);
+};
+var isBuffer = function isBuffer(x) {
+  return x && _typeof(x) === 'object' && x.isBuffer;
+};
+var isWritableNodeStream = function isWritableNodeStream(x) {
+  return isObject(x) && isFunction(x.end) && isFunction(x.write) && isBoolean(x.writable);
+};
+var isReadableNodeStream = function isReadableNodeStream(x) {
+  return isObject(x) && isFunction(x.read) && isFunction(x.pipe) && isBoolean(x.readable);
+};
+var isReadableStream = function isReadableStream(x) {
+  return isReadableDOMStream(x) || isReadableNodeStream(x);
+};
+var isWritableStream = function isWritableStream(x) {
+  return isWritableDOMStream(x) || isWritableNodeStream(x);
+};
+
+var DATA_URL_PATTERN = /^data:([-\w.]+\/[-\w.+]+)(;|,)/;
+var MIME_TYPE_PATTERN = /^([-\w.]+\/[-\w.+]+)/;
+function parseMIMEType(mimeString) {
+  if (typeof mimeString !== 'string') {
+    return '';
+  }
+
+  var matches = mimeString.match(MIME_TYPE_PATTERN);
+
+  if (matches) {
+    return matches[1];
+  }
+
+  return mimeString;
+}
+function parseMIMETypeFromURL(dataUrl) {
+  if (typeof dataUrl !== 'string') {
+    return '';
+  }
+
+  var matches = dataUrl.match(DATA_URL_PATTERN);
+
+  if (matches) {
+    return matches[1];
+  }
+
+  return '';
+}
+
+var QUERY_STRING_PATTERN = /\?.*/;
+function getResourceUrlAndType(resource) {
+  if (isResponse(resource)) {
+    var contentType = parseMIMEType(resource.headers.get('content-type'));
+    var urlType = parseMIMETypeFromURL(resource.url);
+    return {
+      url: stripQueryString(resource.url || ''),
+      type: contentType || urlType || null
+    };
+  }
+
+  if (isBlob(resource)) {
+    return {
+      url: stripQueryString(resource.name || ''),
+      type: resource.type || ''
+    };
+  }
+
+  if (typeof resource === 'string') {
+    return {
+      url: stripQueryString(resource),
+      type: parseMIMETypeFromURL(resource)
+    };
+  }
+
+  return {
+    url: '',
+    type: ''
+  };
+}
+function getResourceContentLength(resource) {
+  if (isResponse(resource)) {
+    return resource.headers['content-length'] || -1;
+  }
+
+  if (isBlob(resource)) {
+    return resource.size;
+  }
+
+  if (typeof resource === 'string') {
+    return resource.length;
+  }
+
+  if (resource instanceof ArrayBuffer) {
+    return resource.byteLength;
+  }
+
+  if (ArrayBuffer.isView(resource)) {
+    return resource.byteLength;
+  }
+
+  return -1;
+}
+
+function stripQueryString(url) {
+  return url.replace(QUERY_STRING_PATTERN, '');
+}
+
+function makeResponse(_x) {
+  return _makeResponse.apply(this, arguments);
+}
+
+function _makeResponse() {
+  _makeResponse = _asyncToGenerator(regenerator.mark(function _callee(resource) {
+    var headers, contentLength, _getResourceUrlAndTyp, url, type, initialDataUrl, response;
+
+    return regenerator.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            if (!isResponse(resource)) {
+              _context.next = 2;
+              break;
+            }
+
+            return _context.abrupt("return", resource);
+
+          case 2:
+            headers = {};
+            contentLength = getResourceContentLength(resource);
+
+            if (contentLength >= 0) {
+              headers['content-length'] = String(contentLength);
+            }
+
+            _getResourceUrlAndTyp = getResourceUrlAndType(resource), url = _getResourceUrlAndTyp.url, type = _getResourceUrlAndTyp.type;
+
+            if (type) {
+              headers['content-type'] = type;
+            }
+
+            _context.next = 9;
+            return getInitialDataUrl(resource);
+
+          case 9:
+            initialDataUrl = _context.sent;
+
+            if (initialDataUrl) {
+              headers['x-first-bytes'] = initialDataUrl;
+            }
+
+            if (typeof resource === 'string') {
+              resource = new TextEncoder().encode(resource);
+            }
+
+            response = new Response(resource, {
+              headers: headers
+            });
+            Object.defineProperty(response, 'url', {
+              value: url
+            });
+            return _context.abrupt("return", response);
+
+          case 15:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee);
+  }));
+  return _makeResponse.apply(this, arguments);
+}
+
+function checkResponse(_x2) {
+  return _checkResponse.apply(this, arguments);
+}
+
+function _checkResponse() {
+  _checkResponse = _asyncToGenerator(regenerator.mark(function _callee2(response) {
+    var message;
+    return regenerator.wrap(function _callee2$(_context2) {
+      while (1) {
+        switch (_context2.prev = _context2.next) {
+          case 0:
+            if (response.ok) {
+              _context2.next = 5;
+              break;
+            }
+
+            _context2.next = 3;
+            return getResponseError(response);
+
+          case 3:
+            message = _context2.sent;
+            throw new Error(message);
+
+          case 5:
+          case "end":
+            return _context2.stop();
+        }
+      }
+    }, _callee2);
+  }));
+  return _checkResponse.apply(this, arguments);
+}
+
+function getResponseError(_x3) {
+  return _getResponseError.apply(this, arguments);
+}
+
+function _getResponseError() {
+  _getResponseError = _asyncToGenerator(regenerator.mark(function _callee3(response) {
+    var message, contentType, text;
+    return regenerator.wrap(function _callee3$(_context3) {
+      while (1) {
+        switch (_context3.prev = _context3.next) {
+          case 0:
+            message = "Failed to fetch resource ".concat(response.url, " (").concat(response.status, "): ");
+            _context3.prev = 1;
+            contentType = response.headers.get('Content-Type');
+            text = response.statusText;
+
+            if (!contentType.includes('application/json')) {
+              _context3.next = 11;
+              break;
+            }
+
+            _context3.t0 = text;
+            _context3.t1 = " ";
+            _context3.next = 9;
+            return response.text();
+
+          case 9:
+            _context3.t2 = _context3.sent;
+            text = _context3.t0 += _context3.t1.concat.call(_context3.t1, _context3.t2);
+
+          case 11:
+            message += text;
+            message = message.length > 60 ? "".concat(message.slice(60), "...") : message;
+            _context3.next = 17;
+            break;
+
+          case 15:
+            _context3.prev = 15;
+            _context3.t3 = _context3["catch"](1);
+
+          case 17:
+            return _context3.abrupt("return", message);
+
+          case 18:
+          case "end":
+            return _context3.stop();
+        }
+      }
+    }, _callee3, null, [[1, 15]]);
+  }));
+  return _getResponseError.apply(this, arguments);
+}
+
+function getInitialDataUrl(_x4) {
+  return _getInitialDataUrl.apply(this, arguments);
+}
+
+function _getInitialDataUrl() {
+  _getInitialDataUrl = _asyncToGenerator(regenerator.mark(function _callee4(resource) {
+    var INITIAL_DATA_LENGTH, blobSlice, slice, base64;
+    return regenerator.wrap(function _callee4$(_context4) {
+      while (1) {
+        switch (_context4.prev = _context4.next) {
+          case 0:
+            INITIAL_DATA_LENGTH = 5;
+
+            if (!(typeof resource === 'string')) {
+              _context4.next = 3;
+              break;
+            }
+
+            return _context4.abrupt("return", "data:,".concat(resource.slice(0, INITIAL_DATA_LENGTH)));
+
+          case 3:
+            if (!(resource instanceof Blob)) {
+              _context4.next = 8;
+              break;
+            }
+
+            blobSlice = resource.slice(0, 5);
+            _context4.next = 7;
+            return new Promise(function (resolve) {
+              var reader = new FileReader();
+
+              reader.onload = function (event) {
+                return resolve(event.target && event.target.result);
+              };
+
+              reader.readAsDataURL(blobSlice);
+            });
+
+          case 7:
+            return _context4.abrupt("return", _context4.sent);
+
+          case 8:
+            if (!(resource instanceof ArrayBuffer)) {
+              _context4.next = 12;
+              break;
+            }
+
+            slice = resource.slice(0, INITIAL_DATA_LENGTH);
+            base64 = arrayBufferToBase64(slice);
+            return _context4.abrupt("return", "data:base64,".concat(base64));
+
+          case 12:
+            return _context4.abrupt("return", null);
+
+          case 13:
+          case "end":
+            return _context4.stop();
+        }
+      }
+    }, _callee4);
+  }));
+  return _getInitialDataUrl.apply(this, arguments);
+}
+
+function arrayBufferToBase64(buffer) {
+  var binary = '';
+  var bytes = new Uint8Array(buffer);
+
+  for (var i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+
+  return btoa(binary);
+}
+
+function getErrorMessageFromResponse(_x) {
+  return _getErrorMessageFromResponse.apply(this, arguments);
+}
+
+function _getErrorMessageFromResponse() {
+  _getErrorMessageFromResponse = _asyncToGenerator(regenerator.mark(function _callee(response) {
+    var message, contentType;
+    return regenerator.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            message = "Failed to fetch resource ".concat(response.url, " (").concat(response.status, "): ");
+            _context.prev = 1;
+            contentType = response.headers.get('Content-Type');
+
+            if (!contentType.includes('application/json')) {
+              _context.next = 10;
+              break;
+            }
+
+            _context.t0 = message;
+            _context.next = 7;
+            return response.text();
+
+          case 7:
+            message = _context.t0 += _context.sent;
+            _context.next = 11;
+            break;
+
+          case 10:
+            message += response.statusText;
+
+          case 11:
+            _context.next = 16;
+            break;
+
+          case 13:
+            _context.prev = 13;
+            _context.t1 = _context["catch"](1);
+            return _context.abrupt("return", message);
+
+          case 16:
+            return _context.abrupt("return", message);
+
+          case 17:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee, null, [[1, 13]]);
+  }));
+  return _getErrorMessageFromResponse.apply(this, arguments);
+}
+
+function fetchFile(_x) {
+  return _fetchFile.apply(this, arguments);
+}
+
+function _fetchFile() {
+  _fetchFile = _asyncToGenerator(regenerator.mark(function _callee(url) {
+    var options,
+        response,
+        _args = arguments;
+    return regenerator.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            options = _args.length > 1 && _args[1] !== undefined ? _args[1] : {};
+
+            if (!(typeof url !== 'string')) {
+              _context.next = 5;
+              break;
+            }
+
+            _context.next = 4;
+            return makeResponse(url);
+
+          case 4:
+            return _context.abrupt("return", _context.sent);
+
+          case 5:
+            url = resolvePath(url);
+            _context.next = 8;
+            return fetch(url, options);
+
+          case 8:
+            response = _context.sent;
+
+            if (!(!response.ok && options["throws"])) {
+              _context.next = 15;
+              break;
+            }
+
+            _context.t0 = Error;
+            _context.next = 13;
+            return getErrorMessageFromResponse(response);
+
+          case 13:
+            _context.t1 = _context.sent;
+            throw new _context.t0(_context.t1);
+
+          case 15:
+            return _context.abrupt("return", response);
+
+          case 16:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee);
+  }));
+  return _fetchFile.apply(this, arguments);
+}
+
+var DEFAULT_OPTIONS = {
+  dataType: 'arraybuffer',
+  nothrow: true
+};
+
+var isDataURL = function isDataURL(url) {
+  return url.startsWith('data:');
+};
+
+function readFileSyncBrowser(uri, options) {
+  options = getReadFileOptions(options);
+
+  if (isDataURL(uri)) ;
+
+  if (!options.nothrow) {
+    assert$2(false);
+  }
+
+  return null;
+}
+
+function getReadFileOptions() {
+  var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+  options = Object.assign({}, DEFAULT_OPTIONS, options);
+  options.responseType = options.responseType || options.dataType;
+  return options;
+}
+
+function readFileSync(url) {
+  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  url = resolvePath(url);
+
+  if (!isBrowser$1 && undefined) {
+    return undefined(url, options);
+  }
+
+  return readFileSyncBrowser(url, options);
+}
+
+function writeFile(filePath, arrayBufferOrString, options) {
+  filePath = resolvePath(filePath);
+
+  if (!isBrowser$1 && undefined) {
+    return undefined(filePath, arrayBufferOrString, options);
+  }
+
+  return assert$2(false);
+}
+function writeFileSync(filePath, arrayBufferOrString, options) {
+  filePath = resolvePath(filePath);
+
+  if (!isBrowser$1 && undefined) {
+    return undefined(filePath, arrayBufferOrString, options);
+  }
+
+  return assert$2(false);
+}
+
+var NullLog = function () {
+  function NullLog() {
+    _classCallCheck$1(this, NullLog);
+  }
+
+  _createClass$1(NullLog, [{
+    key: "log",
+    value: function log() {
+      return function (_) {};
+    }
+  }, {
+    key: "info",
+    value: function info() {
+      return function (_) {};
+    }
+  }, {
+    key: "warn",
+    value: function warn() {
+      return function (_) {};
+    }
+  }, {
+    key: "error",
+    value: function error() {
+      return function (_) {};
+    }
+  }]);
+
+  return NullLog;
+}();
+var ConsoleLog = function () {
+  function ConsoleLog() {
+    _classCallCheck$1(this, ConsoleLog);
+
+    this.console = console;
+  }
+
+  _createClass$1(ConsoleLog, [{
+    key: "log",
+    value: function log() {
+      var _this$console$log;
+
+      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+        args[_key] = arguments[_key];
+      }
+
+      return (_this$console$log = this.console.log).bind.apply(_this$console$log, [this.console].concat(args));
+    }
+  }, {
+    key: "info",
+    value: function info() {
+      var _this$console$info;
+
+      for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+        args[_key2] = arguments[_key2];
+      }
+
+      return (_this$console$info = this.console.info).bind.apply(_this$console$info, [this.console].concat(args));
+    }
+  }, {
+    key: "warn",
+    value: function warn() {
+      var _this$console$warn;
+
+      for (var _len3 = arguments.length, args = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+        args[_key3] = arguments[_key3];
+      }
+
+      return (_this$console$warn = this.console.warn).bind.apply(_this$console$warn, [this.console].concat(args));
+    }
+  }, {
+    key: "error",
+    value: function error() {
+      var _this$console$error;
+
+      for (var _len4 = arguments.length, args = new Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+        args[_key4] = arguments[_key4];
+      }
+
+      return (_this$console$error = this.console.error).bind.apply(_this$console$error, [this.console].concat(args));
+    }
+  }]);
+
+  return ConsoleLog;
+}();
+
+function _createForOfIteratorHelper$9(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$a(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function _unsupportedIterableToArray$a(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$a(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$a(o, minLen); }
+
+function _arrayLikeToArray$a(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
+function ownKeys$a(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread$9(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys$a(Object(source), true).forEach(function (key) { _defineProperty$1(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys$a(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+var DEFAULT_LOADER_OPTIONS = {
+  baseUri: '',
+  fetch: null,
+  CDN: 'https://unpkg.com/@loaders.gl',
+  worker: true,
+  log: new ConsoleLog(),
+  metadata: false,
+  transforms: [],
+  reuseWorkers: true
+};
+var DEPRECATED_LOADER_OPTIONS = {
+  dataType: '(no longer used)',
+  method: 'fetch.method',
+  headers: 'fetch.headers',
+  body: 'fetch.body',
+  mode: 'fetch.mode',
+  credentials: 'fetch.credentials',
+  cache: 'fetch.cache',
+  redirect: 'fetch.redirect',
+  referrer: 'fetch.referrer',
+  referrerPolicy: 'fetch.referrerPolicy',
+  integrity: 'fetch.integrity',
+  keepalive: 'fetch.keepalive',
+  signal: 'fetch.signal'
+};
+var getGlobalLoaderState = function getGlobalLoaderState() {
+  global_$1.loaders = global_$1.loaders || {};
+  var loaders = global_$1.loaders;
+  loaders._state = loaders._state || {};
+  return loaders._state;
+};
+
+var getGlobalLoaderOptions = function getGlobalLoaderOptions() {
+  var state = getGlobalLoaderState();
+  state.globalOptions = state.globalOptions || _objectSpread$9({}, DEFAULT_LOADER_OPTIONS);
+  return state.globalOptions;
+};
+
+function setGlobalOptions(options) {
+  var state = getGlobalLoaderState();
+  var globalOptions = getGlobalLoaderOptions();
+  state.globalOptions = normalizeOptionsInternal(globalOptions, options);
+}
+function normalizeOptions(options, loader, loaders, url) {
+  loaders = loaders || [];
+  loaders = Array.isArray(loaders) ? loaders : [loaders];
+  validateOptions(options, loaders);
+  return normalizeOptionsInternal(loader, options, url);
+}
+function getFetchFunction(options, context) {
+  var globalOptions = getGlobalLoaderOptions();
+  var fetch = options.fetch || globalOptions.fetch;
+
+  if (typeof fetch === 'function') {
+    return fetch;
+  }
+
+  if (isObject(fetch)) {
+    return function (url) {
+      return fetchFile(url, fetch);
+    };
+  }
+
+  if (context && context.fetch) {
+    return context.fetch;
+  }
+
+  return function (url) {
+    return fetchFile(url, options);
+  };
+}
+
+function validateOptions(options, loaders) {
+  var log = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : console;
+  validateOptionsObject(options, null, log, DEFAULT_LOADER_OPTIONS, DEPRECATED_LOADER_OPTIONS, loaders);
+
+  var _iterator = _createForOfIteratorHelper$9(loaders),
+      _step;
+
+  try {
+    for (_iterator.s(); !(_step = _iterator.n()).done;) {
+      var loader = _step.value;
+      var idOptions = options && options[loader.id] || {};
+      var loaderOptions = loader.options && loader.options[loader.id] || {};
+      var deprecatedOptions = loader.defaultOptions && loader.defaultOptions[loader.id] || {};
+      validateOptionsObject(idOptions, loader.id, log, loaderOptions, deprecatedOptions, loaders);
+    }
+  } catch (err) {
+    _iterator.e(err);
+  } finally {
+    _iterator.f();
+  }
+}
+
+function validateOptionsObject(options, id, log, defaultOptions, deprecatedOptions, loaders) {
+  var loaderName = id || 'Top level';
+  var prefix = id ? "".concat(id, ".") : '';
+
+  for (var key in options) {
+    var isSubOptions = !id && isObject(options[key]);
+
+    if (!(key in defaultOptions)) {
+      if (key in deprecatedOptions) {
+        log.warn("".concat(loaderName, " loader option '").concat(prefix).concat(key, "' deprecated, use '").concat(deprecatedOptions[key], "'"));
+      } else if (!isSubOptions) {
+        var suggestion = findSimilarOption(key, loaders);
+        log.warn("".concat(loaderName, " loader option '").concat(prefix).concat(key, "' not recognized. ").concat(suggestion));
+      }
+    }
+  }
+}
+
+function findSimilarOption(optionKey, loaders) {
+  var lowerCaseOptionKey = optionKey.toLowerCase();
+  var bestSuggestion = '';
+
+  var _iterator2 = _createForOfIteratorHelper$9(loaders),
+      _step2;
+
+  try {
+    for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+      var loader = _step2.value;
+
+      for (var key in loader.options) {
+        if (optionKey === key) {
+          return "Did you mean '".concat(loader.id, ".").concat(key, "'?");
+        }
+
+        var lowerCaseKey = key.toLowerCase();
+        var isPartialMatch = lowerCaseOptionKey.startsWith(lowerCaseKey) || lowerCaseKey.startsWith(lowerCaseOptionKey);
+
+        if (isPartialMatch) {
+          bestSuggestion = bestSuggestion || "Did you mean '".concat(loader.id, ".").concat(key, "'?");
+        }
+      }
+    }
+  } catch (err) {
+    _iterator2.e(err);
+  } finally {
+    _iterator2.f();
+  }
+
+  return bestSuggestion;
+}
+
+function normalizeOptionsInternal(loader, options, url) {
+  var loaderDefaultOptions = loader.options || {};
+
+  var mergedOptions = _objectSpread$9({}, loaderDefaultOptions);
+
+  if (mergedOptions.log === null) {
+    mergedOptions.log = new NullLog();
+  }
+
+  mergeNestedFields(mergedOptions, getGlobalLoaderOptions());
+  mergeNestedFields(mergedOptions, options);
+  addUrlOptions(mergedOptions, url);
+  return mergedOptions;
+}
+
+function mergeNestedFields(mergedOptions, options) {
+  for (var key in options) {
+    if (key in options) {
+      var value = options[key];
+
+      if (isPureObject(value) && isPureObject(mergedOptions[key])) {
+        mergedOptions[key] = _objectSpread$9(_objectSpread$9({}, mergedOptions[key]), options[key]);
+      } else {
+        mergedOptions[key] = options[key];
+      }
+    }
+  }
+}
+
+function addUrlOptions(options, url) {
+  if (url && !options.baseUri) {
+    options.baseUri = url;
+  }
+}
+
+function setLoaderOptions(options) {
+  setGlobalOptions(options);
+}
+
+function ownKeys$9(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread$8(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys$9(Object(source), true).forEach(function (key) { _defineProperty$1(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys$9(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+function isLoaderObject(loader) {
+  if (!loader) {
+    return false;
+  }
+
+  if (Array.isArray(loader)) {
+    loader = loader[0];
+  }
+
+  var hasParser = loader.parseTextSync || loader.parseSync || loader.parse || loader.parseStream || loader.parseInBatches;
+  var loaderOptions = loader.options && loader.options[loader.id];
+  hasParser = hasParser || loaderOptions && loaderOptions.workerUrl;
+  return hasParser;
+}
+function normalizeLoader(loader) {
+  assert$2(loader, 'null loader');
+  assert$2(isLoaderObject(loader), 'invalid loader');
+  var options;
+
+  if (Array.isArray(loader)) {
+    options = loader[1];
+    loader = loader[0];
+    loader = _objectSpread$8(_objectSpread$8({}, loader), {}, {
+      options: _objectSpread$8(_objectSpread$8({}, loader.options), options)
+    });
+  }
+
+  if (loader.extension) {
+    loader.extensions = loader.extensions || loader.extension;
+    delete loader.extension;
+  }
+
+  if (!Array.isArray(loader.extensions)) {
+    loader.extensions = [loader.extensions];
+  }
+
+  assert$2(loader.extensions && loader.extensions.length > 0 && loader.extensions[0]);
+
+  if (loader.parseTextSync || loader.parseText) {
+    loader.text = true;
+  }
+
+  if (!loader.text) {
+    loader.binary = true;
+  }
+
+  return loader;
+}
+
+function _createForOfIteratorHelper$8(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$9(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function _unsupportedIterableToArray$9(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$9(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$9(o, minLen); }
+
+function _arrayLikeToArray$9(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
+var getGlobalLoaderRegistry = function getGlobalLoaderRegistry() {
+  var state = getGlobalLoaderState();
+  state.loaderRegistry = state.loaderRegistry || [];
+  return state.loaderRegistry;
+};
+
+function registerLoaders(loaders) {
+  var loaderRegistry = getGlobalLoaderRegistry();
+  loaders = Array.isArray(loaders) ? loaders : [loaders];
+
+  var _iterator = _createForOfIteratorHelper$8(loaders),
+      _step;
+
+  try {
+    var _loop = function _loop() {
+      var loader = _step.value;
+      var normalizedLoader = normalizeLoader(loader);
+
+      if (!loaderRegistry.find(function (registeredLoader) {
+        return normalizedLoader === registeredLoader;
+      })) {
+        loaderRegistry.unshift(normalizedLoader);
+      }
+    };
+
+    for (_iterator.s(); !(_step = _iterator.n()).done;) {
+      _loop();
+    }
+  } catch (err) {
+    _iterator.e(err);
+  } finally {
+    _iterator.f();
+  }
+}
+function getRegisteredLoaders() {
+  return getGlobalLoaderRegistry();
+}
+function _unregisterLoaders() {
+  var state = getGlobalLoaderState();
+  state.loaderRegistry = [];
+}
+
+var _marked$2 = regenerator.mark(makeStringIterator);
+
+function makeStringIterator(string) {
+  var options,
+      _options$chunkSize,
+      chunkSize,
+      offset,
+      textEncoder,
+      chunkLength,
+      chunk,
+      _args = arguments;
+
+  return regenerator.wrap(function makeStringIterator$(_context) {
+    while (1) {
+      switch (_context.prev = _context.next) {
+        case 0:
+          options = _args.length > 1 && _args[1] !== undefined ? _args[1] : {};
+          _options$chunkSize = options.chunkSize, chunkSize = _options$chunkSize === void 0 ? 256 * 1024 : _options$chunkSize;
+          offset = 0;
+          textEncoder = new TextEncoder();
+
+        case 4:
+          if (!(offset < string.length)) {
+            _context.next = 12;
+            break;
+          }
+
+          chunkLength = Math.min(string.length - offset, chunkSize);
+          chunk = string.slice(offset, offset + chunkLength);
+          offset += chunkLength;
+          _context.next = 10;
+          return textEncoder.encode(chunk);
+
+        case 10:
+          _context.next = 4;
+          break;
+
+        case 12:
+        case "end":
+          return _context.stop();
+      }
+    }
+  }, _marked$2);
+}
+
+var _marked$1 = regenerator.mark(makeArrayBufferIterator);
+
+function makeArrayBufferIterator(arrayBuffer) {
+  var options,
+      _options$chunkSize,
+      chunkSize,
+      byteOffset,
+      chunkByteLength,
+      chunk,
+      sourceArray,
+      chunkArray,
+      _args = arguments;
+
+  return regenerator.wrap(function makeArrayBufferIterator$(_context) {
+    while (1) {
+      switch (_context.prev = _context.next) {
+        case 0:
+          options = _args.length > 1 && _args[1] !== undefined ? _args[1] : {};
+          _options$chunkSize = options.chunkSize, chunkSize = _options$chunkSize === void 0 ? 256 * 1024 : _options$chunkSize;
+          byteOffset = 0;
+
+        case 3:
+          if (!(byteOffset < arrayBuffer.byteLength)) {
+            _context.next = 14;
+            break;
+          }
+
+          chunkByteLength = Math.min(arrayBuffer.byteLength - byteOffset, chunkSize);
+          chunk = new ArrayBuffer(chunkByteLength);
+          sourceArray = new Uint8Array(arrayBuffer, byteOffset, chunkByteLength);
+          chunkArray = new Uint8Array(chunk);
+          chunkArray.set(sourceArray);
+          byteOffset += chunkByteLength;
+          _context.next = 12;
+          return chunk;
+
+        case 12:
+          _context.next = 3;
+          break;
+
+        case 14:
+        case "end":
+          return _context.stop();
+      }
+    }
+  }, _marked$1);
+}
+
+var DEFAULT_CHUNK_SIZE = 1024 * 1024;
+function makeBlobIterator(_x) {
+  return _makeBlobIterator.apply(this, arguments);
+}
+
+function _makeBlobIterator() {
+  _makeBlobIterator = _wrapAsyncGenerator(regenerator.mark(function _callee(file) {
+    var options,
+        chunkSize,
+        offset,
+        end,
+        chunk,
+        _args = arguments;
+    return regenerator.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            options = _args.length > 1 && _args[1] !== undefined ? _args[1] : {};
+            chunkSize = options.chunkSize || DEFAULT_CHUNK_SIZE;
+            offset = 0;
+
+          case 3:
+            if (!(offset < file.size)) {
+              _context.next = 13;
+              break;
+            }
+
+            end = offset + chunkSize;
+            _context.next = 7;
+            return _awaitAsyncGenerator(readFileSlice$1(file, offset, end));
+
+          case 7:
+            chunk = _context.sent;
+            offset = end;
+            _context.next = 11;
+            return chunk;
+
+          case 11:
+            _context.next = 3;
+            break;
+
+          case 13:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee);
+  }));
+  return _makeBlobIterator.apply(this, arguments);
+}
+
+function readFileSlice$1(_x2, _x3, _x4) {
+  return _readFileSlice$1.apply(this, arguments);
+}
+
+function _readFileSlice$1() {
+  _readFileSlice$1 = _asyncToGenerator(regenerator.mark(function _callee2(file, offset, end) {
+    return regenerator.wrap(function _callee2$(_context2) {
+      while (1) {
+        switch (_context2.prev = _context2.next) {
+          case 0:
+            _context2.next = 2;
+            return new Promise(function (resolve, reject) {
+              var slice = file.slice(offset, end);
+              var fileReader = new FileReader();
+
+              fileReader.onload = function (event) {
+                return resolve(event.target && event.target.result);
+              };
+
+              fileReader.onerror = function (error) {
+                return reject(error);
+              };
+
+              fileReader.readAsArrayBuffer(slice);
+            });
+
+          case 2:
+            return _context2.abrupt("return", _context2.sent);
+
+          case 3:
+          case "end":
+            return _context2.stop();
+        }
+      }
+    }, _callee2);
+  }));
+  return _readFileSlice$1.apply(this, arguments);
+}
+
+function makeStreamIterator(stream) {
+  if (isBrowser$1 || nodeVersion >= 10) {
+    if (typeof stream[Symbol.asyncIterator] === 'function') {
+      return makeToArrayBufferIterator(stream);
+    }
+
+    if (typeof stream.getIterator === 'function') {
+      return stream.getIterator();
+    }
+  }
+
+  return isBrowser$1 ? makeBrowserStreamIterator(stream) : makeNodeStreamIterator(stream);
+}
+
+function makeToArrayBufferIterator(_x) {
+  return _makeToArrayBufferIterator.apply(this, arguments);
+}
+
+function _makeToArrayBufferIterator() {
+  _makeToArrayBufferIterator = _wrapAsyncGenerator(regenerator.mark(function _callee(asyncIterator) {
+    var _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, _value, chunk;
+
+    return regenerator.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            _iteratorNormalCompletion = true;
+            _didIteratorError = false;
+            _context.prev = 2;
+            _iterator = _asyncIterator(asyncIterator);
+
+          case 4:
+            _context.next = 6;
+            return _awaitAsyncGenerator(_iterator.next());
+
+          case 6:
+            _step = _context.sent;
+            _iteratorNormalCompletion = _step.done;
+            _context.next = 10;
+            return _awaitAsyncGenerator(_step.value);
+
+          case 10:
+            _value = _context.sent;
+
+            if (_iteratorNormalCompletion) {
+              _context.next = 18;
+              break;
+            }
+
+            chunk = _value;
+            _context.next = 15;
+            return toArrayBuffer(chunk);
+
+          case 15:
+            _iteratorNormalCompletion = true;
+            _context.next = 4;
+            break;
+
+          case 18:
+            _context.next = 24;
+            break;
+
+          case 20:
+            _context.prev = 20;
+            _context.t0 = _context["catch"](2);
+            _didIteratorError = true;
+            _iteratorError = _context.t0;
+
+          case 24:
+            _context.prev = 24;
+            _context.prev = 25;
+
+            if (!(!_iteratorNormalCompletion && _iterator["return"] != null)) {
+              _context.next = 29;
+              break;
+            }
+
+            _context.next = 29;
+            return _awaitAsyncGenerator(_iterator["return"]());
+
+          case 29:
+            _context.prev = 29;
+
+            if (!_didIteratorError) {
+              _context.next = 32;
+              break;
+            }
+
+            throw _iteratorError;
+
+          case 32:
+            return _context.finish(29);
+
+          case 33:
+            return _context.finish(24);
+
+          case 34:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee, null, [[2, 20, 24, 34], [25,, 29, 33]]);
+  }));
+  return _makeToArrayBufferIterator.apply(this, arguments);
+}
+
+function makeBrowserStreamIterator(_x2) {
+  return _makeBrowserStreamIterator.apply(this, arguments);
+}
+
+function _makeBrowserStreamIterator() {
+  _makeBrowserStreamIterator = _wrapAsyncGenerator(regenerator.mark(function _callee2(stream) {
+    var reader, _yield$_awaitAsyncGen, done, value;
+
+    return regenerator.wrap(function _callee2$(_context2) {
+      while (1) {
+        switch (_context2.prev = _context2.next) {
+          case 0:
+            reader = stream.getReader();
+            _context2.prev = 1;
+
+          case 2:
+
+            _context2.next = 5;
+            return _awaitAsyncGenerator(reader.read());
+
+          case 5:
+            _yield$_awaitAsyncGen = _context2.sent;
+            done = _yield$_awaitAsyncGen.done;
+            value = _yield$_awaitAsyncGen.value;
+
+            if (!done) {
+              _context2.next = 10;
+              break;
+            }
+
+            return _context2.abrupt("return");
+
+          case 10:
+            _context2.next = 12;
+            return toArrayBuffer(value);
+
+          case 12:
+            _context2.next = 2;
+            break;
+
+          case 14:
+            _context2.next = 19;
+            break;
+
+          case 16:
+            _context2.prev = 16;
+            _context2.t0 = _context2["catch"](1);
+            reader.releaseLock();
+
+          case 19:
+          case "end":
+            return _context2.stop();
+        }
+      }
+    }, _callee2, null, [[1, 16]]);
+  }));
+  return _makeBrowserStreamIterator.apply(this, arguments);
+}
+
+function makeNodeStreamIterator(_x3) {
+  return _makeNodeStreamIterator.apply(this, arguments);
+}
+
+function _makeNodeStreamIterator() {
+  _makeNodeStreamIterator = _wrapAsyncGenerator(regenerator.mark(function _callee3(stream) {
+    var data;
+    return regenerator.wrap(function _callee3$(_context3) {
+      while (1) {
+        switch (_context3.prev = _context3.next) {
+          case 0:
+            _context3.next = 2;
+            return _awaitAsyncGenerator(stream);
+
+          case 2:
+            stream = _context3.sent;
+
+          case 3:
+
+            data = stream.read();
+
+            if (!(data !== null)) {
+              _context3.next = 9;
+              break;
+            }
+
+            _context3.next = 8;
+            return toArrayBuffer(data);
+
+          case 8:
+            return _context3.abrupt("continue", 3);
+
+          case 9:
+            if (!stream._readableState.ended) {
+              _context3.next = 11;
+              break;
+            }
+
+            return _context3.abrupt("return");
+
+          case 11:
+            _context3.next = 13;
+            return _awaitAsyncGenerator(onceReadable(stream));
+
+          case 13:
+            _context3.next = 3;
+            break;
+
+          case 15:
+          case "end":
+            return _context3.stop();
+        }
+      }
+    }, _callee3);
+  }));
+  return _makeNodeStreamIterator.apply(this, arguments);
+}
+
+function onceReadable(_x4) {
+  return _onceReadable.apply(this, arguments);
+}
+
+function _onceReadable() {
+  _onceReadable = _asyncToGenerator(regenerator.mark(function _callee4(stream) {
+    return regenerator.wrap(function _callee4$(_context4) {
+      while (1) {
+        switch (_context4.prev = _context4.next) {
+          case 0:
+            return _context4.abrupt("return", new Promise(function (resolve) {
+              stream.once('readable', resolve);
+            }));
+
+          case 1:
+          case "end":
+            return _context4.stop();
+        }
+      }
+    }, _callee4);
+  }));
+  return _onceReadable.apply(this, arguments);
+}
+
+function makeIterator(data) {
+  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+  if (typeof data === 'string') {
+    return makeStringIterator(data, options);
+  }
+
+  if (data instanceof ArrayBuffer) {
+    return makeArrayBufferIterator(data, options);
+  }
+
+  if (isBlob(data)) {
+    return makeBlobIterator(data, options);
+  }
+
+  if (isReadableStream(data)) {
+    return makeStreamIterator(data);
+  }
+
+  if (isResponse(data)) {
+    return makeStreamIterator(data.body);
+  }
+
+  return assert$2(false);
+}
+
+var ERR_DATA = 'Cannot convert supplied data type';
+function getArrayBufferOrStringFromDataSync(data, loader) {
+  if (loader.text && typeof data === 'string') {
+    return data;
+  }
+
+  if (data instanceof ArrayBuffer) {
+    var arrayBuffer = data;
+
+    if (loader.text && !loader.binary) {
+      var textDecoder = new TextDecoder('utf8');
+      return textDecoder.decode(arrayBuffer);
+    }
+
+    return arrayBuffer;
+  }
+
+  if (ArrayBuffer.isView(data) || isBuffer(data)) {
+    if (loader.text && !loader.binary) {
+      var _textDecoder = new TextDecoder('utf8');
+
+      return _textDecoder.decode(data);
+    }
+
+    var _arrayBuffer = data.buffer;
+    var byteLength = data.byteLength || data.length;
+
+    if (data.byteOffset !== 0 || byteLength !== _arrayBuffer.byteLength) {
+      _arrayBuffer = _arrayBuffer.slice(data.byteOffset, data.byteOffset + byteLength);
+    }
+
+    return _arrayBuffer;
+  }
+
+  throw new Error(ERR_DATA);
+}
+function getArrayBufferOrStringFromData(_x, _x2) {
+  return _getArrayBufferOrStringFromData.apply(this, arguments);
+}
+
+function _getArrayBufferOrStringFromData() {
+  _getArrayBufferOrStringFromData = _asyncToGenerator(regenerator.mark(function _callee(data, loader) {
+    var isArrayBuffer, response;
+    return regenerator.wrap(function _callee$(_context3) {
+      while (1) {
+        switch (_context3.prev = _context3.next) {
+          case 0:
+            isArrayBuffer = data instanceof ArrayBuffer || ArrayBuffer.isView(data);
+
+            if (!(typeof data === 'string' || isArrayBuffer)) {
+              _context3.next = 3;
+              break;
+            }
+
+            return _context3.abrupt("return", getArrayBufferOrStringFromDataSync(data, loader));
+
+          case 3:
+            if (!isBlob(data)) {
+              _context3.next = 7;
+              break;
+            }
+
+            _context3.next = 6;
+            return makeResponse(data);
+
+          case 6:
+            data = _context3.sent;
+
+          case 7:
+            if (!isResponse(data)) {
+              _context3.next = 21;
+              break;
+            }
+
+            response = data;
+            _context3.next = 11;
+            return checkResponse(response);
+
+          case 11:
+            if (!loader.binary) {
+              _context3.next = 17;
+              break;
+            }
+
+            _context3.next = 14;
+            return response.arrayBuffer();
+
+          case 14:
+            _context3.t0 = _context3.sent;
+            _context3.next = 20;
+            break;
+
+          case 17:
+            _context3.next = 19;
+            return response.text();
+
+          case 19:
+            _context3.t0 = _context3.sent;
+
+          case 20:
+            return _context3.abrupt("return", _context3.t0);
+
+          case 21:
+            if (isReadableStream(data)) {
+              data = makeIterator(data);
+            }
+
+            if (!(isIterable(data) || isAsyncIterable(data))) {
+              _context3.next = 24;
+              break;
+            }
+
+            return _context3.abrupt("return", concatenateChunksAsync(data));
+
+          case 24:
+            throw new Error(ERR_DATA);
+
+          case 25:
+          case "end":
+            return _context3.stop();
+        }
+      }
+    }, _callee);
+  }));
+  return _getArrayBufferOrStringFromData.apply(this, arguments);
+}
+
+function getAsyncIteratorFromData(_x3) {
+  return _getAsyncIteratorFromData.apply(this, arguments);
+}
+
+function _getAsyncIteratorFromData() {
+  _getAsyncIteratorFromData = _asyncToGenerator(regenerator.mark(function _callee2(data) {
+    return regenerator.wrap(function _callee2$(_context4) {
+      while (1) {
+        switch (_context4.prev = _context4.next) {
+          case 0:
+            if (!isIterator(data)) {
+              _context4.next = 2;
+              break;
+            }
+
+            return _context4.abrupt("return", data);
+
+          case 2:
+            if (!isResponse(data)) {
+              _context4.next = 6;
+              break;
+            }
+
+            _context4.next = 5;
+            return checkResponse(data);
+
+          case 5:
+            return _context4.abrupt("return", makeIterator(data.body));
+
+          case 6:
+            if (!(isBlob(data) || isReadableStream(data))) {
+              _context4.next = 8;
+              break;
+            }
+
+            return _context4.abrupt("return", makeIterator(data));
+
+          case 8:
+            if (!isAsyncIterable(data)) {
+              _context4.next = 10;
+              break;
+            }
+
+            return _context4.abrupt("return", data[Symbol.asyncIterator]());
+
+          case 10:
+            return _context4.abrupt("return", getIteratorFromData(data));
+
+          case 11:
+          case "end":
+            return _context4.stop();
+        }
+      }
+    }, _callee2);
+  }));
+  return _getAsyncIteratorFromData.apply(this, arguments);
+}
+
+function getIteratorFromData(data) {
+  if (ArrayBuffer.isView(data)) {
+    return regenerator.mark(function oneChunk() {
+      return regenerator.wrap(function oneChunk$(_context) {
+        while (1) {
+          switch (_context.prev = _context.next) {
+            case 0:
+              _context.next = 2;
+              return data.buffer;
+
+            case 2:
+            case "end":
+              return _context.stop();
+          }
+        }
+      }, oneChunk);
+    })();
+  }
+
+  if (data instanceof ArrayBuffer) {
+    return regenerator.mark(function oneChunk() {
+      return regenerator.wrap(function oneChunk$(_context2) {
+        while (1) {
+          switch (_context2.prev = _context2.next) {
+            case 0:
+              _context2.next = 2;
+              return data;
+
+            case 2:
+            case "end":
+              return _context2.stop();
+          }
+        }
+      }, oneChunk);
+    })();
+  }
+
+  if (isIterator(data)) {
+    return data;
+  }
+
+  if (isIterable(data)) {
+    return data[Symbol.iterator]();
+  }
+
+  throw new Error(ERR_DATA);
+}
+
+function getReadableStream(_x4) {
+  return _getReadableStream.apply(this, arguments);
+}
+
+function _getReadableStream() {
+  _getReadableStream = _asyncToGenerator(regenerator.mark(function _callee3(data) {
+    var response;
+    return regenerator.wrap(function _callee3$(_context5) {
+      while (1) {
+        switch (_context5.prev = _context5.next) {
+          case 0:
+            if (!isReadableStream(data)) {
+              _context5.next = 2;
+              break;
+            }
+
+            return _context5.abrupt("return", data);
+
+          case 2:
+            if (!isResponse(data)) {
+              _context5.next = 4;
+              break;
+            }
+
+            return _context5.abrupt("return", data.body);
+
+          case 4:
+            _context5.next = 6;
+            return makeResponse(data);
+
+          case 6:
+            response = _context5.sent;
+            return _context5.abrupt("return", response.body);
+
+          case 8:
+          case "end":
+            return _context5.stop();
+        }
+      }
+    }, _callee3);
+  }));
+  return _getReadableStream.apply(this, arguments);
+}
+
+function ownKeys$8(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread$7(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys$8(Object(source), true).forEach(function (key) { _defineProperty$1(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys$8(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+function getLoaderContext(context, options) {
+  var previousContext = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+
+  if (previousContext) {
+    return previousContext;
+  }
+
+  context = _objectSpread$7({
+    fetch: getFetchFunction(options || {}, context)
+  }, context);
+
+  if (!Array.isArray(context.loaders)) {
+    context.loaders = null;
+  }
+
+  return context;
+}
+function getLoaders(loaders, context) {
+  if (!context && loaders && !Array.isArray(loaders)) {
+    return loaders;
+  }
+
+  var candidateLoaders;
+
+  if (loaders) {
+    candidateLoaders = Array.isArray(loaders) ? loaders : [loaders];
+  }
+
+  if (context && context.loaders) {
+    var contextLoaders = Array.isArray(context.loaders) ? context.loaders : [context.loaders];
+    candidateLoaders = candidateLoaders ? [].concat(_toConsumableArray$1(candidateLoaders), _toConsumableArray$1(contextLoaders)) : contextLoaders;
+  }
+
+  return candidateLoaders && candidateLoaders.length ? candidateLoaders : null;
+}
+
+var VERSION$5 = "2.3.13" ;
+function canParseWithWorker(loader, data, options, context) {
+  if (!WorkerFarm.isSupported()) {
+    return false;
+  }
+
+  var loaderOptions = options && options[loader.id];
+
+  if (options.worker === 'local' && loaderOptions && loaderOptions.localWorkerUrl || options.worker && loaderOptions && loaderOptions.workerUrl) {
+    return loader.useWorker ? loader.useWorker(options) : true;
+  }
+
+  return false;
+}
+function parseWithWorker(loader, data, options, context) {
+  var _ref = options || {},
+      worker = _ref.worker;
+
+  var loaderOptions = options && options[loader.id] || {};
+  var workerUrl = worker === 'local' ? loaderOptions.localWorkerUrl : loaderOptions.workerUrl;
+  var workerSource = "url(".concat(workerUrl, ")");
+  var workerName = loader.name;
+  var workerFarm = getWorkerFarm(options);
+  options = JSON.parse(JSON.stringify(options));
+  var warning = loader.version !== VERSION$5 ? "(core version ".concat(VERSION$5, ")") : '';
+  return workerFarm.process(workerSource, "".concat(workerName, "-worker@").concat(loader.version).concat(warning), {
+    arraybuffer: toArrayBuffer(data),
+    options: options,
+    source: "loaders.gl@".concat(VERSION$5),
+    type: 'parse'
+  });
+}
+var _workerFarm = null;
+
+function getWorkerFarm() {
+  var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+  var props = {};
+
+  if (options.maxConcurrency) {
+    props.maxConcurrency = options.maxConcurrency;
+  }
+
+  if (options.onDebug) {
+    props.onDebug = options.onDebug;
+  }
+
+  if ('reuseWorkers' in options) {
+    props.reuseWorkers = options.reuseWorkers;
+  }
+
+  if (!_workerFarm) {
+    _workerFarm = new WorkerFarm({
+      onMessage: onWorkerMessage
+    });
+  }
+
+  _workerFarm.setProps(props);
+
+  return _workerFarm;
+}
+
+function onWorkerMessage(_x) {
+  return _onWorkerMessage.apply(this, arguments);
+}
+
+function _onWorkerMessage() {
+  _onWorkerMessage = _asyncToGenerator(regenerator.mark(function _callee(_ref2) {
+    var worker, data, resolve, reject, result;
+    return regenerator.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            worker = _ref2.worker, data = _ref2.data, resolve = _ref2.resolve, reject = _ref2.reject;
+            _context.t0 = data.type;
+            _context.next = _context.t0 === 'done' ? 4 : _context.t0 === 'parse' ? 6 : _context.t0 === 'error' ? 17 : 19;
+            break;
+
+          case 4:
+            resolve(data.result);
+            return _context.abrupt("break", 19);
+
+          case 6:
+            _context.prev = 6;
+            _context.next = 9;
+            return parse$2(data.arraybuffer, data.options, data.url);
+
+          case 9:
+            result = _context.sent;
+            worker.postMessage({
+              type: 'parse-done',
+              id: data.id,
+              result: result
+            }, getTransferList(result));
+            _context.next = 16;
+            break;
+
+          case 13:
+            _context.prev = 13;
+            _context.t1 = _context["catch"](6);
+            worker.postMessage({
+              type: 'parse-error',
+              id: data.id,
+              message: _context.t1.message
+            });
+
+          case 16:
+            return _context.abrupt("break", 19);
+
+          case 17:
+            reject(data.message);
+            return _context.abrupt("break", 19);
+
+          case 19:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee, null, [[6, 13]]);
+  }));
+  return _onWorkerMessage.apply(this, arguments);
+}
+
+function ownKeys$7(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread$6(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys$7(Object(source), true).forEach(function (key) { _defineProperty$1(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys$7(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+
+function _createForOfIteratorHelper$7(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$8(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function _unsupportedIterableToArray$8(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$8(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$8(o, minLen); }
+
+function _arrayLikeToArray$8(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+var EXT_PATTERN = /\.([^.]+)$/;
+function selectLoader(_x) {
+  return _selectLoader.apply(this, arguments);
+}
+
+function _selectLoader() {
+  _selectLoader = _asyncToGenerator(regenerator.mark(function _callee(data) {
+    var loaders,
+        options,
+        context,
+        loader,
+        _args = arguments;
+    return regenerator.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            loaders = _args.length > 1 && _args[1] !== undefined ? _args[1] : [];
+            options = _args.length > 2 && _args[2] !== undefined ? _args[2] : {};
+            context = _args.length > 3 && _args[3] !== undefined ? _args[3] : {};
+            loader = selectLoaderSync(data, loaders, _objectSpread$6(_objectSpread$6({}, options), {}, {
+              nothrow: true
+            }), context);
+
+            if (!loader) {
+              _context.next = 6;
+              break;
+            }
+
+            return _context.abrupt("return", loader);
+
+          case 6:
+            if (!isBlob(data)) {
+              _context.next = 11;
+              break;
+            }
+
+            _context.next = 9;
+            return readFileSlice$1(data, 0, 10);
+
+          case 9:
+            data = _context.sent;
+            loader = selectLoaderSync(data, loaders, options, context);
+
+          case 11:
+            if (!(!loader && !options.nothrow)) {
+              _context.next = 13;
+              break;
+            }
+
+            throw new Error(getNoValidLoaderMessage(data));
+
+          case 13:
+            return _context.abrupt("return", loader);
+
+          case 14:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee);
+  }));
+  return _selectLoader.apply(this, arguments);
+}
+
+function selectLoaderSync(data) {
+  var loaders = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
+  var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+  var context = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+
+  if (loaders && !Array.isArray(loaders)) {
+    return normalizeLoader(loaders);
+  }
+
+  loaders = [].concat(_toConsumableArray$1(loaders || []), _toConsumableArray$1(getRegisteredLoaders()));
+  normalizeLoaders(loaders);
+
+  var _getResourceUrlAndTyp = getResourceUrlAndType(data),
+      url = _getResourceUrlAndTyp.url,
+      type = _getResourceUrlAndTyp.type;
+
+  var loader = findLoaderByUrl(loaders, url || context.url);
+  loader = loader || findLoaderByContentType(loaders, type);
+  loader = loader || findLoaderByExamingInitialData(loaders, data);
+
+  if (!loader && !options.nothrow) {
+    throw new Error(getNoValidLoaderMessage(data));
+  }
+
+  return loader;
+}
+
+function getNoValidLoaderMessage(data) {
+  var _getResourceUrlAndTyp2 = getResourceUrlAndType(data),
+      url = _getResourceUrlAndTyp2.url,
+      type = _getResourceUrlAndTyp2.type;
+
+  var message = 'No valid loader found';
+
+  if (data) {
+    message += " data: \"".concat(getFirstCharacters(data), "\", contentType: \"").concat(type, "\"");
+  }
+
+  if (url) {
+    message += " url: ".concat(url);
+  }
+
+  return message;
+}
+
+function normalizeLoaders(loaders) {
+  var _iterator = _createForOfIteratorHelper$7(loaders),
+      _step;
+
+  try {
+    for (_iterator.s(); !(_step = _iterator.n()).done;) {
+      var loader = _step.value;
+      normalizeLoader(loader);
+    }
+  } catch (err) {
+    _iterator.e(err);
+  } finally {
+    _iterator.f();
+  }
+}
+
+function findLoaderByUrl(loaders, url) {
+  var match = url && url.match(EXT_PATTERN);
+  var extension = match && match[1];
+  return extension && findLoaderByExtension(loaders, extension);
+}
+
+function findLoaderByExtension(loaders, extension) {
+  extension = extension.toLowerCase();
+
+  var _iterator2 = _createForOfIteratorHelper$7(loaders),
+      _step2;
+
+  try {
+    for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+      var loader = _step2.value;
+
+      var _iterator3 = _createForOfIteratorHelper$7(loader.extensions),
+          _step3;
+
+      try {
+        for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+          var loaderExtension = _step3.value;
+
+          if (loaderExtension.toLowerCase() === extension) {
+            return loader;
+          }
+        }
+      } catch (err) {
+        _iterator3.e(err);
+      } finally {
+        _iterator3.f();
+      }
+    }
+  } catch (err) {
+    _iterator2.e(err);
+  } finally {
+    _iterator2.f();
+  }
+
+  return null;
+}
+
+function findLoaderByContentType(loaders, mimeType) {
+  var _iterator4 = _createForOfIteratorHelper$7(loaders),
+      _step4;
+
+  try {
+    for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
+      var loader = _step4.value;
+
+      if (loader.mimeTypes && loader.mimeTypes.includes(mimeType)) {
+        return loader;
+      }
+
+      if (mimeType === "application/x.".concat(loader.id)) {
+        return loader;
+      }
+    }
+  } catch (err) {
+    _iterator4.e(err);
+  } finally {
+    _iterator4.f();
+  }
+
+  return null;
+}
+
+function findLoaderByExamingInitialData(loaders, data) {
+  if (!data) {
+    return null;
+  }
+
+  var _iterator5 = _createForOfIteratorHelper$7(loaders),
+      _step5;
+
+  try {
+    for (_iterator5.s(); !(_step5 = _iterator5.n()).done;) {
+      var loader = _step5.value;
+
+      if (typeof data === 'string') {
+        if (testDataAgainstText(data, loader)) {
+          return loader;
+        }
+      } else if (ArrayBuffer.isView(data)) {
+        if (testDataAgainstBinary(data.buffer, data.byteOffset, loader)) {
+          return loader;
+        }
+      } else if (data instanceof ArrayBuffer) {
+        var byteOffset = 0;
+
+        if (testDataAgainstBinary(data, byteOffset, loader)) {
+          return loader;
+        }
+      }
+    }
+  } catch (err) {
+    _iterator5.e(err);
+  } finally {
+    _iterator5.f();
+  }
+
+  return null;
+}
+
+function testDataAgainstText(data, loader) {
+  return loader.testText && loader.testText(data);
+}
+
+function testDataAgainstBinary(data, byteOffset, loader) {
+  var tests = Array.isArray(loader.tests) ? loader.tests : [loader.tests];
+  return tests.some(function (test) {
+    return testBinary(data, byteOffset, loader, test);
+  });
+}
+
+function testBinary(data, byteOffset, loader, test) {
+  if (test instanceof ArrayBuffer) {
+    return compareArrayBuffers(test, data, test.byteLength);
+  }
+
+  switch (_typeof(test)) {
+    case 'function':
+      return test(data, loader);
+
+    case 'string':
+      var magic = getMagicString$1(data, byteOffset, test.length);
+      return test === magic;
+
+    default:
+      return false;
+  }
+}
+
+function getFirstCharacters(data) {
+  var length = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 5;
+
+  if (typeof data === 'string') {
+    return data.slice(0, length);
+  } else if (ArrayBuffer.isView(data)) {
+    return getMagicString$1(data.buffer, data.byteOffset, length);
+  } else if (data instanceof ArrayBuffer) {
+    var byteOffset = 0;
+    return getMagicString$1(data, byteOffset, length);
+  }
+
+  return '';
+}
+
+function getMagicString$1(arrayBuffer, byteOffset, length) {
+  if (arrayBuffer.byteLength < byteOffset + length) {
+    return '';
+  }
+
+  var dataView = new DataView(arrayBuffer);
+  var magic = '';
+
+  for (var i = 0; i < length; i++) {
+    magic += String.fromCharCode(dataView.getUint8(byteOffset + i));
+  }
+
+  return magic;
+}
+
+function parse$2(_x, _x2, _x3, _x4) {
+  return _parse$2.apply(this, arguments);
+}
+
+function _parse$2() {
+  _parse$2 = _asyncToGenerator(regenerator.mark(function _callee(data, loaders, options, context) {
+    var _getResourceUrlAndTyp, url, candidateLoaders, loader;
+
+    return regenerator.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            assert$2(!context || typeof context !== 'string', 'parse no longer accepts final url');
+
+            if (loaders && !Array.isArray(loaders) && !isLoaderObject(loaders)) {
+              context = options;
+              options = loaders;
+              loaders = null;
+            }
+
+            _context.next = 4;
+            return data;
+
+          case 4:
+            data = _context.sent;
+            options = options || {};
+            _getResourceUrlAndTyp = getResourceUrlAndType(data), url = _getResourceUrlAndTyp.url;
+            candidateLoaders = getLoaders(loaders, context);
+            _context.next = 10;
+            return selectLoader(data, candidateLoaders, options);
+
+          case 10:
+            loader = _context.sent;
+
+            if (loader) {
+              _context.next = 13;
+              break;
+            }
+
+            return _context.abrupt("return", null);
+
+          case 13:
+            options = normalizeOptions(options, loader, candidateLoaders, url);
+            context = getLoaderContext({
+              url: url,
+              parse: parse$2,
+              loaders: candidateLoaders
+            }, options, context);
+            _context.next = 17;
+            return parseWithLoader(loader, data, options, context);
+
+          case 17:
+            return _context.abrupt("return", _context.sent);
+
+          case 18:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee);
+  }));
+  return _parse$2.apply(this, arguments);
+}
+
+function parseWithLoader(_x5, _x6, _x7, _x8) {
+  return _parseWithLoader.apply(this, arguments);
+}
+
+function _parseWithLoader() {
+  _parseWithLoader = _asyncToGenerator(regenerator.mark(function _callee2(loader, data, options, context) {
+    return regenerator.wrap(function _callee2$(_context2) {
+      while (1) {
+        switch (_context2.prev = _context2.next) {
+          case 0:
+            validateLoaderVersion(loader);
+            _context2.next = 3;
+            return getArrayBufferOrStringFromData(data, loader);
+
+          case 3:
+            data = _context2.sent;
+
+            if (!(loader.parseTextSync && typeof data === 'string')) {
+              _context2.next = 7;
+              break;
+            }
+
+            options.dataType = 'text';
+            return _context2.abrupt("return", loader.parseTextSync(data, options, context, loader));
+
+          case 7:
+            if (!canParseWithWorker(loader, data, options)) {
+              _context2.next = 11;
+              break;
+            }
+
+            _context2.next = 10;
+            return parseWithWorker(loader, data, options);
+
+          case 10:
+            return _context2.abrupt("return", _context2.sent);
+
+          case 11:
+            if (!(loader.parseText && typeof data === 'string')) {
+              _context2.next = 15;
+              break;
+            }
+
+            _context2.next = 14;
+            return loader.parseText(data, options, context, loader);
+
+          case 14:
+            return _context2.abrupt("return", _context2.sent);
+
+          case 15:
+            if (!loader.parse) {
+              _context2.next = 19;
+              break;
+            }
+
+            _context2.next = 18;
+            return loader.parse(data, options, context, loader);
+
+          case 18:
+            return _context2.abrupt("return", _context2.sent);
+
+          case 19:
+            assert$2(!loader.parseSync);
+            return _context2.abrupt("return", assert$2(false));
+
+          case 21:
+          case "end":
+            return _context2.stop();
+        }
+      }
+    }, _callee2);
+  }));
+  return _parseWithLoader.apply(this, arguments);
+}
+
+function parseSync$1(data, loaders, options, context) {
+  assert$2(!context || typeof context !== 'string', 'parseSync no longer accepts final url');
+
+  if (!Array.isArray(loaders) && !isLoaderObject(loaders)) {
+    context = options;
+    options = loaders;
+    loaders = null;
+  }
+
+  options = options || {};
+  var candidateLoaders = getLoaders(loaders, context);
+  var loader = selectLoaderSync(data, candidateLoaders, options);
+
+  if (!loader) {
+    return null;
+  }
+
+  options = normalizeOptions(options, loader, candidateLoaders);
+
+  var _getResourceUrlAndTyp = getResourceUrlAndType(data),
+      url = _getResourceUrlAndTyp.url;
+
+  context = getLoaderContext({
+    url: url,
+    parseSync: parseSync$1,
+    loaders: loaders
+  }, options);
+  return parseWithLoaderSync(loader, data, options, context);
+}
+
+function parseWithLoaderSync(loader, data, options, context) {
+  data = getArrayBufferOrStringFromDataSync(data, loader);
+
+  if (loader.parseTextSync && typeof data === 'string') {
+    return loader.parseTextSync(data, options, context, loader);
+  }
+
+  if (loader.parseSync) {
+    return loader.parseSync(data, options, context, loader);
+  }
+
+  throw new Error("".concat(loader.name, " loader: 'parseSync' not supported by this loader, use 'parse' instead. ").concat(context.url || ''));
+}
+
+function _asyncGeneratorDelegate(inner, awaitWrap) {
+  var iter = {},
+      waiting = false;
+
+  function pump(key, value) {
+    waiting = true;
+    value = new Promise(function (resolve) {
+      resolve(inner[key](value));
+    });
+    return {
+      done: false,
+      value: awaitWrap(value)
+    };
+  }
+
+  if (typeof Symbol === "function" && Symbol.iterator) {
+    iter[Symbol.iterator] = function () {
+      return this;
+    };
+  }
+
+  iter.next = function (value) {
+    if (waiting) {
+      waiting = false;
+      return value;
+    }
+
+    return pump("next", value);
+  };
+
+  if (typeof inner["throw"] === "function") {
+    iter["throw"] = function (value) {
+      if (waiting) {
+        waiting = false;
+        throw value;
+      }
+
+      return pump("throw", value);
+    };
+  }
+
+  if (typeof inner["return"] === "function") {
+    iter["return"] = function (value) {
+      if (waiting) {
+        waiting = false;
+        return value;
+      }
+
+      return pump("return", value);
+    };
+  }
+
+  return iter;
+}
+
+function _createForOfIteratorHelper$6(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$7(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function _unsupportedIterableToArray$7(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$7(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$7(o, minLen); }
+
+function _arrayLikeToArray$7(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+function parseInBatches(_x2, _x3, _x4, _x5) {
+  return _parseInBatches.apply(this, arguments);
+}
+
+function _parseInBatches() {
+  _parseInBatches = _asyncToGenerator(regenerator.mark(function _callee(data, loaders, options, context) {
+    var _getResourceUrlAndTyp, url, loader;
+
+    return regenerator.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            assert$2(!context || typeof context !== 'string', 'parseInBatches no longer accepts final url');
+
+            if (!Array.isArray(loaders) && !isLoaderObject(loaders)) {
+              context = options;
+              options = loaders;
+              loaders = null;
+            }
+
+            _context.next = 4;
+            return data;
+
+          case 4:
+            data = _context.sent;
+            options = options || {};
+            _getResourceUrlAndTyp = getResourceUrlAndType(data), url = _getResourceUrlAndTyp.url;
+            _context.next = 9;
+            return selectLoader(data, loaders, options);
+
+          case 9:
+            loader = _context.sent;
+
+            if (loader) {
+              _context.next = 12;
+              break;
+            }
+
+            return _context.abrupt("return", null);
+
+          case 12:
+            options = normalizeOptions(options, loader, loaders, url);
+            context = getLoaderContext({
+              url: url,
+              parseInBatches: parseInBatches,
+              parse: parse$2,
+              loaders: loaders
+            }, options, context);
+            _context.next = 16;
+            return parseWithLoaderInBatches(loader, data, options, context);
+
+          case 16:
+            return _context.abrupt("return", _context.sent);
+
+          case 17:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee);
+  }));
+  return _parseInBatches.apply(this, arguments);
+}
+
+function parseWithLoaderInBatches(_x6, _x7, _x8, _x9) {
+  return _parseWithLoaderInBatches.apply(this, arguments);
+}
+
+function _parseWithLoaderInBatches() {
+  _parseWithLoaderInBatches = _asyncToGenerator(regenerator.mark(function _callee3(loader, data, options, context) {
+    var outputIterator, metadataBatch, makeMetadataBatchIterator, _makeMetadataBatchIterator;
+
+    return regenerator.wrap(function _callee3$(_context3) {
+      while (1) {
+        switch (_context3.prev = _context3.next) {
+          case 0:
+            _makeMetadataBatchIterator = function _makeMetadataBatchIte2() {
+              _makeMetadataBatchIterator = _wrapAsyncGenerator(regenerator.mark(function _callee2(iterator) {
+                return regenerator.wrap(function _callee2$(_context2) {
+                  while (1) {
+                    switch (_context2.prev = _context2.next) {
+                      case 0:
+                        _context2.next = 2;
+                        return metadataBatch;
+
+                      case 2:
+                        return _context2.delegateYield(_asyncGeneratorDelegate(_asyncIterator(iterator), _awaitAsyncGenerator), "t0", 3);
+
+                      case 3:
+                      case "end":
+                        return _context2.stop();
+                    }
+                  }
+                }, _callee2);
+              }));
+              return _makeMetadataBatchIterator.apply(this, arguments);
+            };
+
+            makeMetadataBatchIterator = function _makeMetadataBatchIte(_x) {
+              return _makeMetadataBatchIterator.apply(this, arguments);
+            };
+
+            _context3.next = 4;
+            return parseToOutputIterator(loader, data, options, context);
+
+          case 4:
+            outputIterator = _context3.sent;
+
+            if (options.metadata) {
+              _context3.next = 7;
+              break;
+            }
+
+            return _context3.abrupt("return", outputIterator);
+
+          case 7:
+            metadataBatch = {
+              batchType: 'metadata',
+              metadata: {
+                _loader: loader,
+                _context: context
+              },
+              data: [],
+              bytesUsed: 0
+            };
+            return _context3.abrupt("return", makeMetadataBatchIterator(outputIterator));
+
+          case 9:
+          case "end":
+            return _context3.stop();
+        }
+      }
+    }, _callee3);
+  }));
+  return _parseWithLoaderInBatches.apply(this, arguments);
+}
+
+function parseToOutputIterator(_x10, _x11, _x12, _x13) {
+  return _parseToOutputIterator.apply(this, arguments);
+}
+
+function _parseToOutputIterator() {
+  _parseToOutputIterator = _asyncToGenerator(regenerator.mark(function _callee5(loader, data, options, context) {
+    var inputIterator, iteratorChain, stream, parseChunkInBatches, _parseChunkInBatches;
+
+    return regenerator.wrap(function _callee5$(_context5) {
+      while (1) {
+        switch (_context5.prev = _context5.next) {
+          case 0:
+            _parseChunkInBatches = function _parseChunkInBatches3() {
+              _parseChunkInBatches = _wrapAsyncGenerator(regenerator.mark(function _callee4() {
+                var inputIterator, arrayBuffer;
+                return regenerator.wrap(function _callee4$(_context4) {
+                  while (1) {
+                    switch (_context4.prev = _context4.next) {
+                      case 0:
+                        _context4.next = 2;
+                        return _awaitAsyncGenerator(getAsyncIteratorFromData(data));
+
+                      case 2:
+                        inputIterator = _context4.sent;
+                        _context4.next = 5;
+                        return _awaitAsyncGenerator(concatenateChunksAsync(inputIterator));
+
+                      case 5:
+                        arrayBuffer = _context4.sent;
+                        _context4.next = 8;
+                        return loader.parse(arrayBuffer, options, context, loader);
+
+                      case 8:
+                      case "end":
+                        return _context4.stop();
+                    }
+                  }
+                }, _callee4);
+              }));
+              return _parseChunkInBatches.apply(this, arguments);
+            };
+
+            parseChunkInBatches = function _parseChunkInBatches2() {
+              return _parseChunkInBatches.apply(this, arguments);
+            };
+
+            if (!loader.parseInBatches) {
+              _context5.next = 10;
+              break;
+            }
+
+            _context5.next = 5;
+            return getAsyncIteratorFromData(data);
+
+          case 5:
+            inputIterator = _context5.sent;
+            iteratorChain = applyInputTransforms(inputIterator, options);
+            _context5.next = 9;
+            return loader.parseInBatches(iteratorChain, options, context, loader);
+
+          case 9:
+            return _context5.abrupt("return", _context5.sent);
+
+          case 10:
+            if (!loader.parseStreamInBatches) {
+              _context5.next = 17;
+              break;
+            }
+
+            _context5.next = 13;
+            return getReadableStream(data);
+
+          case 13:
+            stream = _context5.sent;
+
+            if (!stream) {
+              _context5.next = 17;
+              break;
+            }
+
+            if (options.transforms) {
+              console.warn('options.transforms not implemented for loaders that use `parseStreamInBatches`');
+            }
+
+            return _context5.abrupt("return", loader.parseStreamInBatches(stream, options, context));
+
+          case 17:
+            _context5.next = 19;
+            return parseChunkInBatches();
+
+          case 19:
+            return _context5.abrupt("return", _context5.sent);
+
+          case 20:
+          case "end":
+            return _context5.stop();
+        }
+      }
+    }, _callee5);
+  }));
+  return _parseToOutputIterator.apply(this, arguments);
+}
+
+function applyInputTransforms(inputIterator, options) {
+  var iteratorChain = inputIterator;
+
+  var _iterator = _createForOfIteratorHelper$6(options.transforms || []),
+      _step;
+
+  try {
+    for (_iterator.s(); !(_step = _iterator.n()).done;) {
+      var Transform = _step.value;
+      iteratorChain = makeTransformIterator(iteratorChain, Transform, options);
+    }
+  } catch (err) {
+    _iterator.e(err);
+  } finally {
+    _iterator.f();
+  }
+
+  return iteratorChain;
+}
+
+function load(_x, _x2, _x3) {
+  return _load.apply(this, arguments);
+}
+
+function _load() {
+  _load = _asyncToGenerator(regenerator.mark(function _callee(url, loaders, options) {
+    var fetch, data;
+    return regenerator.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            if (!Array.isArray(loaders) && !isLoaderObject(loaders)) {
+              options = loaders;
+              loaders = null;
+            }
+
+            fetch = getFetchFunction(options || {});
+            data = url;
+
+            if (!(typeof url === 'string')) {
+              _context.next = 9;
+              break;
+            }
+
+            _context.next = 6;
+            return fetch(url);
+
+          case 6:
+            data = _context.sent;
+            _context.next = 10;
+            break;
+
+          case 9:
+            url = null;
+
+          case 10:
+            if (!isBlob(url)) {
+              _context.next = 15;
+              break;
+            }
+
+            _context.next = 13;
+            return fetch(url);
+
+          case 13:
+            data = _context.sent;
+            url = null;
+
+          case 15:
+            _context.next = 17;
+            return parse$2(data, loaders, options);
+
+          case 17:
+            return _context.abrupt("return", _context.sent);
+
+          case 18:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee);
+  }));
+  return _load.apply(this, arguments);
+}
+
+function loadInBatches(files, loaders, options) {
+  if (!Array.isArray(loaders) && !isLoaderObject(loaders)) {
+    options = loaders;
+    loaders = null;
+  }
+
+  var fetch = getFetchFunction(options || {});
+
+  if (!Array.isArray(files)) {
+    return loadOneFileInBatches(files, loaders, options, fetch);
+  }
+
+  var promises = files.map(function (file) {
+    return loadOneFileInBatches(file, loaders, options, fetch);
+  });
+  return promises;
+}
+
+function loadOneFileInBatches(_x, _x2, _x3, _x4) {
+  return _loadOneFileInBatches.apply(this, arguments);
+}
+
+function _loadOneFileInBatches() {
+  _loadOneFileInBatches = _asyncToGenerator(regenerator.mark(function _callee(file, loaders, options, fetch) {
+    var url, response;
+    return regenerator.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            if (!(typeof file === 'string')) {
+              _context.next = 8;
+              break;
+            }
+
+            url = file;
+            _context.next = 4;
+            return fetch(url);
+
+          case 4:
+            response = _context.sent;
+            _context.next = 7;
+            return parseInBatches(response, loaders, options);
+
+          case 7:
+            return _context.abrupt("return", _context.sent);
+
+          case 8:
+            _context.next = 10;
+            return parseInBatches(file, loaders, options);
+
+          case 10:
+            return _context.abrupt("return", _context.sent);
+
+          case 11:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee);
+  }));
+  return _loadOneFileInBatches.apply(this, arguments);
+}
+
+function getTemporaryFilename(filename) {
+  return "/tmp/".concat(filename);
+}
+
+function encode$4(_x, _x2, _x3, _x4) {
+  return _encode.apply(this, arguments);
+}
+
+function _encode() {
+  _encode = _asyncToGenerator(regenerator.mark(function _callee(data, writer, options, url) {
+    var batches, chunks, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, _value, batch, tmpInputFilename, tmpOutputFilename, outputFilename, response;
+
+    return regenerator.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            if (!writer.encode) {
+              _context.next = 4;
+              break;
+            }
+
+            _context.next = 3;
+            return writer.encode(data, options);
+
+          case 3:
+            return _context.abrupt("return", _context.sent);
+
+          case 4:
+            if (!writer.encodeSync) {
+              _context.next = 6;
+              break;
+            }
+
+            return _context.abrupt("return", writer.encodeSync(data, options));
+
+          case 6:
+            if (!writer.encodeText) {
+              _context.next = 12;
+              break;
+            }
+
+            _context.t0 = new TextEncoder();
+            _context.next = 10;
+            return writer.encodeText(data, options);
+
+          case 10:
+            _context.t1 = _context.sent;
+            return _context.abrupt("return", _context.t0.encode.call(_context.t0, _context.t1));
+
+          case 12:
+            if (!writer.encodeInBatches) {
+              _context.next = 51;
+              break;
+            }
+
+            batches = encodeInBatches(data, writer, options);
+            chunks = [];
+            _iteratorNormalCompletion = true;
+            _didIteratorError = false;
+            _context.prev = 17;
+            _iterator = _asyncIterator(batches);
+
+          case 19:
+            _context.next = 21;
+            return _iterator.next();
+
+          case 21:
+            _step = _context.sent;
+            _iteratorNormalCompletion = _step.done;
+            _context.next = 25;
+            return _step.value;
+
+          case 25:
+            _value = _context.sent;
+
+            if (_iteratorNormalCompletion) {
+              _context.next = 32;
+              break;
+            }
+
+            batch = _value;
+            chunks.push(batch);
+
+          case 29:
+            _iteratorNormalCompletion = true;
+            _context.next = 19;
+            break;
+
+          case 32:
+            _context.next = 38;
+            break;
+
+          case 34:
+            _context.prev = 34;
+            _context.t2 = _context["catch"](17);
+            _didIteratorError = true;
+            _iteratorError = _context.t2;
+
+          case 38:
+            _context.prev = 38;
+            _context.prev = 39;
+
+            if (!(!_iteratorNormalCompletion && _iterator["return"] != null)) {
+              _context.next = 43;
+              break;
+            }
+
+            _context.next = 43;
+            return _iterator["return"]();
+
+          case 43:
+            _context.prev = 43;
+
+            if (!_didIteratorError) {
+              _context.next = 46;
+              break;
+            }
+
+            throw _iteratorError;
+
+          case 46:
+            return _context.finish(43);
+
+          case 47:
+            return _context.finish(38);
+
+          case 48:
+            _context.next = 50;
+            return concatenateArrayBuffers.apply(void 0, chunks);
+
+          case 50:
+            return _context.abrupt("return", _context.sent);
+
+          case 51:
+            if (!(!isBrowser$1 && writer.encodeURLtoURL)) {
+              _context.next = 63;
+              break;
+            }
+
+            tmpInputFilename = getTemporaryFilename('input');
+            _context.next = 55;
+            return writeFile(tmpInputFilename, data);
+
+          case 55:
+            tmpOutputFilename = getTemporaryFilename('output');
+            _context.next = 58;
+            return encodeURLtoURL(tmpInputFilename, tmpOutputFilename, writer, options);
+
+          case 58:
+            outputFilename = _context.sent;
+            _context.next = 61;
+            return fetchFile(outputFilename);
+
+          case 61:
+            response = _context.sent;
+            return _context.abrupt("return", response.arrayBuffer());
+
+          case 63:
+            throw new Error('Writer could not encode data');
+
+          case 64:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee, null, [[17, 34, 38, 48], [39,, 43, 47]]);
+  }));
+  return _encode.apply(this, arguments);
+}
+
+function encodeSync$2(data, writer, options, url) {
+  if (writer.encodeSync) {
+    return writer.encodeSync(data, options);
+  }
+
+  throw new Error('Writer could not synchronously encode data');
+}
+function encodeText(_x5, _x6, _x7, _x8) {
+  return _encodeText.apply(this, arguments);
+}
+
+function _encodeText() {
+  _encodeText = _asyncToGenerator(regenerator.mark(function _callee2(data, writer, options, url) {
+    var arrayBuffer;
+    return regenerator.wrap(function _callee2$(_context2) {
+      while (1) {
+        switch (_context2.prev = _context2.next) {
+          case 0:
+            if (!(writer.text && writer.encodeText)) {
+              _context2.next = 4;
+              break;
+            }
+
+            _context2.next = 3;
+            return writer.encodeText(data, options);
+
+          case 3:
+            return _context2.abrupt("return", _context2.sent);
+
+          case 4:
+            if (!(writer.text && (writer.encode || writer.encodeInBatches))) {
+              _context2.next = 9;
+              break;
+            }
+
+            _context2.next = 7;
+            return encode$4(data, writer, options);
+
+          case 7:
+            arrayBuffer = _context2.sent;
+            return _context2.abrupt("return", new TextDecoder().decode(arrayBuffer));
+
+          case 9:
+            throw new Error('Writer could not encode data as text');
+
+          case 10:
+          case "end":
+            return _context2.stop();
+        }
+      }
+    }, _callee2);
+  }));
+  return _encodeText.apply(this, arguments);
+}
+
+function encodeInBatches(data, writer, options, url) {
+  if (writer.encodeInBatches) {
+    var dataIterator = getIterator(data);
+    return writer.encodeInBatches(dataIterator, options);
+  }
+
+  throw new Error('Writer could not encode data in batches');
+}
+
+function getIterator(data) {
+  var dataIterator = [{
+    table: data,
+    start: 0,
+    end: data.length
+  }];
+  return dataIterator;
+}
+
+function encodeURLtoURL(_x9, _x10, _x11, _x12) {
+  return _encodeURLtoURL.apply(this, arguments);
+}
+
+function _encodeURLtoURL() {
+  _encodeURLtoURL = _asyncToGenerator(regenerator.mark(function _callee3(inputUrl, outputUrl, writer, options) {
+    var outputFilename;
+    return regenerator.wrap(function _callee3$(_context3) {
+      while (1) {
+        switch (_context3.prev = _context3.next) {
+          case 0:
+            inputUrl = resolvePath(inputUrl);
+            outputUrl = resolvePath(outputUrl);
+
+            if (!(isBrowser$1 || !writer.encodeURLtoURL)) {
+              _context3.next = 4;
+              break;
+            }
+
+            throw new Error();
+
+          case 4:
+            _context3.next = 6;
+            return writer.encodeURLtoURL(inputUrl, outputUrl, options);
+
+          case 6:
+            outputFilename = _context3.sent;
+            return _context3.abrupt("return", outputFilename);
+
+          case 8:
+          case "end":
+            return _context3.stop();
+        }
+      }
+    }, _callee3);
+  }));
+  return _encodeURLtoURL.apply(this, arguments);
+}
+
+function save(data, url, writer, options) {
+  var encodedData = encode$4(data, writer, options, url);
+  return writeFile(url, encodedData);
+}
+function saveSync(data, url, writer, options) {
+  var encodedData = encodeSync$2(data, writer, options);
+  return writeFileSync(url, encodedData);
+}
+
+var VERSION$4 = "2.3.13" ;
+var NullLoader = {
+  id: 'image',
+  name: 'Images',
+  version: VERSION$4,
+  mimeTypes: ['application/x.empty'],
+  extensions: ['null'],
+  parse: function () {
+    var _parse = _asyncToGenerator(regenerator.mark(function _callee(arrayBuffer, options) {
+      return regenerator.wrap(function _callee$(_context) {
+        while (1) {
+          switch (_context.prev = _context.next) {
+            case 0:
+              return _context.abrupt("return", arrayBuffer);
+
+            case 1:
+            case "end":
+              return _context.stop();
+          }
+        }
+      }, _callee);
+    }));
+
+    function parse(_x, _x2) {
+      return _parse.apply(this, arguments);
+    }
+
+    return parse;
+  }(),
+  parseSync: function parseSync(arrayBuffer, options) {
+    return arrayBuffer;
+  },
+  parseInBatches: function () {
+    var _parseInBatches2 = _asyncToGenerator(regenerator.mark(function _callee3(asyncIterator, options) {
+      return regenerator.wrap(function _callee3$(_context3) {
+        while (1) {
+          switch (_context3.prev = _context3.next) {
+            case 0:
+              return _context3.abrupt("return", function () {
+                var _parseInBatches = _wrapAsyncGenerator(regenerator.mark(function _callee2() {
+                  return regenerator.wrap(function _callee2$(_context2) {
+                    while (1) {
+                      switch (_context2.prev = _context2.next) {
+                        case 0:
+                          return _context2.delegateYield(_asyncGeneratorDelegate(_asyncIterator(asyncIterator), _awaitAsyncGenerator), "t0", 1);
+
+                        case 1:
+                        case "end":
+                          return _context2.stop();
+                      }
+                    }
+                  }, _callee2);
+                }));
+
+                function parseInBatches() {
+                  return _parseInBatches.apply(this, arguments);
+                }
+
+                return parseInBatches;
+              }()());
+
+            case 1:
+            case "end":
+              return _context3.stop();
+          }
+        }
+      }, _callee3);
+    }));
+
+    function parseInBatches(_x3, _x4) {
+      return _parseInBatches2.apply(this, arguments);
+    }
+
+    return parseInBatches;
+  }(),
+  tests: [function () {
+    return false;
+  }],
+  options: {}
+};
+
+function fetchProgress(_x, _x2) {
+  return _fetchProgress.apply(this, arguments);
+}
+
+function _fetchProgress() {
+  _fetchProgress = _asyncToGenerator(regenerator.mark(function _callee(response, onProgress) {
+    var onDone,
+        onError,
+        body,
+        contentLength,
+        totalBytes,
+        progressStream,
+        _args = arguments;
+    return regenerator.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            onDone = _args.length > 2 && _args[2] !== undefined ? _args[2] : function () {};
+            onError = _args.length > 3 && _args[3] !== undefined ? _args[3] : function () {};
+            _context.next = 4;
+            return response;
+
+          case 4:
+            response = _context.sent;
+
+            if (response.ok) {
+              _context.next = 7;
+              break;
+            }
+
+            return _context.abrupt("return", response);
+
+          case 7:
+            body = response.body;
+
+            if (body) {
+              _context.next = 10;
+              break;
+            }
+
+            return _context.abrupt("return", response);
+
+          case 10:
+            contentLength = response.headers.get('content-length');
+            totalBytes = contentLength && parseInt(contentLength, 10);
+
+            if (contentLength > 0) {
+              _context.next = 14;
+              break;
+            }
+
+            return _context.abrupt("return", response);
+
+          case 14:
+            if (!(typeof ReadableStream === 'undefined' || !body.getReader)) {
+              _context.next = 16;
+              break;
+            }
+
+            return _context.abrupt("return", response);
+
+          case 16:
+            progressStream = new ReadableStream({
+              start: function start(controller) {
+                var reader = body.getReader();
+                read(controller, reader, 0, totalBytes, onProgress, onDone, onError);
+              }
+            });
+            return _context.abrupt("return", new Response(progressStream));
+
+          case 18:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee);
+  }));
+  return _fetchProgress.apply(this, arguments);
+}
+
+function read(_x3, _x4, _x5, _x6, _x7, _x8, _x9) {
+  return _read.apply(this, arguments);
+}
+
+function _read() {
+  _read = _asyncToGenerator(regenerator.mark(function _callee2(controller, reader, loadedBytes, totalBytes, onProgress, onDone, onError) {
+    var _yield$reader$read, done, value, percent;
+
+    return regenerator.wrap(function _callee2$(_context2) {
+      while (1) {
+        switch (_context2.prev = _context2.next) {
+          case 0:
+            _context2.prev = 0;
+            _context2.next = 3;
+            return reader.read();
+
+          case 3:
+            _yield$reader$read = _context2.sent;
+            done = _yield$reader$read.done;
+            value = _yield$reader$read.value;
+
+            if (!done) {
+              _context2.next = 10;
+              break;
+            }
+
+            onDone();
+            controller.close();
+            return _context2.abrupt("return");
+
+          case 10:
+            loadedBytes += value.byteLength;
+            percent = Math.round(loadedBytes / totalBytes * 100);
+            onProgress(percent, {
+              loadedBytes: loadedBytes,
+              totalBytes: totalBytes
+            });
+            controller.enqueue(value);
+            _context2.next = 16;
+            return read(controller, reader, loadedBytes, totalBytes, onProgress, onDone, onError);
+
+          case 16:
+            _context2.next = 22;
+            break;
+
+          case 18:
+            _context2.prev = 18;
+            _context2.t0 = _context2["catch"](0);
+            controller.error(_context2.t0);
+            onError(_context2.t0);
+
+          case 22:
+          case "end":
+            return _context2.stop();
+        }
+      }
+    }, _callee2, null, [[0, 18]]);
+  }));
+  return _read.apply(this, arguments);
+}
+
+var BrowserFileSystem = function () {
+  function BrowserFileSystem(files) {
+    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+    _classCallCheck$1(this, BrowserFileSystem);
+
+    this._fetch = options.fetch || fetch;
+    this.files = {};
+
+    for (var i = 0; i < files.length; ++i) {
+      var file = files[i];
+      this.files[file.name] = file;
+    }
+
+    this.fetch = this.fetch.bind(this);
+  }
+
+  _createClass$1(BrowserFileSystem, [{
+    key: "fetch",
+    value: function () {
+      var _fetch = _asyncToGenerator(regenerator.mark(function _callee(path) {
+        var options,
+            fallbackFetch,
+            file,
+            response,
+            _args = arguments;
+        return regenerator.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                options = _args.length > 1 && _args[1] !== undefined ? _args[1] : {};
+
+                if (!path.includes('://')) {
+                  _context.next = 4;
+                  break;
+                }
+
+                fallbackFetch = options.fetch || this._fetch;
+                return _context.abrupt("return", fallbackFetch(path, options));
+
+              case 4:
+                file = this.files[path];
+
+                if (!file) {
+                  _context.next = 9;
+                  break;
+                }
+
+                response = new Response(this.files[path]);
+                Object.defineProperty(response, 'url', {
+                  value: path
+                });
+                return _context.abrupt("return", response);
+
+              case 9:
+                return _context.abrupt("return", new Response(path, {
+                  status: 400,
+                  statusText: 'NOT FOUND'
+                }));
+
+              case 10:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, this);
+      }));
+
+      function fetch(_x) {
+        return _fetch.apply(this, arguments);
+      }
+
+      return fetch;
+    }()
+  }, {
+    key: "readdir",
+    value: function () {
+      var _readdir = _asyncToGenerator(regenerator.mark(function _callee2() {
+        var files, path;
+        return regenerator.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                files = [];
+
+                for (path in this.files) {
+                  files.push(path);
+                }
+
+                return _context2.abrupt("return", files);
+
+              case 3:
+              case "end":
+                return _context2.stop();
+            }
+          }
+        }, _callee2, this);
+      }));
+
+      function readdir() {
+        return _readdir.apply(this, arguments);
+      }
+
+      return readdir;
+    }()
+  }, {
+    key: "stat",
+    value: function () {
+      var _stat = _asyncToGenerator(regenerator.mark(function _callee3(path, options) {
+        var file;
+        return regenerator.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                file = this.files[path];
+
+                if (file) {
+                  _context3.next = 3;
+                  break;
+                }
+
+                throw new Error("No such file: ".concat(path));
+
+              case 3:
+                return _context3.abrupt("return", {
+                  size: file.size
+                });
+
+              case 4:
+              case "end":
+                return _context3.stop();
+            }
+          }
+        }, _callee3, this);
+      }));
+
+      function stat(_x2, _x3) {
+        return _stat.apply(this, arguments);
+      }
+
+      return stat;
+    }()
+  }, {
+    key: "unlink",
+    value: function () {
+      var _unlink = _asyncToGenerator(regenerator.mark(function _callee4(pathname) {
+        return regenerator.wrap(function _callee4$(_context4) {
+          while (1) {
+            switch (_context4.prev = _context4.next) {
+              case 0:
+                delete this.files[pathname];
+
+              case 1:
+              case "end":
+                return _context4.stop();
+            }
+          }
+        }, _callee4, this);
+      }));
+
+      function unlink(_x4) {
+        return _unlink.apply(this, arguments);
+      }
+
+      return unlink;
+    }()
+  }, {
+    key: "open",
+    value: function () {
+      var _open = _asyncToGenerator(regenerator.mark(function _callee5(pathname) {
+        return regenerator.wrap(function _callee5$(_context5) {
+          while (1) {
+            switch (_context5.prev = _context5.next) {
+              case 0:
+                return _context5.abrupt("return", this.files[pathname]);
+
+              case 1:
+              case "end":
+                return _context5.stop();
+            }
+          }
+        }, _callee5, this);
+      }));
+
+      function open(_x5) {
+        return _open.apply(this, arguments);
+      }
+
+      return open;
+    }()
+  }, {
+    key: "read",
+    value: function () {
+      var _read = _asyncToGenerator(regenerator.mark(function _callee6(fd, _ref) {
+        var _ref$buffer, buffer, _ref$length, length, _ref$position, position, file, arrayBuffer;
+
+        return regenerator.wrap(function _callee6$(_context6) {
+          while (1) {
+            switch (_context6.prev = _context6.next) {
+              case 0:
+                _ref$buffer = _ref.buffer, buffer = _ref$buffer === void 0 ? null : _ref$buffer, _ref.offset, _ref$length = _ref.length, length = _ref$length === void 0 ? buffer.byteLength : _ref$length, _ref$position = _ref.position, position = _ref$position === void 0 ? null : _ref$position;
+                file = fd;
+                _context6.next = 4;
+                return readFileSlice(file, position, position + length);
+
+              case 4:
+                arrayBuffer = _context6.sent;
+                return _context6.abrupt("return", arrayBuffer);
+
+              case 6:
+              case "end":
+                return _context6.stop();
+            }
+          }
+        }, _callee6);
+      }));
+
+      function read(_x6, _x7) {
+        return _read.apply(this, arguments);
+      }
+
+      return read;
+    }()
+  }, {
+    key: "close",
+    value: function () {
+      var _close = _asyncToGenerator(regenerator.mark(function _callee7(fd) {
+        return regenerator.wrap(function _callee7$(_context7) {
+          while (1) {
+            switch (_context7.prev = _context7.next) {
+              case 0:
+              case "end":
+                return _context7.stop();
+            }
+          }
+        }, _callee7);
+      }));
+
+      function close(_x8) {
+        return _close.apply(this, arguments);
+      }
+
+      return close;
+    }()
+  }]);
+
+  return BrowserFileSystem;
+}();
+
+function readFileSlice(_x9, _x10, _x11) {
+  return _readFileSlice.apply(this, arguments);
+}
+
+function _readFileSlice() {
+  _readFileSlice = _asyncToGenerator(regenerator.mark(function _callee8(file, start, end) {
+    var slice;
+    return regenerator.wrap(function _callee8$(_context8) {
+      while (1) {
+        switch (_context8.prev = _context8.next) {
+          case 0:
+            slice = file.slice(start, end);
+            _context8.next = 3;
+            return new Promise(function (resolve, reject) {
+              var fileReader = new FileReader();
+
+              fileReader.onload = function (event) {
+                return resolve(event.target && event.target.result);
+              };
+
+              fileReader.onerror = function (error) {
+                return reject(error);
+              };
+
+              fileReader.readAsArrayBuffer(slice);
+            });
+
+          case 3:
+            return _context8.abrupt("return", _context8.sent);
+
+          case 4:
+          case "end":
+            return _context8.stop();
+        }
+      }
+    }, _callee8);
+  }));
+  return _readFileSlice.apply(this, arguments);
+}
+
+var index$1 = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  fetchFile: fetchFile,
+  readFileSync: readFileSync,
+  writeFile: writeFile,
+  writeFileSync: writeFileSync,
+  setLoaderOptions: setLoaderOptions,
+  registerLoaders: registerLoaders,
+  parse: parse$2,
+  parseSync: parseSync$1,
+  parseInBatches: parseInBatches,
+  selectLoader: selectLoader,
+  selectLoaderSync: selectLoaderSync,
+  load: load,
+  loadInBatches: loadInBatches,
+  encode: encode$4,
+  encodeSync: encodeSync$2,
+  encodeInBatches: encodeInBatches,
+  encodeText: encodeText,
+  encodeURLtoURL: encodeURLtoURL,
+  save: save,
+  saveSync: saveSync,
+  makeIterator: makeIterator,
+  NullLoader: NullLoader,
+  setPathPrefix: setPathPrefix,
+  getPathPrefix: getPathPrefix,
+  resolvePath: resolvePath,
+  RequestScheduler: RequestScheduler,
+  _fetchProgress: fetchProgress,
+  _BrowserFileSystem: BrowserFileSystem,
+  _unregisterLoaders: _unregisterLoaders,
+  isBrowser: isBrowser$1,
+  isWorker: isWorker,
+  self: self_,
+  window: window_,
+  global: global_$1,
+  document: document_,
+  assert: assert$2,
+  forEach: forEach,
+  concatenateChunksAsync: concatenateChunksAsync,
+  makeTextDecoderIterator: makeTextDecoderIterator,
+  makeTextEncoderIterator: makeTextEncoderIterator,
+  makeLineIterator: makeLineIterator,
+  makeNumberedLineIterator: makeNumberedLineIterator,
+  isPromise: isPromise,
+  isIterable: isIterable,
+  isAsyncIterable: isAsyncIterable,
+  isIterator: isIterator,
+  isResponse: isResponse,
+  isReadableStream: isReadableStream,
+  isWritableStream: isWritableStream
+});
+
+var KHR_BINARY_GLTF = 'KHR_binary_glTF';
+var KHR_DRACO_MESH_COMPRESSION = 'KHR_draco_mesh_compression';
+var KHR_LIGHTS_PUNCTUAL = 'KHR_lights_punctual';
+var KHR_MATERIALS_UNLIT = 'KHR_materials_unlit';
+var KHR_TECHNIQUES_WEBGL = 'KHR_techniques_webgl';
+var UBER_POINT_CLOUD_EXTENSION = 'UBER_draco_point_cloud_compression';
+
+function assert$1(condition, message) {
+  if (!condition) {
+    throw new Error(message);
+  }
+}
+
+var globals = {
+  self: typeof self !== 'undefined' && self,
+  window: typeof window !== 'undefined' && window,
+  global: typeof global !== 'undefined' && global,
+  document: typeof document !== 'undefined' && document
+};
+var global_ = globals.global || globals.self || globals.window;
+var isBrowser = (typeof process === "undefined" ? "undefined" : _typeof(process)) !== 'object' || String(process) !== '[object process]' || process.browser;
+var matches = typeof process !== 'undefined' && process.version && process.version.match(/v([0-9]*)/);
+matches && parseFloat(matches[1]) || 0;
+
+var _parseImageNode = global_._parseImageNode;
+var IMAGE_SUPPORTED = typeof Image !== 'undefined';
+var IMAGE_BITMAP_SUPPORTED = typeof ImageBitmap !== 'undefined';
+var NODE_IMAGE_SUPPORTED = Boolean(_parseImageNode);
+var DATA_SUPPORTED = isBrowser ? true : NODE_IMAGE_SUPPORTED;
+function isImageTypeSupported(type) {
+  switch (type) {
+    case 'auto':
+      return IMAGE_BITMAP_SUPPORTED || IMAGE_SUPPORTED || DATA_SUPPORTED;
+
+    case 'imagebitmap':
+      return IMAGE_BITMAP_SUPPORTED;
+
+    case 'image':
+      return IMAGE_SUPPORTED;
+
+    case 'data':
+      return DATA_SUPPORTED;
+
+    case 'html':
+      return IMAGE_SUPPORTED;
+
+    case 'ndarray':
+      return DATA_SUPPORTED;
+
+    default:
+      throw new Error("@loaders.gl/images: image ".concat(type, " not supported in this environment"));
+  }
+}
+function getDefaultImageType() {
+  if (IMAGE_BITMAP_SUPPORTED) {
+    return 'imagebitmap';
+  }
+
+  if (IMAGE_SUPPORTED) {
+    return 'image';
+  }
+
+  if (DATA_SUPPORTED) {
+    return 'data';
+  }
+
+  throw new Error("Install '@loaders.gl/polyfills' to parse images under Node.js");
+}
+
+function isImage(image) {
+  return Boolean(getImageTypeOrNull(image));
+}
+function getImageType(image) {
+  var format = getImageTypeOrNull(image);
+
+  if (!format) {
+    throw new Error('Not an image');
+  }
+
+  return format;
+}
+function getImageData(image) {
+  switch (getImageType(image)) {
+    case 'data':
+      return image;
+
+    case 'image':
+    case 'imagebitmap':
+      var canvas = document.createElement('canvas');
+      var context = canvas.getContext('2d');
+
+      if (context) {
+        canvas.width = image.width;
+        canvas.height = image.height;
+        context.drawImage(image, 0, 0);
+        return context.getImageData(0, 0, image.width, image.height);
+      }
+
+    default:
+      return assert$1(false);
+  }
+}
+
+function getImageTypeOrNull(image) {
+  if (typeof ImageBitmap !== 'undefined' && image instanceof ImageBitmap) {
+    return 'imagebitmap';
+  }
+
+  if (typeof Image !== 'undefined' && image instanceof Image) {
+    return 'image';
+  }
+
+  if (image && _typeof(image) === 'object' && image.data && image.width && image.height) {
+    return 'data';
+  }
+
+  return null;
+}
+
+var SVG_DATA_URL_PATTERN = /^data:image\/svg\+xml/;
+var SVG_URL_PATTERN = /\.svg((\?|#).*)?$/;
+function isSVG(url) {
+  return url && (SVG_DATA_URL_PATTERN.test(url) || SVG_URL_PATTERN.test(url));
+}
+function getBlobOrSVGDataUrl(arrayBuffer, url) {
+  if (isSVG(url)) {
+    var textDecoder = new TextDecoder();
+    var xmlText = textDecoder.decode(arrayBuffer);
+    var src = "data:image/svg+xml;base64,".concat(btoa(xmlText));
+    return src;
+  }
+
+  return getBlob(arrayBuffer, url);
+}
+function getBlob(arrayBuffer, url) {
+  if (isSVG(url)) {
+    throw new Error('SVG cannot be parsed directly to imagebitmap');
+  }
+
+  return new Blob([new Uint8Array(arrayBuffer)]);
+}
+
+function parseToImage(_x, _x2, _x3) {
+  return _parseToImage.apply(this, arguments);
+}
+
+function _parseToImage() {
+  _parseToImage = _asyncToGenerator(regenerator.mark(function _callee(arrayBuffer, options, url) {
+    var blobOrDataUrl, URL, objectUrl;
+    return regenerator.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            blobOrDataUrl = getBlobOrSVGDataUrl(arrayBuffer, url);
+            URL = self.URL || self.webkitURL;
+            objectUrl = typeof blobOrDataUrl !== 'string' && URL.createObjectURL(blobOrDataUrl);
+            _context.prev = 3;
+            _context.next = 6;
+            return loadToImage(objectUrl || blobOrDataUrl, options);
+
+          case 6:
+            return _context.abrupt("return", _context.sent);
+
+          case 7:
+            _context.prev = 7;
+
+            if (objectUrl) {
+              URL.revokeObjectURL(objectUrl);
+            }
+
+            return _context.finish(7);
+
+          case 10:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee, null, [[3,, 7, 10]]);
+  }));
+  return _parseToImage.apply(this, arguments);
+}
+
+function loadToImage(_x4, _x5) {
+  return _loadToImage.apply(this, arguments);
+}
+
+function _loadToImage() {
+  _loadToImage = _asyncToGenerator(regenerator.mark(function _callee2(url, options) {
+    var image;
+    return regenerator.wrap(function _callee2$(_context2) {
+      while (1) {
+        switch (_context2.prev = _context2.next) {
+          case 0:
+            image = new Image();
+            image.src = url;
+
+            if (!(options.image && options.image.decode && image.decode)) {
+              _context2.next = 6;
+              break;
+            }
+
+            _context2.next = 5;
+            return image.decode();
+
+          case 5:
+            return _context2.abrupt("return", image);
+
+          case 6:
+            _context2.next = 8;
+            return new Promise(function (resolve, reject) {
+              try {
+                image.onload = function () {
+                  return resolve(image);
+                };
+
+                image.onerror = function (err) {
+                  return reject(new Error("Could not load image ".concat(url, ": ").concat(err)));
+                };
+              } catch (error) {
+                reject(error);
+              }
+            });
+
+          case 8:
+            return _context2.abrupt("return", _context2.sent);
+
+          case 9:
+          case "end":
+            return _context2.stop();
+        }
+      }
+    }, _callee2);
+  }));
+  return _loadToImage.apply(this, arguments);
+}
+
+var EMPTY_OBJECT = {};
+var imagebitmapOptionsSupported = true;
+function parseToImageBitmap(_x, _x2, _x3) {
+  return _parseToImageBitmap.apply(this, arguments);
+}
+
+function _parseToImageBitmap() {
+  _parseToImageBitmap = _asyncToGenerator(regenerator.mark(function _callee(arrayBuffer, options, url) {
+    var blob, image, imagebitmapOptions;
+    return regenerator.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            if (!isSVG(url)) {
+              _context.next = 7;
+              break;
+            }
+
+            _context.next = 3;
+            return parseToImage(arrayBuffer, options, url);
+
+          case 3:
+            image = _context.sent;
+            blob = image;
+            _context.next = 8;
+            break;
+
+          case 7:
+            blob = getBlob(arrayBuffer, url);
+
+          case 8:
+            imagebitmapOptions = options && options.imagebitmap;
+            _context.next = 11;
+            return safeCreateImageBitmap(blob, imagebitmapOptions);
+
+          case 11:
+            return _context.abrupt("return", _context.sent);
+
+          case 12:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee);
+  }));
+  return _parseToImageBitmap.apply(this, arguments);
+}
+
+function safeCreateImageBitmap(_x4) {
+  return _safeCreateImageBitmap.apply(this, arguments);
+}
+
+function _safeCreateImageBitmap() {
+  _safeCreateImageBitmap = _asyncToGenerator(regenerator.mark(function _callee2(blob) {
+    var imagebitmapOptions,
+        _args2 = arguments;
+    return regenerator.wrap(function _callee2$(_context2) {
+      while (1) {
+        switch (_context2.prev = _context2.next) {
+          case 0:
+            imagebitmapOptions = _args2.length > 1 && _args2[1] !== undefined ? _args2[1] : null;
+
+            if (isEmptyObject(imagebitmapOptions) || !imagebitmapOptionsSupported) {
+              imagebitmapOptions = null;
+            }
+
+            if (!imagebitmapOptions) {
+              _context2.next = 13;
+              break;
+            }
+
+            _context2.prev = 3;
+            _context2.next = 6;
+            return createImageBitmap(blob, imagebitmapOptions);
+
+          case 6:
+            return _context2.abrupt("return", _context2.sent);
+
+          case 9:
+            _context2.prev = 9;
+            _context2.t0 = _context2["catch"](3);
+            console.warn(_context2.t0);
+            imagebitmapOptionsSupported = false;
+
+          case 13:
+            _context2.next = 15;
+            return createImageBitmap(blob);
+
+          case 15:
+            return _context2.abrupt("return", _context2.sent);
+
+          case 16:
+          case "end":
+            return _context2.stop();
+        }
+      }
+    }, _callee2, null, [[3, 9]]);
+  }));
+  return _safeCreateImageBitmap.apply(this, arguments);
+}
+
+function isEmptyObject(object) {
+  for (var key in object || EMPTY_OBJECT) {
+    return false;
+  }
+
+  return true;
+}
+
+var BIG_ENDIAN = false;
+var LITTLE_ENDIAN = true;
+function getBinaryImageMetadata(binaryData) {
+  var dataView = toDataView(binaryData);
+  return getPngMetadata(dataView) || getJpegMetadata(dataView) || getGifMetadata(dataView) || getBmpMetadata(dataView);
+}
+
+function getPngMetadata(binaryData) {
+  var dataView = toDataView(binaryData);
+  var isPng = dataView.byteLength >= 24 && dataView.getUint32(0, BIG_ENDIAN) === 0x89504e47;
+
+  if (!isPng) {
+    return null;
+  }
+
+  return {
+    mimeType: 'image/png',
+    width: dataView.getUint32(16, BIG_ENDIAN),
+    height: dataView.getUint32(20, BIG_ENDIAN)
+  };
+}
+
+function getGifMetadata(binaryData) {
+  var dataView = toDataView(binaryData);
+  var isGif = dataView.byteLength >= 10 && dataView.getUint32(0, BIG_ENDIAN) === 0x47494638;
+
+  if (!isGif) {
+    return null;
+  }
+
+  return {
+    mimeType: 'image/gif',
+    width: dataView.getUint16(6, LITTLE_ENDIAN),
+    height: dataView.getUint16(8, LITTLE_ENDIAN)
+  };
+}
+
+function getBmpMetadata(binaryData) {
+  var dataView = toDataView(binaryData);
+  var isBmp = dataView.byteLength >= 14 && dataView.getUint16(0, BIG_ENDIAN) === 0x424d && dataView.getUint32(2, LITTLE_ENDIAN) === dataView.byteLength;
+
+  if (!isBmp) {
+    return null;
+  }
+
+  return {
+    mimeType: 'image/bmp',
+    width: dataView.getUint32(18, LITTLE_ENDIAN),
+    height: dataView.getUint32(22, LITTLE_ENDIAN)
+  };
+}
+
+function getJpegMetadata(binaryData) {
+  var dataView = toDataView(binaryData);
+  var isJpeg = dataView.byteLength >= 3 && dataView.getUint16(0, BIG_ENDIAN) === 0xffd8 && dataView.getUint8(2) === 0xff;
+
+  if (!isJpeg) {
+    return null;
+  }
+
+  var _getJpegMarkers = getJpegMarkers(),
+      tableMarkers = _getJpegMarkers.tableMarkers,
+      sofMarkers = _getJpegMarkers.sofMarkers;
+
+  var i = 2;
+
+  while (i + 9 < dataView.byteLength) {
+    var marker = dataView.getUint16(i, BIG_ENDIAN);
+
+    if (sofMarkers.has(marker)) {
+      return {
+        mimeType: 'image/jpeg',
+        height: dataView.getUint16(i + 5, BIG_ENDIAN),
+        width: dataView.getUint16(i + 7, BIG_ENDIAN)
+      };
+    }
+
+    if (!tableMarkers.has(marker)) {
+      return null;
+    }
+
+    i += 2;
+    i += dataView.getUint16(i, BIG_ENDIAN);
+  }
+
+  return null;
+}
+
+function getJpegMarkers() {
+  var tableMarkers = new Set([0xffdb, 0xffc4, 0xffcc, 0xffdd, 0xfffe]);
+
+  for (var i = 0xffe0; i < 0xfff0; ++i) {
+    tableMarkers.add(i);
+  }
+
+  var sofMarkers = new Set([0xffc0, 0xffc1, 0xffc2, 0xffc3, 0xffc5, 0xffc6, 0xffc7, 0xffc9, 0xffca, 0xffcb, 0xffcd, 0xffce, 0xffcf, 0xffde]);
+  return {
+    tableMarkers: tableMarkers,
+    sofMarkers: sofMarkers
+  };
+}
+
+function toDataView(data) {
+  if (data instanceof DataView) {
+    return data;
+  }
+
+  if (ArrayBuffer.isView(data)) {
+    return new DataView(data.buffer);
+  }
+
+  if (data instanceof ArrayBuffer) {
+    return new DataView(data);
+  }
+
+  throw new Error('toDataView');
+}
+
+function parseToNodeImage(arrayBuffer, options) {
+  var _ref = getBinaryImageMetadata(arrayBuffer) || {},
+      mimeType = _ref.mimeType;
+
+  var _parseImageNode = global_._parseImageNode;
+  assert$1(_parseImageNode);
+  return _parseImageNode(arrayBuffer, mimeType, options);
+}
+
+function parseImage(_x, _x2, _x3) {
+  return _parseImage.apply(this, arguments);
+}
+
+function _parseImage() {
+  _parseImage = _asyncToGenerator(regenerator.mark(function _callee(arrayBuffer, options, context) {
+    var imageOptions, imageType, _ref, url, loadType, image;
+
+    return regenerator.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            options = options || {};
+            imageOptions = options.image || {};
+            imageType = imageOptions.type || 'auto';
+            _ref = context || {}, url = _ref.url;
+            loadType = getLoadableImageType(imageType);
+            _context.t0 = loadType;
+            _context.next = _context.t0 === 'imagebitmap' ? 8 : _context.t0 === 'image' ? 12 : _context.t0 === 'data' ? 16 : 20;
+            break;
+
+          case 8:
+            _context.next = 10;
+            return parseToImageBitmap(arrayBuffer, options, url);
+
+          case 10:
+            image = _context.sent;
+            return _context.abrupt("break", 21);
+
+          case 12:
+            _context.next = 14;
+            return parseToImage(arrayBuffer, options, url);
+
+          case 14:
+            image = _context.sent;
+            return _context.abrupt("break", 21);
+
+          case 16:
+            _context.next = 18;
+            return parseToNodeImage(arrayBuffer, options);
+
+          case 18:
+            image = _context.sent;
+            return _context.abrupt("break", 21);
+
+          case 20:
+            assert$1(false);
+
+          case 21:
+            if (imageType === 'data') {
+              image = getImageData(image);
+            }
+
+            return _context.abrupt("return", image);
+
+          case 23:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee);
+  }));
+  return _parseImage.apply(this, arguments);
+}
+
+function getLoadableImageType(type) {
+  switch (type) {
+    case 'auto':
+    case 'data':
+      return getDefaultImageType();
+
+    default:
+      isImageTypeSupported(type);
+      return type;
+  }
+}
+
+var VERSION$3 = "2.3.13" ;
+var EXTENSIONS$1 = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'ico', 'svg'];
+var MIME_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/bmp', 'image/vnd.microsoft.icon', 'image/svg+xml'];
+var ImageLoader = {
+  id: 'image',
+  name: 'Images',
+  version: VERSION$3,
+  mimeTypes: MIME_TYPES,
+  extensions: EXTENSIONS$1,
+  parse: parseImage,
+  tests: [function (arrayBuffer) {
+    return Boolean(getBinaryImageMetadata(new DataView(arrayBuffer)));
+  }],
+  options: {
+    image: {
+      type: 'auto',
+      decode: true
+    }
+  }
+};
+
+function getBinaryImageMIMEType(arrayBuffer) {
+  var metadata = getBinaryImageMetadata(arrayBuffer);
+  return metadata ? metadata.mimeType : null;
+}
+
+function assert(condition, message) {
+  if (!condition) {
+    throw new Error(message || 'assert failed: gltf');
+  }
+}
+
+function resolveUrl(url, options) {
+  var absolute = url.startsWith('data:') || url.startsWith('http:') || url.startsWith('https:');
+
+  if (absolute) {
+    return url;
+  }
+
+  var baseUrl = options.baseUri || options.uri;
+
+  if (!baseUrl) {
+    throw new Error("'baseUri' must be provided to resolve relative url ".concat(url));
+  }
+
+  return baseUrl.substr(0, baseUrl.lastIndexOf('/') + 1) + url;
+}
+
+function getTypedArrayForBufferView(json, buffers, bufferViewIndex) {
+  var bufferView = json.bufferViews[bufferViewIndex];
+  assert(bufferView);
+  var bufferIndex = bufferView.buffer;
+  var binChunk = buffers[bufferIndex];
+  assert(binChunk);
+  var byteOffset = (bufferView.byteOffset || 0) + binChunk.byteOffset;
+  return new Uint8Array(binChunk.arrayBuffer, byteOffset, bufferView.byteLength);
+}
+
+function _arrayWithHoles$1(arr) {
+  if (Array.isArray(arr)) return arr;
+}
+
+function _iterableToArrayLimit$1(arr, i) {
+  if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return;
+  var _arr = [];
+  var _n = true;
+  var _d = false;
+  var _e = undefined;
+
+  try {
+    for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+      _arr.push(_s.value);
+
+      if (i && _arr.length === i) break;
+    }
+  } catch (err) {
+    _d = true;
+    _e = err;
+  } finally {
+    try {
+      if (!_n && _i["return"] != null) _i["return"]();
+    } finally {
+      if (_d) throw _e;
+    }
+  }
+
+  return _arr;
+}
+
+function _nonIterableRest$1() {
+  throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+}
+
+function _slicedToArray$1(arr, i) {
+  return _arrayWithHoles$1(arr) || _iterableToArrayLimit$1(arr, i) || _unsupportedIterableToArray$b(arr, i) || _nonIterableRest$1();
+}
+
+function ownKeys$6(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread$5(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys$6(Object(source), true).forEach(function (key) { _defineProperty$1(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys$6(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+var loadDecoderPromise;
+function loadDracoDecoderModule(_x) {
+  return _loadDracoDecoderModule.apply(this, arguments);
+}
+
+function _loadDracoDecoderModule() {
+  _loadDracoDecoderModule = _asyncToGenerator(regenerator.mark(function _callee(options) {
+    var modules;
+    return regenerator.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            modules = options.modules || {};
+
+            if (modules.draco3d) {
+              loadDecoderPromise = loadDecoderPromise || new Promise(function (resolve) {
+                var draco = modules.draco3d.createDecoderModule({
+                  onModuleLoaded: function onModuleLoaded() {
+                    resolve({
+                      draco: draco
+                    });
+                  }
+                });
+              });
+            } else {
+              loadDecoderPromise = loadDecoderPromise || loadDracoDecoder(options);
+            }
+
+            _context.next = 4;
+            return loadDecoderPromise;
+
+          case 4:
+            return _context.abrupt("return", _context.sent);
+
+          case 5:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee);
+  }));
+  return _loadDracoDecoderModule.apply(this, arguments);
+}
+
+function loadDracoDecoder(_x3) {
+  return _loadDracoDecoder.apply(this, arguments);
+}
+
+function _loadDracoDecoder() {
+  _loadDracoDecoder = _asyncToGenerator(regenerator.mark(function _callee3(options) {
+    var DracoDecoderModule, wasmBinary, _yield$Promise$all, _yield$Promise$all2;
+
+    return regenerator.wrap(function _callee3$(_context3) {
+      while (1) {
+        switch (_context3.prev = _context3.next) {
+          case 0:
+            _context3.t0 = options.draco && options.draco.decoderType;
+            _context3.next = _context3.t0 === 'js' ? 3 : _context3.t0 === 'wasm' ? 7 : 7;
+            break;
+
+          case 3:
+            _context3.next = 5;
+            return loadLibrary('draco_decoder.js', 'draco', options);
+
+          case 5:
+            DracoDecoderModule = _context3.sent;
+            return _context3.abrupt("break", 21);
+
+          case 7:
+            _context3.t1 = Promise;
+            _context3.next = 10;
+            return loadLibrary('draco_wasm_wrapper.js', 'draco', options);
+
+          case 10:
+            _context3.t2 = _context3.sent;
+            _context3.next = 13;
+            return loadLibrary('draco_decoder.wasm', 'draco', options);
+
+          case 13:
+            _context3.t3 = _context3.sent;
+            _context3.t4 = [_context3.t2, _context3.t3];
+            _context3.next = 17;
+            return _context3.t1.all.call(_context3.t1, _context3.t4);
+
+          case 17:
+            _yield$Promise$all = _context3.sent;
+            _yield$Promise$all2 = _slicedToArray$1(_yield$Promise$all, 2);
+            DracoDecoderModule = _yield$Promise$all2[0];
+            wasmBinary = _yield$Promise$all2[1];
+
+          case 21:
+            DracoDecoderModule = DracoDecoderModule || global_$1.DracoDecoderModule;
+            _context3.next = 24;
+            return initializeDracoDecoder(DracoDecoderModule, wasmBinary);
+
+          case 24:
+            return _context3.abrupt("return", _context3.sent);
+
+          case 25:
+          case "end":
+            return _context3.stop();
+        }
+      }
+    }, _callee3);
+  }));
+  return _loadDracoDecoder.apply(this, arguments);
+}
+
+function initializeDracoDecoder(DracoDecoderModule, wasmBinary) {
+  var options = {};
+
+  if (wasmBinary) {
+    options.wasmBinary = wasmBinary;
+  }
+
+  return new Promise(function (resolve) {
+    DracoDecoderModule(_objectSpread$5(_objectSpread$5({}, options), {}, {
+      onModuleLoaded: function onModuleLoaded(draco) {
+        return resolve({
+          draco: draco
+        });
+      }
+    }));
+  });
+}
+
+var GEOMETRY_TYPE = {
+  TRIANGULAR_MESH: 0,
+  POINT_CLOUD: 1
+};
+var DRACO_TO_GLTF_ATTRIBUTE_NAME_MAP = {
+  POSITION: 'POSITION',
+  NORMAL: 'NORMAL',
+  COLOR: 'COLOR_0',
+  TEX_COORD: 'TEXCOORD_0'
+};
+var DRACO_DATA_TYPE_TO_TYPED_ARRAY_MAP = {
+  1: Int8Array,
+  2: Uint8Array,
+  3: Int16Array,
+  4: Uint16Array,
+  5: Int32Array,
+  6: Uint32Array,
+  9: Float32Array
+};
+
+var DracoParser = function () {
+  function DracoParser(draco) {
+    _classCallCheck$1(this, DracoParser);
+
+    this.draco = draco;
+    this.drawMode = 'TRIANGLE';
+    this.metadataQuerier = {};
+  }
+
+  _createClass$1(DracoParser, [{
+    key: "destroy",
+    value: function destroy() {}
+  }, {
+    key: "destroyGeometry",
+    value: function destroyGeometry(dracoGeometry) {
+      if (dracoGeometry) {
+        this.draco.destroy(dracoGeometry.dracoGeometry);
+      }
+    }
+  }, {
+    key: "parseSync",
+    value: function parseSync(arrayBuffer) {
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      this.metadataQuerier = new this.draco.MetadataQuerier();
+      var buffer = new this.draco.DecoderBuffer();
+      buffer.Init(new Int8Array(arrayBuffer), arrayBuffer.byteLength);
+      var decoder = new this.draco.Decoder();
+      var data = {};
+      var dracoStatus;
+      var dracoGeometry;
+      var header;
+
+      try {
+        var geometryType = decoder.GetEncodedGeometryType(buffer);
+
+        switch (geometryType) {
+          case this.draco.TRIANGULAR_MESH:
+            dracoGeometry = new this.draco.Mesh();
+            dracoStatus = decoder.DecodeBufferToMesh(buffer, dracoGeometry);
+            header = {
+              type: GEOMETRY_TYPE.TRIANGULAR_MESH,
+              faceCount: dracoGeometry.num_faces(),
+              attributeCount: dracoGeometry.num_attributes(),
+              vertexCount: dracoGeometry.num_points()
+            };
+            break;
+
+          case this.draco.POINT_CLOUD:
+            dracoGeometry = new this.draco.PointCloud();
+            dracoStatus = decoder.DecodeBufferToPointCloud(buffer, dracoGeometry);
+            header = {
+              type: GEOMETRY_TYPE.POINT_CLOUD,
+              attributeCount: dracoGeometry.num_attributes(),
+              vertexCount: dracoGeometry.num_points()
+            };
+            break;
+
+          default:
+            throw new Error('Unknown DRACO geometry type.');
+        }
+
+        if (!dracoStatus.ok() || !dracoGeometry.ptr) {
+          var message = "DRACO decompression failed: ".concat(dracoStatus.error_msg());
+
+          if (dracoGeometry) {
+            this.draco.destroy(dracoGeometry);
+          }
+
+          throw new Error(message);
+        }
+
+        data.loaderData = {
+          header: header
+        };
+
+        this._extractDRACOGeometry(decoder, dracoGeometry, geometryType, data, options);
+
+        var metadata = this._getGeometryMetadata(decoder, dracoGeometry);
+
+        data.header = {
+          vertexCount: header.vertexCount,
+          boundingBox: getMeshBoundingBox(data.attributes),
+          metadata: metadata
+        };
+      } finally {
+        this.draco.destroy(decoder);
+        this.draco.destroy(buffer);
+        this.draco.destroy(dracoGeometry);
+        this.draco.destroy(this.metadataQuerier);
+      }
+
+      return data;
+    }
+  }, {
+    key: "_extractDRACOGeometry",
+    value: function _extractDRACOGeometry(decoder, dracoGeometry, geometryType, geometry, options) {
+      var attributes = this._getAttributes(decoder, dracoGeometry, options);
+
+      var positionAttribute = attributes.POSITION;
+
+      if (!positionAttribute) {
+        throw new Error('DRACO decompressor: No position attribute found.');
+      }
+
+      if (geometryType === this.draco.TRIANGULAR_MESH) {
+        attributes.indices = this.drawMode === 'TRIANGLE_STRIP' ? this._getMeshStripIndices(decoder, dracoGeometry) : this._getMeshFaceIndices(decoder, dracoGeometry);
+        geometry.mode = this.drawMode === 'TRIANGLE_STRIP' ? 5 : 4;
+      } else {
+        geometry.mode = 0;
+      }
+
+      if (attributes.indices) {
+        geometry.indices = {
+          value: attributes.indices,
+          size: 1
+        };
+        delete attributes.indices;
+      }
+
+      geometry.attributes = attributes;
+      return geometry;
+    }
+  }, {
+    key: "getPositionAttributeMetadata",
+    value: function getPositionAttributeMetadata(positionAttribute) {
+      this.metadata = this.metadata || {};
+      this.metadata.attributes = this.metadata.attributes || {};
+      var posTransform = new this.draco.AttributeQuantizationTransform();
+
+      if (posTransform.InitFromAttribute(positionAttribute)) {
+        this.metadata.attributes.position.isQuantized = true;
+        this.metadata.attributes.position.maxRange = posTransform.range();
+        this.metadata.attributes.position.numQuantizationBits = posTransform.quantization_bits();
+        this.metadata.attributes.position.minValues = new Float32Array(3);
+
+        for (var i = 0; i < 3; ++i) {
+          this.metadata.attributes.position.minValues[i] = posTransform.min_value(i);
+        }
+      }
+
+      this.draco.destroy(posTransform);
+    }
+  }, {
+    key: "_getAttributes",
+    value: function _getAttributes(decoder, dracoGeometry, options) {
+      var attributes = {};
+      var numPoints = dracoGeometry.num_points();
+
+      for (var attributeId = 0; attributeId < dracoGeometry.num_attributes(); attributeId++) {
+        var dracoAttribute = decoder.GetAttribute(dracoGeometry, attributeId);
+
+        var attributeMetadata = this._getAttributeMetadata(decoder, dracoGeometry, attributeId);
+
+        var attributeData = {
+          uniqueId: dracoAttribute.unique_id(),
+          attributeType: dracoAttribute.attribute_type(),
+          dataType: DRACO_DATA_TYPE_TO_TYPED_ARRAY_MAP[dracoAttribute.data_type()],
+          size: dracoAttribute.size(),
+          numComponents: dracoAttribute.num_components(),
+          byteOffset: dracoAttribute.byte_offset(),
+          byteStride: dracoAttribute.byte_stride(),
+          normalized: dracoAttribute.normalized(),
+          metadata: attributeMetadata
+        };
+
+        var attributeName = this._deduceAttributeName(attributeData, options);
+
+        var _this$_getAttributeTy = this._getAttributeTypedArray(decoder, dracoGeometry, dracoAttribute, attributeName),
+            typedArray = _this$_getAttributeTy.typedArray;
+
+        attributes[attributeName] = {
+          value: typedArray,
+          size: typedArray.length / numPoints,
+          metadata: attributeMetadata
+        };
+      }
+
+      return attributes;
+    }
+  }, {
+    key: "_getMeshFaceIndices",
+    value: function _getMeshFaceIndices(decoder, dracoGeometry) {
+      var numFaces = dracoGeometry.num_faces();
+      var numIndices = numFaces * 3;
+      var indices = new Uint32Array(numIndices);
+      var dracoArray = new this.draco.DracoInt32Array();
+
+      for (var i = 0; i < numFaces; ++i) {
+        decoder.GetFaceFromMesh(dracoGeometry, i, dracoArray);
+        var index = i * 3;
+        indices[index] = dracoArray.GetValue(0);
+        indices[index + 1] = dracoArray.GetValue(1);
+        indices[index + 2] = dracoArray.GetValue(2);
+      }
+
+      this.draco.destroy(dracoArray);
+      return indices;
+    }
+  }, {
+    key: "_getMeshStripIndices",
+    value: function _getMeshStripIndices(decoder, dracoGeometry) {
+      var dracoArray = new this.draco.DracoInt32Array();
+      decoder.GetTriangleStripsFromMesh(dracoGeometry, dracoArray);
+      var indices = new Uint32Array(dracoArray.size());
+
+      for (var i = 0; i < dracoArray.size(); ++i) {
+        indices[i] = dracoArray.GetValue(i);
+      }
+
+      this.draco.destroy(dracoArray);
+      return indices;
+    }
+  }, {
+    key: "_getAttributeTypedArray",
+    value: function _getAttributeTypedArray(decoder, dracoGeometry, dracoAttribute, attributeName) {
+      if (dracoAttribute.ptr === 0) {
+        var message = "DRACO decode bad attribute ".concat(attributeName);
+        throw new Error(message);
+      }
+
+      var attributeType = DRACO_DATA_TYPE_TO_TYPED_ARRAY_MAP[dracoAttribute.data_type()];
+      var numComponents = dracoAttribute.num_components();
+      var numPoints = dracoGeometry.num_points();
+      var numValues = numPoints * numComponents;
+      var dracoArray;
+      var typedArray;
+
+      switch (attributeType) {
+        case Float32Array:
+          dracoArray = new this.draco.DracoFloat32Array();
+          decoder.GetAttributeFloatForAllPoints(dracoGeometry, dracoAttribute, dracoArray);
+          typedArray = new Float32Array(numValues);
+          break;
+
+        case Int8Array:
+          dracoArray = new this.draco.DracoInt8Array();
+          decoder.GetAttributeInt8ForAllPoints(dracoGeometry, dracoAttribute, dracoArray);
+          typedArray = new Int8Array(numValues);
+          break;
+
+        case Int16Array:
+          dracoArray = new this.draco.DracoInt16Array();
+          decoder.GetAttributeInt16ForAllPoints(dracoGeometry, dracoAttribute, dracoArray);
+          typedArray = new Int16Array(numValues);
+          break;
+
+        case Int32Array:
+          dracoArray = new this.draco.DracoInt32Array();
+          decoder.GetAttributeInt32ForAllPoints(dracoGeometry, dracoAttribute, dracoArray);
+          typedArray = new Int32Array(numValues);
+          break;
+
+        case Uint8Array:
+          dracoArray = new this.draco.DracoUInt8Array();
+          decoder.GetAttributeUInt8ForAllPoints(dracoGeometry, dracoAttribute, dracoArray);
+          typedArray = new Uint8Array(numValues);
+          break;
+
+        case Uint16Array:
+          dracoArray = new this.draco.DracoUInt16Array();
+          decoder.GetAttributeUInt16ForAllPoints(dracoGeometry, dracoAttribute, dracoArray);
+          typedArray = new Uint16Array(numValues);
+          break;
+
+        case Uint32Array:
+          dracoArray = new this.draco.DracoUInt32Array();
+          decoder.GetAttributeUInt32ForAllPoints(dracoGeometry, dracoAttribute, dracoArray);
+          typedArray = new Uint32Array(numValues);
+          break;
+
+        default:
+          var errorMsg = 'DRACO decoder: unexpected attribute type.';
+          throw new Error(errorMsg);
+      }
+
+      for (var i = 0; i < numValues; i++) {
+        typedArray[i] = dracoArray.GetValue(i);
+      }
+
+      this.draco.destroy(dracoArray);
+      return {
+        typedArray: typedArray,
+        components: numComponents
+      };
+    }
+  }, {
+    key: "_deduceAttributeName",
+    value: function _deduceAttributeName(attributeData, options) {
+      var _options$extraAttribu = options.extraAttributes,
+          extraAttributes = _options$extraAttribu === void 0 ? {} : _options$extraAttribu;
+
+      if (extraAttributes && _typeof(extraAttributes) === 'object') {
+        for (var _i = 0, _Object$entries = Object.entries(extraAttributes); _i < _Object$entries.length; _i++) {
+          var _Object$entries$_i = _slicedToArray$1(_Object$entries[_i], 2),
+              attributeName = _Object$entries$_i[0],
+              attributeUniqueId = _Object$entries$_i[1];
+
+          if (attributeUniqueId === attributeData.uniqueId) {
+            return attributeName;
+          }
+        }
+      }
+
+      for (var dracoAttributeConstant in DRACO_TO_GLTF_ATTRIBUTE_NAME_MAP) {
+        var attributeType = this.draco[dracoAttributeConstant];
+
+        if (attributeData.attributeType === attributeType) {
+          return DRACO_TO_GLTF_ATTRIBUTE_NAME_MAP[dracoAttributeConstant];
+        }
+      }
+
+      if (attributeData.metadata) {
+        var entryName = options.attributeNameEntry || 'name';
+
+        if (attributeData.metadata[entryName]) {
+          return attributeData.metadata[entryName].string;
+        }
+      }
+
+      return "CUSTOM_ATTRIBUTE_".concat(attributeData.uniqueId);
+    }
+  }, {
+    key: "_getGeometryMetadata",
+    value: function _getGeometryMetadata(decoder, dracoGeometry) {
+      var dracoMetadata = decoder.GetMetadata(dracoGeometry);
+      return this._queryDracoMetadata(dracoMetadata);
+    }
+  }, {
+    key: "_getAttributeMetadata",
+    value: function _getAttributeMetadata(decoder, dracoGeometry, attributeId) {
+      var dracoMetadata = decoder.GetAttributeMetadata(dracoGeometry, attributeId);
+      return this._queryDracoMetadata(dracoMetadata);
+    }
+  }, {
+    key: "_queryDracoMetadata",
+    value: function _queryDracoMetadata(dracoMetadata) {
+      if (!dracoMetadata || !dracoMetadata.ptr) {
+        return {};
+      }
+
+      var result = {};
+      var numEntries = this.metadataQuerier.NumEntries(dracoMetadata);
+
+      for (var entryIndex = 0; entryIndex < numEntries; entryIndex++) {
+        var entryName = this.metadataQuerier.GetEntryName(dracoMetadata, entryIndex);
+        result[entryName] = {
+          "int": this.metadataQuerier.GetIntEntry(dracoMetadata, entryName),
+          string: this.metadataQuerier.GetStringEntry(dracoMetadata, entryName),
+          "double": this.metadataQuerier.GetDoubleEntry(dracoMetadata, entryName),
+          intArray: this.metadataQuerier.GetIntEntryArray(dracoMetadata, entryName)
+        };
+      }
+
+      return result;
+    }
+  }, {
+    key: "decode",
+    value: function decode(arrayBuffer, options) {
+      return this.parseSync(arrayBuffer, options);
+    }
+  }]);
+
+  return DracoParser;
+}();
+
+function ownKeys$5(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread$4(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys$5(Object(source), true).forEach(function (key) { _defineProperty$1(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys$5(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+var VERSION$2 = "2.3.13" ;
+var DracoWorkerLoader = {
+  id: 'draco',
+  name: 'Draco',
+  version: VERSION$2,
+  extensions: ['drc'],
+  mimeTypes: ['application/octet-stream'],
+  binary: true,
+  tests: ['DRACO'],
+  options: {
+    draco: {
+      decoderType: (typeof WebAssembly === "undefined" ? "undefined" : _typeof(WebAssembly)) === 'object' ? 'wasm' : 'js',
+      libraryPath: "libs/",
+      workerUrl: "https://unpkg.com/@loaders.gl/draco@".concat(VERSION$2, "/dist/draco-loader.worker.js"),
+      localWorkerUrl: "modules/draco/dist/draco-loader.worker.dev.js",
+      extraAttributes: {}
+    }
+  }
+};
+var DracoLoader = _objectSpread$4(_objectSpread$4({}, DracoWorkerLoader), {}, {
+  parse: parse$1
+});
+
+function parse$1(_x, _x2, _x3, _x4) {
+  return _parse$1.apply(this, arguments);
+}
+
+function _parse$1() {
+  _parse$1 = _asyncToGenerator(regenerator.mark(function _callee(arrayBuffer, options, context, loader) {
+    var _yield$loadDracoDecod, draco, dracoParser;
+
+    return regenerator.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            _context.next = 2;
+            return loadDracoDecoderModule(options);
+
+          case 2:
+            _yield$loadDracoDecod = _context.sent;
+            draco = _yield$loadDracoDecod.draco;
+            dracoParser = new DracoParser(draco);
+            _context.prev = 5;
+            return _context.abrupt("return", dracoParser.parseSync(arrayBuffer, _objectSpread$4({
+              extraAttributes: options.draco && options.draco.extraAttributes || null
+            }, options.parseOptions || {})));
+
+          case 7:
+            _context.prev = 7;
+            dracoParser.destroy();
+            return _context.finish(7);
+
+          case 10:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee, null, [[5,, 7, 10]]);
+  }));
+  return _parse$1.apply(this, arguments);
+}
+
+var TYPES = ['SCALAR', 'VEC2', 'VEC3', 'VEC4'];
+var ARRAY_TO_COMPONENT_TYPE = new Map([[Int8Array, 5120], [Uint8Array, 5121], [Int16Array, 5122], [Uint16Array, 5123], [Uint32Array, 5125], [Float32Array, 5126]]);
+var ATTRIBUTE_TYPE_TO_COMPONENTS = {
+  SCALAR: 1,
+  VEC2: 2,
+  VEC3: 3,
+  VEC4: 4,
+  MAT2: 4,
+  MAT3: 9,
+  MAT4: 16
+};
+var ATTRIBUTE_COMPONENT_TYPE_TO_BYTE_SIZE = {
+  5120: 1,
+  5121: 1,
+  5122: 2,
+  5123: 2,
+  5125: 4,
+  5126: 4
+};
+var ATTRIBUTE_COMPONENT_TYPE_TO_ARRAY = {
+  5120: Int8Array,
+  5121: Uint8Array,
+  5122: Int16Array,
+  5123: Uint16Array,
+  5125: Uint32Array,
+  5126: Float32Array
+};
+function getAccessorTypeFromSize(size) {
+  var type = TYPES[size - 1];
+  return type || TYPES[0];
+}
+function getComponentTypeFromArray(typedArray) {
+  var componentType = ARRAY_TO_COMPONENT_TYPE.get(typedArray.constructor);
+
+  if (!componentType) {
+    throw new Error('Illegal typed array');
+  }
+
+  return componentType;
+}
+function getAccessorArrayTypeAndLength(accessor, bufferView) {
+  var ArrayType = ATTRIBUTE_COMPONENT_TYPE_TO_ARRAY[accessor.componentType];
+  var components = ATTRIBUTE_TYPE_TO_COMPONENTS[accessor.type];
+  var bytesPerComponent = ATTRIBUTE_COMPONENT_TYPE_TO_BYTE_SIZE[accessor.componentType];
+  var length = accessor.count * components;
+  var byteLength = accessor.count * components * bytesPerComponent;
+  assert(byteLength >= 0 && byteLength <= bufferView.byteLength);
+  return {
+    ArrayType: ArrayType,
+    length: length,
+    byteLength: byteLength
+  };
+}
+
+var GLTFScenegraph = function () {
+  function GLTFScenegraph(gltf) {
+    _classCallCheck$1(this, GLTFScenegraph);
+
+    if (gltf instanceof GLTFScenegraph) {
+      return gltf;
+    }
+
+    if (!gltf) {
+      gltf = {
+        json: {
+          asset: {
+            version: '2.0',
+            generator: 'loaders.gl'
+          },
+          buffers: []
+        },
+        buffers: []
+      };
+    }
+
+    this.byteLength = 0;
+    this.gltf = gltf;
+    assert(this.gltf.json);
+  }
+
+  _createClass$1(GLTFScenegraph, [{
+    key: "getApplicationData",
+    value: function getApplicationData(key) {
+      var data = this.json[key];
+      return data;
+    }
+  }, {
+    key: "getExtraData",
+    value: function getExtraData(key) {
+      var extras = this.json.extras || {};
+      return extras[key];
+    }
+  }, {
+    key: "getExtension",
+    value: function getExtension(extensionName) {
+      var isExtension = this.getUsedExtensions().find(function (name) {
+        return name === extensionName;
+      });
+      var extensions = this.json.extensions || {};
+      return isExtension ? extensions[extensionName] || true : null;
+    }
+  }, {
+    key: "getRequiredExtension",
+    value: function getRequiredExtension(extensionName) {
+      var isRequired = this.getRequiredExtensions().find(function (name) {
+        return name === extensionName;
+      });
+      return isRequired ? this.getExtension(extensionName) : null;
+    }
+  }, {
+    key: "getRequiredExtensions",
+    value: function getRequiredExtensions() {
+      return this.json.extensionsRequired || [];
+    }
+  }, {
+    key: "getUsedExtensions",
+    value: function getUsedExtensions() {
+      return this.json.extensionsUsed || [];
+    }
+  }, {
+    key: "getObjectExtension",
+    value: function getObjectExtension(object, extensionName) {
+      var extensions = object.extensions || {};
+      return extensions[extensionName];
+    }
+  }, {
+    key: "getScene",
+    value: function getScene(index) {
+      return this.getObject('scenes', index);
+    }
+  }, {
+    key: "getNode",
+    value: function getNode(index) {
+      return this.getObject('nodes', index);
+    }
+  }, {
+    key: "getSkin",
+    value: function getSkin(index) {
+      return this.getObject('skins', index);
+    }
+  }, {
+    key: "getMesh",
+    value: function getMesh(index) {
+      return this.getObject('meshes', index);
+    }
+  }, {
+    key: "getMaterial",
+    value: function getMaterial(index) {
+      return this.getObject('materials', index);
+    }
+  }, {
+    key: "getAccessor",
+    value: function getAccessor(index) {
+      return this.getObject('accessors', index);
+    }
+  }, {
+    key: "getCamera",
+    value: function getCamera(index) {
+      return null;
+    }
+  }, {
+    key: "getTexture",
+    value: function getTexture(index) {
+      return this.getObject('textures', index);
+    }
+  }, {
+    key: "getSampler",
+    value: function getSampler(index) {
+      return this.getObject('samplers', index);
+    }
+  }, {
+    key: "getImage",
+    value: function getImage(index) {
+      return this.getObject('images', index);
+    }
+  }, {
+    key: "getBufferView",
+    value: function getBufferView(index) {
+      return this.getObject('bufferViews', index);
+    }
+  }, {
+    key: "getBuffer",
+    value: function getBuffer(index) {
+      return this.getObject('buffers', index);
+    }
+  }, {
+    key: "getObject",
+    value: function getObject(array, index) {
+      if (_typeof(index) === 'object') {
+        return index;
+      }
+
+      var object = this.json[array] && this.json[array][index];
+
+      if (!object) {
+        throw new Error("glTF file error: Could not find ".concat(array, "[").concat(index, "]"));
+      }
+
+      return object;
+    }
+  }, {
+    key: "getTypedArrayForBufferView",
+    value: function getTypedArrayForBufferView(bufferView) {
+      bufferView = this.getBufferView(bufferView);
+      var bufferIndex = bufferView.buffer;
+      var binChunk = this.gltf.buffers[bufferIndex];
+      assert(binChunk);
+      var byteOffset = (bufferView.byteOffset || 0) + binChunk.byteOffset;
+      return new Uint8Array(binChunk.arrayBuffer, byteOffset, bufferView.byteLength);
+    }
+  }, {
+    key: "getTypedArrayForAccessor",
+    value: function getTypedArrayForAccessor(accessor) {
+      accessor = this.getAccessor(accessor);
+      var bufferView = this.getBufferView(accessor.bufferView);
+      var buffer = this.getBuffer(bufferView.buffer);
+      var arrayBuffer = buffer.data;
+
+      var _getAccessorArrayType = getAccessorArrayTypeAndLength(accessor, bufferView),
+          ArrayType = _getAccessorArrayType.ArrayType,
+          length = _getAccessorArrayType.length;
+
+      var byteOffset = bufferView.byteOffset + accessor.byteOffset;
+      return new ArrayType(arrayBuffer, byteOffset, length);
+    }
+  }, {
+    key: "getTypedArrayForImageData",
+    value: function getTypedArrayForImageData(image) {
+      image = this.getAccessor(image);
+      var bufferView = this.getBufferView(image.bufferView);
+      var buffer = this.getBuffer(bufferView.buffer);
+      var arrayBuffer = buffer.data;
+      var byteOffset = bufferView.byteOffset || 0;
+      return new Uint8Array(arrayBuffer, byteOffset, bufferView.byteLength);
+    }
+  }, {
+    key: "addApplicationData",
+    value: function addApplicationData(key, data) {
+      this.json[key] = data;
+      return this;
+    }
+  }, {
+    key: "addExtraData",
+    value: function addExtraData(key, data) {
+      this.json.extras = this.json.extras || {};
+      this.json.extras[key] = data;
+      return this;
+    }
+  }, {
+    key: "addObjectExtension",
+    value: function addObjectExtension(object, extensionName, data) {
+      assert(data);
+      object.extensions = object.extensions || {};
+      object.extensions[extensionName] = data;
+      this.registerUsedExtension(extensionName);
+      return this;
+    }
+  }, {
+    key: "setObjectExtension",
+    value: function setObjectExtension(object, extensionName, data) {
+      var extensions = object.extensions || {};
+      extensions[extensionName] = data;
+    }
+  }, {
+    key: "removeObjectExtension",
+    value: function removeObjectExtension(object, extensionName) {
+      var extensions = object.extensions || {};
+      var extension = extensions[extensionName];
+      delete extensions[extensionName];
+      return extension;
+    }
+  }, {
+    key: "addExtension",
+    value: function addExtension(extensionName) {
+      var extensionData = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      assert(extensionData);
+      this.json.extensions = this.json.extensions || {};
+      this.json.extensions[extensionName] = extensionData;
+      this.registerUsedExtension(extensionName);
+      return extensionData;
+    }
+  }, {
+    key: "addRequiredExtension",
+    value: function addRequiredExtension(extensionName) {
+      var extensionData = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      assert(extensionData);
+      this.addExtension(extensionName, extensionData);
+      this.registerRequiredExtension(extensionName);
+      return extensionData;
+    }
+  }, {
+    key: "registerUsedExtension",
+    value: function registerUsedExtension(extensionName) {
+      this.json.extensionsUsed = this.json.extensionsUsed || [];
+
+      if (!this.json.extensionsUsed.find(function (ext) {
+        return ext === extensionName;
+      })) {
+        this.json.extensionsUsed.push(extensionName);
+      }
+    }
+  }, {
+    key: "registerRequiredExtension",
+    value: function registerRequiredExtension(extensionName) {
+      this.registerUsedExtension(extensionName);
+      this.json.extensionsRequired = this.json.extensionsRequired || [];
+
+      if (!this.json.extensionsRequired.find(function (ext) {
+        return ext === extensionName;
+      })) {
+        this.json.extensionsRequired.push(extensionName);
+      }
+    }
+  }, {
+    key: "removeExtension",
+    value: function removeExtension(extensionName) {
+      if (this.json.extensionsRequired) {
+        this._removeStringFromArray(this.json.extensionsRequired, extensionName);
+      }
+
+      if (this.json.extensionsUsed) {
+        this._removeStringFromArray(this.json.extensionsUsed, extensionName);
+      }
+
+      if (this.json.extensions) {
+        delete this.json.extensions[extensionName];
+      }
+    }
+  }, {
+    key: "addMesh",
+    value: function addMesh(attributes, indices) {
+      var mode = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 4;
+
+      var accessors = this._addAttributes(attributes);
+
+      var glTFMesh = {
+        primitives: [{
+          attributes: accessors,
+          indices: indices,
+          mode: mode
+        }]
+      };
+      this.json.meshes = this.json.meshes || [];
+      this.json.meshes.push(glTFMesh);
+      return this.json.meshes.length - 1;
+    }
+  }, {
+    key: "addPointCloud",
+    value: function addPointCloud(attributes) {
+      var accessorIndices = this._addAttributes(attributes);
+
+      var glTFMesh = {
+        primitives: [{
+          attributes: accessorIndices,
+          mode: 0
+        }]
+      };
+      this.json.meshes = this.json.meshes || [];
+      this.json.meshes.push(glTFMesh);
+      return this.json.meshes.length - 1;
+    }
+  }, {
+    key: "addImage",
+    value: function addImage(imageData, mimeType) {
+      mimeType = mimeType || getBinaryImageMIMEType(imageData);
+      var bufferViewIndex = this.addBufferView(imageData);
+      var glTFImage = {
+        bufferView: bufferViewIndex,
+        mimeType: mimeType
+      };
+      this.json.images = this.json.images || [];
+      this.json.images.push(glTFImage);
+      return this.json.images.length - 1;
+    }
+  }, {
+    key: "addBufferView",
+    value: function addBufferView(buffer) {
+      var byteLength = buffer.byteLength;
+      assert(Number.isFinite(byteLength));
+      this.sourceBuffers = this.sourceBuffers || [];
+      this.sourceBuffers.push(buffer);
+      var glTFBufferView = {
+        buffer: 0,
+        byteOffset: this.byteLength,
+        byteLength: byteLength
+      };
+      this.byteLength += padTo4Bytes(byteLength);
+      this.json.bufferViews = this.json.bufferViews || [];
+      this.json.bufferViews.push(glTFBufferView);
+      return this.json.bufferViews.length - 1;
+    }
+  }, {
+    key: "addAccessor",
+    value: function addAccessor(bufferViewIndex, accessor) {
+      var glTFAccessor = {
+        bufferView: bufferViewIndex,
+        type: getAccessorTypeFromSize(accessor.size),
+        componentType: accessor.componentType,
+        count: accessor.count
+      };
+      this.json.accessors = this.json.accessors || [];
+      this.json.accessors.push(glTFAccessor);
+      return this.json.accessors.length - 1;
+    }
+  }, {
+    key: "addBinaryBuffer",
+    value: function addBinaryBuffer(sourceBuffer) {
+      var accessor = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {
+        size: 3
+      };
+      var bufferViewIndex = this.addBufferView(sourceBuffer);
+      var accessorDefaults = {
+        size: accessor.size,
+        componentType: getComponentTypeFromArray(sourceBuffer),
+        count: Math.round(sourceBuffer.length / accessor.size)
+      };
+      return this.addAccessor(bufferViewIndex, Object.assign(accessorDefaults, accessor));
+    }
+  }, {
+    key: "createBinaryChunk",
+    value: function createBinaryChunk() {
+      if (this.arrayBuffer) {
+        return;
+      }
+
+      var totalByteLength = this.byteLength;
+      var arrayBuffer = new ArrayBuffer(totalByteLength);
+      var targetArray = new Uint8Array(arrayBuffer);
+      var dstByteOffset = 0;
+
+      for (var i = 0; i < this.sourceBuffers.length; i++) {
+        var sourceBuffer = this.sourceBuffers[i];
+        dstByteOffset = copyToArray(sourceBuffer, targetArray, dstByteOffset);
+      }
+
+      this.json.buffers[0].byteLength = totalByteLength;
+      this.arrayBuffer = arrayBuffer;
+      this.sourceBuffers = [];
+    }
+  }, {
+    key: "_removeStringFromArray",
+    value: function _removeStringFromArray(array, string) {
+      var found = true;
+
+      while (found) {
+        var index = array.indexOf(string);
+
+        if (index > -1) {
+          array.splice(index, 1);
+        } else {
+          found = false;
+        }
+      }
+    }
+  }, {
+    key: "json",
+    get: function get() {
+      return this.gltf.json;
+    }
+  }]);
+
+  return GLTFScenegraph;
+}();
+
+function ownKeys$4(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread$3(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys$4(Object(source), true).forEach(function (key) { _defineProperty$1(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys$4(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+function getGLTFAccessors(attributes) {
+  var jsonAccessors = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  var accessors = {};
+
+  for (var name in attributes) {
+    var attribute = attributes[name];
+
+    if (name !== 'indices') {
+      var glTFAccessor = getGLTFAccessor(attribute, jsonAccessors[name] || {});
+      accessors[name] = glTFAccessor;
+    }
+  }
+
+  return accessors;
+}
+function getGLTFAccessor(attribute) {
+  var jsonAccessor = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+  var _getAccessorData = getAccessorData(attribute),
+      buffer = _getAccessorData.buffer,
+      size = _getAccessorData.size,
+      count = _getAccessorData.count;
+
+  var glTFAccessor = _objectSpread$3(_objectSpread$3({}, jsonAccessor), {}, {
+    value: buffer,
+    size: size,
+    bufferView: null,
+    byteOffset: 0,
+    count: count,
+    type: getAccessorTypeFromSize(size),
+    componentType: getComponentTypeFromArray(buffer)
+  });
+
+  return glTFAccessor;
+}
+
+function getAccessorData(attribute) {
+  var buffer = attribute;
+  var size = 1;
+  var count = 0;
+
+  if (attribute && attribute.value) {
+    buffer = attribute.value;
+    size = attribute.size || 1;
+  }
+
+  if (buffer) {
+    if (!ArrayBuffer.isView(buffer)) {
+      buffer = toTypedArray(buffer, Float32Array);
+    }
+
+    count = buffer.length / size;
+  }
+
+  return {
+    buffer: buffer,
+    size: size,
+    count: count
+  };
+}
+
+function toTypedArray(array, ArrayType) {
+  var convertTypedArrays = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+
+  if (!array) {
+    return null;
+  }
+
+  if (Array.isArray(array)) {
+    return new ArrayType(array);
+  }
+
+  if (convertTypedArrays && !(array instanceof ArrayType)) {
+    return new ArrayType(array);
+  }
+
+  return array;
+}
+
+function ownKeys$3(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread$2(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys$3(Object(source), true).forEach(function (key) { _defineProperty$1(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys$3(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+
+var _marked = regenerator.mark(makeMeshPrimitiveIterator);
+
+function _createForOfIteratorHelper$5(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$6(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function _unsupportedIterableToArray$6(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$6(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$6(o, minLen); }
+
+function _arrayLikeToArray$6(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+function decode$4(_x, _x2, _x3) {
+  return _decode.apply(this, arguments);
+}
+
+function _decode() {
+  _decode = _asyncToGenerator(regenerator.mark(function _callee(gltfData, options, context) {
+    var scenegraph, promises, _iterator4, _step4, primitive;
+
+    return regenerator.wrap(function _callee$(_context2) {
+      while (1) {
+        switch (_context2.prev = _context2.next) {
+          case 0:
+            if (options.gltf.decompressMeshes) {
+              _context2.next = 2;
+              break;
+            }
+
+            return _context2.abrupt("return");
+
+          case 2:
+            scenegraph = new GLTFScenegraph(gltfData);
+            promises = [];
+            _iterator4 = _createForOfIteratorHelper$5(makeMeshPrimitiveIterator(scenegraph));
+
+            try {
+              for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
+                primitive = _step4.value;
+
+                if (scenegraph.getObjectExtension(primitive, KHR_DRACO_MESH_COMPRESSION)) {
+                  promises.push(decompressPrimitive(primitive, scenegraph, options, context));
+                }
+              }
+            } catch (err) {
+              _iterator4.e(err);
+            } finally {
+              _iterator4.f();
+            }
+
+            _context2.next = 8;
+            return Promise.all(promises);
+
+          case 8:
+            scenegraph.removeExtension(KHR_DRACO_MESH_COMPRESSION);
+
+          case 9:
+          case "end":
+            return _context2.stop();
+        }
+      }
+    }, _callee);
+  }));
+  return _decode.apply(this, arguments);
+}
+
+function encode$3(gltfData) {
+  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  var scenegraph = new GLTFScenegraph(gltfData);
+
+  var _iterator = _createForOfIteratorHelper$5(scenegraph.json.meshes || []),
+      _step;
+
+  try {
+    for (_iterator.s(); !(_step = _iterator.n()).done;) {
+      var mesh = _step.value;
+      compressMesh(mesh, options);
+      scenegraph.addRequiredExtension(KHR_DRACO_MESH_COMPRESSION);
+    }
+  } catch (err) {
+    _iterator.e(err);
+  } finally {
+    _iterator.f();
+  }
+}
+
+function decompressPrimitive(_x4, _x5, _x6, _x7) {
+  return _decompressPrimitive.apply(this, arguments);
+}
+
+function _decompressPrimitive() {
+  _decompressPrimitive = _asyncToGenerator(regenerator.mark(function _callee2(primitive, scenegraph, options, context) {
+    var compressedPrimitive, buffer, bufferCopy, parse, dracoOptions, decodedData, originalAccessors, _i, _arr, _arr$_i, name, index;
+
+    return regenerator.wrap(function _callee2$(_context3) {
+      while (1) {
+        switch (_context3.prev = _context3.next) {
+          case 0:
+            compressedPrimitive = scenegraph.getObjectExtension(primitive, KHR_DRACO_MESH_COMPRESSION);
+            buffer = scenegraph.getTypedArrayForBufferView(compressedPrimitive.bufferView);
+            bufferCopy = getZeroOffsetArrayBuffer(buffer.buffer, buffer.byteOffset);
+            parse = context.parse;
+            dracoOptions = _objectSpread$2({}, options);
+            delete dracoOptions['3d-tiles'];
+            _context3.next = 8;
+            return parse(bufferCopy, DracoLoader, dracoOptions, context);
+
+          case 8:
+            decodedData = _context3.sent;
+            originalAccessors = {};
+
+            for (_i = 0, _arr = [].concat(_toConsumableArray$1(Object.entries(primitive.attributes)), [['indices', primitive.indices]]); _i < _arr.length; _i++) {
+              _arr$_i = _slicedToArray$1(_arr[_i], 2), name = _arr$_i[0], index = _arr$_i[1];
+              originalAccessors[name] = scenegraph.getAccessor(index);
+            }
+
+            primitive.attributes = getGLTFAccessors(decodedData.attributes, originalAccessors);
+
+            if (decodedData.indices) {
+              primitive.indices = getGLTFAccessor(decodedData.indices, originalAccessors.indices || {});
+            }
+
+            checkPrimitive(primitive);
+
+          case 14:
+          case "end":
+            return _context3.stop();
+        }
+      }
+    }, _callee2);
+  }));
+  return _decompressPrimitive.apply(this, arguments);
+}
+
+function compressMesh(attributes, indices) {
+  var mode = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 4;
+  var options = arguments.length > 3 ? arguments[3] : undefined;
+  var context = arguments.length > 4 ? arguments[4] : undefined;
+
+  if (!options.DracoWriter || !options.DracoLoader) {
+    throw new Error('DracoWriter/DracoLoader not available');
+  }
+
+  var compressedData = options.DracoWriter.encodeSync({
+    attributes: attributes
+  });
+  var parseSync = context.parseSync;
+  var decodedData = parseSync({
+    attributes: attributes
+  });
+
+  var fauxAccessors = options._addFauxAttributes(decodedData.attributes);
+
+  var bufferViewIndex = options.addBufferView(compressedData);
+  var glTFMesh = {
+    primitives: [{
+      attributes: fauxAccessors,
+      mode: mode,
+      extensions: _defineProperty$1({}, KHR_DRACO_MESH_COMPRESSION, {
+        bufferView: bufferViewIndex,
+        attributes: fauxAccessors
+      })
+    }]
+  };
+  return glTFMesh;
+}
+
+function checkPrimitive(primitive) {
+  if (!primitive.attributes && Object.keys(primitive.attributes).length > 0) {
+    throw new Error('Empty glTF primitive detected: Draco decompression failure?');
+  }
+}
+
+function makeMeshPrimitiveIterator(scenegraph) {
+  var _iterator2, _step2, mesh, _iterator3, _step3, primitive;
+
+  return regenerator.wrap(function makeMeshPrimitiveIterator$(_context) {
+    while (1) {
+      switch (_context.prev = _context.next) {
+        case 0:
+          _iterator2 = _createForOfIteratorHelper$5(scenegraph.json.meshes || []);
+          _context.prev = 1;
+
+          _iterator2.s();
+
+        case 3:
+          if ((_step2 = _iterator2.n()).done) {
+            _context.next = 24;
+            break;
+          }
+
+          mesh = _step2.value;
+          _iterator3 = _createForOfIteratorHelper$5(mesh.primitives);
+          _context.prev = 6;
+
+          _iterator3.s();
+
+        case 8:
+          if ((_step3 = _iterator3.n()).done) {
+            _context.next = 14;
+            break;
+          }
+
+          primitive = _step3.value;
+          _context.next = 12;
+          return primitive;
+
+        case 12:
+          _context.next = 8;
+          break;
+
+        case 14:
+          _context.next = 19;
+          break;
+
+        case 16:
+          _context.prev = 16;
+          _context.t0 = _context["catch"](6);
+
+          _iterator3.e(_context.t0);
+
+        case 19:
+          _context.prev = 19;
+
+          _iterator3.f();
+
+          return _context.finish(19);
+
+        case 22:
+          _context.next = 3;
+          break;
+
+        case 24:
+          _context.next = 29;
+          break;
+
+        case 26:
+          _context.prev = 26;
+          _context.t1 = _context["catch"](1);
+
+          _iterator2.e(_context.t1);
+
+        case 29:
+          _context.prev = 29;
+
+          _iterator2.f();
+
+          return _context.finish(29);
+
+        case 32:
+        case "end":
+          return _context.stop();
+      }
+    }
+  }, _marked, null, [[1, 26, 29, 32], [6, 16, 19, 22]]);
+}
+
+var KHR_draco_mesh_compression = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  decode: decode$4,
+  encode: encode$3
+});
+
+function _createForOfIteratorHelper$4(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$5(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function _unsupportedIterableToArray$5(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$5(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$5(o, minLen); }
+
+function _arrayLikeToArray$5(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+function decode$3(gltfData, options) {
+  var gltfScenegraph = new GLTFScenegraph(gltfData);
+  var json = gltfScenegraph.json;
+  var extension = gltfScenegraph.getExtension(KHR_LIGHTS_PUNCTUAL);
+
+  if (extension) {
+    gltfScenegraph.json.lights = extension.lights;
+    gltfScenegraph.removeExtension(KHR_LIGHTS_PUNCTUAL);
+  }
+
+  var _iterator = _createForOfIteratorHelper$4(json.nodes || []),
+      _step;
+
+  try {
+    for (_iterator.s(); !(_step = _iterator.n()).done;) {
+      var node = _step.value;
+      var nodeExtension = gltfScenegraph.getObjectExtension(node, KHR_LIGHTS_PUNCTUAL);
+
+      if (nodeExtension) {
+        node.light = nodeExtension.light;
+      }
+
+      gltfScenegraph.removeObjectExtension(node, KHR_LIGHTS_PUNCTUAL);
+    }
+  } catch (err) {
+    _iterator.e(err);
+  } finally {
+    _iterator.f();
+  }
+}
+function encode$2(gltfData, options) {
+  var gltfScenegraph = new GLTFScenegraph(gltfData);
+  var json = gltfScenegraph.json;
+
+  if (json.lights) {
+    var extension = gltfScenegraph.addExtension(KHR_LIGHTS_PUNCTUAL);
+    assert(!extension.lights);
+    extension.lights = json.lights;
+    delete json.lights;
+  }
+
+  if (gltfScenegraph.json.lights) {
+    var _iterator2 = _createForOfIteratorHelper$4(gltfScenegraph.json.lights),
+        _step2;
+
+    try {
+      for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+        var light = _step2.value;
+        var node = light.node;
+        gltfScenegraph.addObjectExtension(node, KHR_LIGHTS_PUNCTUAL, light);
+      }
+    } catch (err) {
+      _iterator2.e(err);
+    } finally {
+      _iterator2.f();
+    }
+
+    delete gltfScenegraph.json.lights;
+  }
+}
+
+var KHR_lights_punctual = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  decode: decode$3,
+  encode: encode$2
+});
+
+function _createForOfIteratorHelper$3(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$4(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function _unsupportedIterableToArray$4(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$4(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$4(o, minLen); }
+
+function _arrayLikeToArray$4(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+function decode$2(gltfData, options) {
+  var gltfScenegraph = new GLTFScenegraph(gltfData);
+  var json = gltfScenegraph.json;
+  gltfScenegraph.removeExtension(KHR_MATERIALS_UNLIT);
+
+  var _iterator = _createForOfIteratorHelper$3(json.materials || []),
+      _step;
+
+  try {
+    for (_iterator.s(); !(_step = _iterator.n()).done;) {
+      var material = _step.value;
+      var extension = material.extensions && material.extensions.KHR_materials_unlit;
+
+      if (extension) {
+        material.unlit = true;
+      }
+
+      gltfScenegraph.removeObjectExtension(material, KHR_MATERIALS_UNLIT);
+    }
+  } catch (err) {
+    _iterator.e(err);
+  } finally {
+    _iterator.f();
+  }
+}
+function encode$1(gltfData, options) {
+  var gltfScenegraph = new GLTFScenegraph(gltfData);
+  var json = gltfScenegraph.json;
+
+  if (gltfScenegraph.materials) {
+    var _iterator2 = _createForOfIteratorHelper$3(json.materials),
+        _step2;
+
+    try {
+      for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+        var material = _step2.value;
+
+        if (material.unlit) {
+          delete material.unlit;
+          gltfScenegraph.addObjectExtension(material, KHR_MATERIALS_UNLIT, {});
+          gltfScenegraph.addExtension(KHR_MATERIALS_UNLIT);
+        }
+      }
+    } catch (err) {
+      _iterator2.e(err);
+    } finally {
+      _iterator2.f();
+    }
+  }
+}
+
+var KHR_materials_unlit = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  decode: decode$2,
+  encode: encode$1
+});
+
+function _createForOfIteratorHelper$2(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$3(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function _unsupportedIterableToArray$3(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$3(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$3(o, minLen); }
+
+function _arrayLikeToArray$3(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+function decode$1(gltfData, options) {
+  var gltfScenegraph = new GLTFScenegraph(gltfData);
+  var json = gltfScenegraph.json;
+  var extension = gltfScenegraph.getExtension(KHR_TECHNIQUES_WEBGL);
+
+  if (extension) {
+    var techniques = resolveTechniques(extension, gltfScenegraph);
+
+    var _iterator = _createForOfIteratorHelper$2(json.materials || []),
+        _step;
+
+    try {
+      for (_iterator.s(); !(_step = _iterator.n()).done;) {
+        var material = _step.value;
+        var materialExtension = gltfScenegraph.getObjectExtension(material, KHR_TECHNIQUES_WEBGL);
+
+        if (materialExtension) {
+          material.technique = Object.assign({}, materialExtension, techniques[materialExtension.technique]);
+          material.technique.values = resolveValues(material.technique, gltfScenegraph);
+        }
+
+        gltfScenegraph.removeObjectExtension(material, KHR_TECHNIQUES_WEBGL);
+      }
+    } catch (err) {
+      _iterator.e(err);
+    } finally {
+      _iterator.f();
+    }
+
+    gltfScenegraph.removeExtension(KHR_TECHNIQUES_WEBGL);
+  }
+}
+function encode(gltfData, options) {}
+
+function resolveTechniques(_ref, gltfScenegraph) {
+  var _ref$programs = _ref.programs,
+      programs = _ref$programs === void 0 ? [] : _ref$programs,
+      _ref$shaders = _ref.shaders,
+      shaders = _ref$shaders === void 0 ? [] : _ref$shaders,
+      _ref$techniques = _ref.techniques,
+      techniques = _ref$techniques === void 0 ? [] : _ref$techniques;
+  var textDecoder = new TextDecoder();
+  shaders.forEach(function (shader) {
+    if (Number.isFinite(shader.bufferView)) {
+      shader.code = textDecoder.decode(gltfScenegraph.getTypedArrayForBufferView(shader.bufferView));
+    } else {
+      throw new Error('KHR_techniques_webgl: no shader code');
+    }
+  });
+  programs.forEach(function (program) {
+    program.fragmentShader = shaders[program.fragmentShader];
+    program.vertexShader = shaders[program.vertexShader];
+  });
+  techniques.forEach(function (technique) {
+    technique.program = programs[technique.program];
+  });
+  return techniques;
+}
+
+function resolveValues(technique, gltfScenegraph) {
+  var values = Object.assign({}, technique.values);
+  Object.keys(technique.uniforms || {}).forEach(function (uniform) {
+    if (technique.uniforms[uniform].value && !(uniform in values)) {
+      values[uniform] = technique.uniforms[uniform].value;
+    }
+  });
+  Object.keys(values).forEach(function (uniform) {
+    if (_typeof(values[uniform]) === 'object' && values[uniform].index !== undefined) {
+      values[uniform].texture = gltfScenegraph.getTexture(values[uniform].index);
+    }
+  });
+  return values;
+}
+
+var KHR_techniques_webgl = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  decode: decode$1,
+  encode: encode
+});
+
+var EXTENSIONS = {
+  KHR_draco_mesh_compression: KHR_draco_mesh_compression,
+  KHR_lights_punctual: KHR_lights_punctual,
+  KHR_materials_unlit: KHR_materials_unlit,
+  KHR_techniques_webgl: KHR_techniques_webgl
+};
+function decodeExtensions(_x) {
+  return _decodeExtensions.apply(this, arguments);
+}
+
+function _decodeExtensions() {
+  _decodeExtensions = _asyncToGenerator(regenerator.mark(function _callee(gltf) {
+    var options,
+        context,
+        extensionName,
+        excludes,
+        exclude,
+        extension,
+        _args = arguments;
+    return regenerator.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            options = _args.length > 1 && _args[1] !== undefined ? _args[1] : {};
+            context = _args.length > 2 ? _args[2] : undefined;
+            options.gltf = options.gltf || {};
+            _context.t0 = regenerator.keys(EXTENSIONS);
+
+          case 4:
+            if ((_context.t1 = _context.t0()).done) {
+              _context.next = 14;
+              break;
+            }
+
+            extensionName = _context.t1.value;
+            excludes = options.gltf.excludeExtensions || {};
+            exclude = extensionName in excludes && !excludes[extensionName];
+
+            if (exclude) {
+              _context.next = 12;
+              break;
+            }
+
+            extension = EXTENSIONS[extensionName];
+            _context.next = 12;
+            return extension.decode(gltf, options, context);
+
+          case 12:
+            _context.next = 4;
+            break;
+
+          case 14:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee);
+  }));
+  return _decodeExtensions.apply(this, arguments);
+}
+
+var MAGIC_glTF$1 = 0x676c5446;
+var GLB_FILE_HEADER_SIZE = 12;
+var GLB_CHUNK_HEADER_SIZE = 8;
+var GLB_CHUNK_TYPE_JSON = 0x4e4f534a;
+var GLB_CHUNK_TYPE_BIN = 0x004e4942;
+var GLB_CHUNK_TYPE_JSON_XVIZ_DEPRECATED = 0;
+var GLB_CHUNK_TYPE_BIX_XVIZ_DEPRECATED = 1;
+var GLB_V1_CONTENT_FORMAT_JSON = 0x0;
+var LE$1 = true;
+
+function getMagicString(dataView) {
+  var byteOffset = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+  return "".concat(String.fromCharCode(dataView.getUint8(byteOffset + 0))).concat(String.fromCharCode(dataView.getUint8(byteOffset + 1))).concat(String.fromCharCode(dataView.getUint8(byteOffset + 2))).concat(String.fromCharCode(dataView.getUint8(byteOffset + 3)));
+}
+
+function isGLB(arrayBuffer) {
+  var byteOffset = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+  var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+  var dataView = new DataView(arrayBuffer);
+  var _options$magic = options.magic,
+      magic = _options$magic === void 0 ? MAGIC_glTF$1 : _options$magic;
+  var magic1 = dataView.getUint32(byteOffset, false);
+  return magic1 === magic || magic1 === MAGIC_glTF$1;
+}
+function parseGLBSync(glb, arrayBuffer) {
+  var byteOffset = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
+  var dataView = new DataView(arrayBuffer);
+  glb.type = getMagicString(dataView, byteOffset + 0);
+  glb.version = dataView.getUint32(byteOffset + 4, LE$1);
+  var byteLength = dataView.getUint32(byteOffset + 8, LE$1);
+  glb.header = {
+    byteOffset: byteOffset,
+    byteLength: byteLength
+  };
+  glb.json = {};
+  glb.binChunks = [];
+  byteOffset += GLB_FILE_HEADER_SIZE;
+
+  switch (glb.version) {
+    case 1:
+      return parseGLBV1(glb, dataView, byteOffset);
+
+    case 2:
+      return parseGLBV2(glb, dataView, byteOffset, {});
+
+    default:
+      throw new Error("Invalid GLB version ".concat(glb.version, ". Only supports v1 and v2."));
+  }
+}
+
+function parseGLBV1(glb, dataView, byteOffset, options) {
+  assert$2(glb.header.byteLength > GLB_FILE_HEADER_SIZE + GLB_CHUNK_HEADER_SIZE);
+  var contentLength = dataView.getUint32(byteOffset + 0, LE$1);
+  var contentFormat = dataView.getUint32(byteOffset + 4, LE$1);
+  byteOffset += GLB_CHUNK_HEADER_SIZE;
+  assert$2(contentFormat === GLB_V1_CONTENT_FORMAT_JSON);
+  parseJSONChunk(glb, dataView, byteOffset, contentLength);
+  byteOffset += contentLength;
+  byteOffset += parseBINChunk(glb, dataView, byteOffset, glb.header.byteLength);
+  return byteOffset;
+}
+
+function parseGLBV2(glb, dataView, byteOffset, options) {
+  assert$2(glb.header.byteLength > GLB_FILE_HEADER_SIZE + GLB_CHUNK_HEADER_SIZE);
+  parseGLBChunksSync(glb, dataView, byteOffset, options);
+  return byteOffset + glb.header.byteLength;
+}
+
+function parseGLBChunksSync(glb, dataView, byteOffset, options) {
+  while (byteOffset + 8 <= glb.header.byteLength) {
+    var chunkLength = dataView.getUint32(byteOffset + 0, LE$1);
+    var chunkFormat = dataView.getUint32(byteOffset + 4, LE$1);
+    byteOffset += GLB_CHUNK_HEADER_SIZE;
+
+    switch (chunkFormat) {
+      case GLB_CHUNK_TYPE_JSON:
+        parseJSONChunk(glb, dataView, byteOffset, chunkLength);
+        break;
+
+      case GLB_CHUNK_TYPE_BIN:
+        parseBINChunk(glb, dataView, byteOffset, chunkLength);
+        break;
+
+      case GLB_CHUNK_TYPE_JSON_XVIZ_DEPRECATED:
+        if (!options.glb.strict) {
+          parseJSONChunk(glb, dataView, byteOffset, chunkLength);
+        }
+
+        break;
+
+      case GLB_CHUNK_TYPE_BIX_XVIZ_DEPRECATED:
+        if (!options.glb.strict) {
+          parseBINChunk(glb, dataView, byteOffset, chunkLength);
+        }
+
+        break;
+    }
+
+    byteOffset += padTo4Bytes(chunkLength);
+  }
+
+  return byteOffset;
+}
+
+function parseJSONChunk(glb, dataView, byteOffset, chunkLength, options) {
+  var jsonChunk = new Uint8Array(dataView.buffer, byteOffset, chunkLength);
+  var textDecoder = new TextDecoder('utf8');
+  var jsonText = textDecoder.decode(jsonChunk);
+  glb.json = JSON.parse(jsonText);
+  return padTo4Bytes(chunkLength);
+}
+
+function parseBINChunk(glb, dataView, byteOffset, chunkLength, options) {
+  glb.header.hasBinChunk = true;
+  glb.binChunks.push({
+    byteOffset: byteOffset,
+    byteLength: chunkLength,
+    arrayBuffer: dataView.buffer
+  });
+  return padTo4Bytes(chunkLength);
+}
+
+function _createForOfIteratorHelper$1(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$2(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function _unsupportedIterableToArray$2(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$2(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$2(o, minLen); }
+
+function _arrayLikeToArray$2(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+function decode(gltfData, options) {
+  var gltfScenegraph = new GLTFScenegraph(gltfData);
+  var json = gltfScenegraph.json;
+
+  var _iterator = _createForOfIteratorHelper$1(json.images || []),
+      _step;
+
+  try {
+    for (_iterator.s(); !(_step = _iterator.n()).done;) {
+      var node = _step.value;
+      var extension = gltfScenegraph.removeObjectExtension(node, KHR_BINARY_GLTF);
+
+      if (extension) {
+        Object.assign(node, extension);
+      }
+    }
+  } catch (err) {
+    _iterator.e(err);
+  } finally {
+    _iterator.f();
+  }
+
+  if (json.buffers && json.buffers[0]) {
+    delete json.buffers[0].uri;
+  }
+
+  gltfScenegraph.removeExtension(KHR_BINARY_GLTF);
+}
+
+function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function _unsupportedIterableToArray$1(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$1(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$1(o, minLen); }
+
+function _arrayLikeToArray$1(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+var GLTF_ARRAYS = {
+  accessors: 'accessor',
+  animations: 'animation',
+  buffers: 'buffer',
+  bufferViews: 'bufferView',
+  images: 'image',
+  materials: 'material',
+  meshes: 'mesh',
+  nodes: 'node',
+  samplers: 'sampler',
+  scenes: 'scene',
+  skins: 'skin',
+  textures: 'texture'
+};
+var GLTF_KEYS = {
+  accessor: 'accessors',
+  animations: 'animation',
+  buffer: 'buffers',
+  bufferView: 'bufferViews',
+  image: 'images',
+  material: 'materials',
+  mesh: 'meshes',
+  node: 'nodes',
+  sampler: 'samplers',
+  scene: 'scenes',
+  skin: 'skins',
+  texture: 'textures'
+};
+
+var GLTFV1Normalizer = function () {
+  function GLTFV1Normalizer(gltf) {
+    _classCallCheck$1(this, GLTFV1Normalizer);
+
+    this.idToIndexMap = {
+      animations: {},
+      accessors: {},
+      buffers: {},
+      bufferViews: {},
+      images: {},
+      materials: {},
+      meshes: {},
+      nodes: {},
+      samplers: {},
+      scenes: {},
+      skins: {},
+      textures: {}
+    };
+  }
+
+  _createClass$1(GLTFV1Normalizer, [{
+    key: "normalize",
+    value: function normalize(gltf, options) {
+      this.json = gltf.json;
+      var json = gltf.json;
+
+      switch (json.asset && json.asset.version) {
+        case '2.0':
+          return;
+
+        case undefined:
+        case '1.0':
+          break;
+
+        default:
+          console.warn("glTF: Unknown version ".concat(json.asset.version));
+          return;
+      }
+
+      if (!options.normalize) {
+        throw new Error('glTF v1 is not supported.');
+      }
+
+      console.warn('Converting glTF v1 to glTF v2 format. This is experimental and may fail.');
+
+      this._addAsset(json);
+
+      this._convertTopLevelObjectsToArrays(json);
+
+      decode(gltf);
+
+      this._convertObjectIdsToArrayIndices(json);
+
+      this._updateObjects(json);
+    }
+  }, {
+    key: "_addAsset",
+    value: function _addAsset(json) {
+      json.asset = json.asset || {};
+      json.asset.version = '2.0';
+      json.asset.generator = json.asset.generator || 'Normalized to glTF 2.0 by loaders.gl';
+    }
+  }, {
+    key: "_convertTopLevelObjectsToArrays",
+    value: function _convertTopLevelObjectsToArrays(json) {
+      for (var arrayName in GLTF_ARRAYS) {
+        this._convertTopLevelObjectToArray(json, arrayName);
+      }
+    }
+  }, {
+    key: "_convertTopLevelObjectToArray",
+    value: function _convertTopLevelObjectToArray(json, mapName) {
+      var objectMap = json[mapName];
+
+      if (!objectMap || Array.isArray(objectMap)) {
+        return;
+      }
+
+      json[mapName] = [];
+
+      for (var id in objectMap) {
+        var object = objectMap[id];
+        object.id = object.id || id;
+        var index = json[mapName].length;
+        json[mapName].push(object);
+        this.idToIndexMap[mapName][id] = index;
+      }
+    }
+  }, {
+    key: "_convertObjectIdsToArrayIndices",
+    value: function _convertObjectIdsToArrayIndices(json) {
+      for (var arrayName in GLTF_ARRAYS) {
+        this._convertIdsToIndices(json, arrayName);
+      }
+
+      if ('scene' in json) {
+        json.scene = this._convertIdToIndex(json.scene, 'scene');
+      }
+
+      var _iterator = _createForOfIteratorHelper(json.textures),
+          _step;
+
+      try {
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
+          var texture = _step.value;
+
+          this._convertTextureIds(texture);
+        }
+      } catch (err) {
+        _iterator.e(err);
+      } finally {
+        _iterator.f();
+      }
+
+      var _iterator2 = _createForOfIteratorHelper(json.meshes),
+          _step2;
+
+      try {
+        for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+          var mesh = _step2.value;
+
+          this._convertMeshIds(mesh);
+        }
+      } catch (err) {
+        _iterator2.e(err);
+      } finally {
+        _iterator2.f();
+      }
+
+      var _iterator3 = _createForOfIteratorHelper(json.nodes),
+          _step3;
+
+      try {
+        for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+          var node = _step3.value;
+
+          this._convertNodeIds(node);
+        }
+      } catch (err) {
+        _iterator3.e(err);
+      } finally {
+        _iterator3.f();
+      }
+
+      var _iterator4 = _createForOfIteratorHelper(json.scenes),
+          _step4;
+
+      try {
+        for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
+          var _node = _step4.value;
+
+          this._convertSceneIds(_node);
+        }
+      } catch (err) {
+        _iterator4.e(err);
+      } finally {
+        _iterator4.f();
+      }
+    }
+  }, {
+    key: "_convertTextureIds",
+    value: function _convertTextureIds(texture) {
+      if (texture.source) {
+        texture.source = this._convertIdToIndex(texture.source, 'image');
+      }
+    }
+  }, {
+    key: "_convertMeshIds",
+    value: function _convertMeshIds(mesh) {
+      var _iterator5 = _createForOfIteratorHelper(mesh.primitives),
+          _step5;
+
+      try {
+        for (_iterator5.s(); !(_step5 = _iterator5.n()).done;) {
+          var primitive = _step5.value;
+          var attributes = primitive.attributes,
+              indices = primitive.indices,
+              material = primitive.material;
+
+          for (var attributeName in attributes) {
+            attributes[attributeName] = this._convertIdToIndex(attributes[attributeName], 'accessor');
+          }
+
+          if (indices) {
+            primitive.indices = this._convertIdToIndex(indices, 'accessor');
+          }
+
+          if (material) {
+            primitive.material = this._convertIdToIndex(material, 'material');
+          }
+        }
+      } catch (err) {
+        _iterator5.e(err);
+      } finally {
+        _iterator5.f();
+      }
+    }
+  }, {
+    key: "_convertNodeIds",
+    value: function _convertNodeIds(node) {
+      var _this = this;
+
+      if (node.children) {
+        node.children = node.children.map(function (child) {
+          return _this._convertIdToIndex(child, 'node');
+        });
+      }
+    }
+  }, {
+    key: "_convertSceneIds",
+    value: function _convertSceneIds(scene) {
+      var _this2 = this;
+
+      if (scene.nodes) {
+        scene.nodes = scene.nodes.map(function (node) {
+          return _this2._convertIdToIndex(node, 'node');
+        });
+      }
+    }
+  }, {
+    key: "_convertIdsToIndices",
+    value: function _convertIdsToIndices(json, topLevelArrayName) {
+      var _iterator6 = _createForOfIteratorHelper(json[topLevelArrayName]),
+          _step6;
+
+      try {
+        for (_iterator6.s(); !(_step6 = _iterator6.n()).done;) {
+          var object = _step6.value;
+
+          for (var key in object) {
+            var id = object[key];
+
+            var index = this._convertIdToIndex(id, key);
+
+            object[key] = index;
+          }
+        }
+      } catch (err) {
+        _iterator6.e(err);
+      } finally {
+        _iterator6.f();
+      }
+    }
+  }, {
+    key: "_convertIdToIndex",
+    value: function _convertIdToIndex(id, key) {
+      var arrayName = GLTF_KEYS[key];
+
+      if (arrayName in this.idToIndexMap) {
+        var index = this.idToIndexMap[arrayName][id];
+
+        if (!Number.isFinite(index)) {
+          throw new Error("gltf v1: failed to resolve ".concat(key, " with id ").concat(id));
+        }
+
+        return index;
+      }
+
+      return id;
+    }
+  }, {
+    key: "_updateObjects",
+    value: function _updateObjects(json) {
+      var _iterator7 = _createForOfIteratorHelper(this.json.buffers),
+          _step7;
+
+      try {
+        for (_iterator7.s(); !(_step7 = _iterator7.n()).done;) {
+          var buffer = _step7.value;
+          delete buffer.type;
+        }
+      } catch (err) {
+        _iterator7.e(err);
+      } finally {
+        _iterator7.f();
+      }
+    }
+  }]);
+
+  return GLTFV1Normalizer;
+}();
+
+function normalizeGLTFV1(gltf) {
+  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  return new GLTFV1Normalizer().normalize(gltf, options);
+}
+
+var _DEFAULT_SAMPLER;
+
+function ownKeys$2(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys$2(Object(source), true).forEach(function (key) { _defineProperty$1(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys$2(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+var COMPONENTS = {
+  SCALAR: 1,
+  VEC2: 2,
+  VEC3: 3,
+  VEC4: 4,
+  MAT2: 4,
+  MAT3: 9,
+  MAT4: 16
+};
+var BYTES = {
+  5120: 1,
+  5121: 1,
+  5122: 2,
+  5123: 2,
+  5125: 4,
+  5126: 4
+};
+var GL_SAMPLER = {
+  TEXTURE_MAG_FILTER: 0x2800,
+  TEXTURE_MIN_FILTER: 0x2801,
+  TEXTURE_WRAP_S: 0x2802,
+  TEXTURE_WRAP_T: 0x2803,
+  REPEAT: 0x2901,
+  LINEAR: 0x2601,
+  NEAREST_MIPMAP_LINEAR: 0x2702
+};
+var SAMPLER_PARAMETER_GLTF_TO_GL = {
+  magFilter: GL_SAMPLER.TEXTURE_MAG_FILTER,
+  minFilter: GL_SAMPLER.TEXTURE_MIN_FILTER,
+  wrapS: GL_SAMPLER.TEXTURE_WRAP_S,
+  wrapT: GL_SAMPLER.TEXTURE_WRAP_T
+};
+var DEFAULT_SAMPLER = (_DEFAULT_SAMPLER = {}, _defineProperty$1(_DEFAULT_SAMPLER, GL_SAMPLER.TEXTURE_MAG_FILTER, GL_SAMPLER.LINEAR), _defineProperty$1(_DEFAULT_SAMPLER, GL_SAMPLER.TEXTURE_MIN_FILTER, GL_SAMPLER.NEAREST_MIPMAP_LINEAR), _defineProperty$1(_DEFAULT_SAMPLER, GL_SAMPLER.TEXTURE_WRAP_S, GL_SAMPLER.REPEAT), _defineProperty$1(_DEFAULT_SAMPLER, GL_SAMPLER.TEXTURE_WRAP_, GL_SAMPLER.REPEAT), _DEFAULT_SAMPLER);
+
+function getBytesFromComponentType(componentType) {
+  return BYTES[componentType];
+}
+
+function getSizeFromAccessorType(type) {
+  return COMPONENTS[type];
+}
+
+var GLTFPostProcessor = function () {
+  function GLTFPostProcessor() {
+    _classCallCheck$1(this, GLTFPostProcessor);
+  }
+
+  _createClass$1(GLTFPostProcessor, [{
+    key: "postProcess",
+    value: function postProcess(gltf) {
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      var json = gltf.json,
+          _gltf$buffers = gltf.buffers,
+          buffers = _gltf$buffers === void 0 ? [] : _gltf$buffers,
+          _gltf$images = gltf.images,
+          images = _gltf$images === void 0 ? [] : _gltf$images,
+          _gltf$baseUri = gltf.baseUri,
+          baseUri = _gltf$baseUri === void 0 ? '' : _gltf$baseUri;
+      assert(json);
+      this.baseUri = baseUri;
+      this.json = json;
+      this.buffers = buffers;
+      this.images = images;
+
+      this._resolveTree(this.json, options);
+
+      return this.json;
+    }
+  }, {
+    key: "_resolveTree",
+    value: function _resolveTree(json) {
+      var _this = this;
+
+      if (json.bufferViews) {
+        json.bufferViews = json.bufferViews.map(function (bufView, i) {
+          return _this._resolveBufferView(bufView, i);
+        });
+      }
+
+      if (json.images) {
+        json.images = json.images.map(function (image, i) {
+          return _this._resolveImage(image, i);
+        });
+      }
+
+      if (json.samplers) {
+        json.samplers = json.samplers.map(function (sampler, i) {
+          return _this._resolveSampler(sampler, i);
+        });
+      }
+
+      if (json.textures) {
+        json.textures = json.textures.map(function (texture, i) {
+          return _this._resolveTexture(texture, i);
+        });
+      }
+
+      if (json.accessors) {
+        json.accessors = json.accessors.map(function (accessor, i) {
+          return _this._resolveAccessor(accessor, i);
+        });
+      }
+
+      if (json.materials) {
+        json.materials = json.materials.map(function (material, i) {
+          return _this._resolveMaterial(material, i);
+        });
+      }
+
+      if (json.meshes) {
+        json.meshes = json.meshes.map(function (mesh, i) {
+          return _this._resolveMesh(mesh, i);
+        });
+      }
+
+      if (json.nodes) {
+        json.nodes = json.nodes.map(function (node, i) {
+          return _this._resolveNode(node, i);
+        });
+      }
+
+      if (json.skins) {
+        json.skins = json.skins.map(function (skin, i) {
+          return _this._resolveSkin(skin, i);
+        });
+      }
+
+      if (json.scenes) {
+        json.scenes = json.scenes.map(function (scene, i) {
+          return _this._resolveScene(scene, i);
+        });
+      }
+
+      if (json.scene !== undefined) {
+        json.scene = json.scenes[this.json.scene];
+      }
+    }
+  }, {
+    key: "getScene",
+    value: function getScene(index) {
+      return this._get('scenes', index);
+    }
+  }, {
+    key: "getNode",
+    value: function getNode(index) {
+      return this._get('nodes', index);
+    }
+  }, {
+    key: "getSkin",
+    value: function getSkin(index) {
+      return this._get('skins', index);
+    }
+  }, {
+    key: "getMesh",
+    value: function getMesh(index) {
+      return this._get('meshes', index);
+    }
+  }, {
+    key: "getMaterial",
+    value: function getMaterial(index) {
+      return this._get('materials', index);
+    }
+  }, {
+    key: "getAccessor",
+    value: function getAccessor(index) {
+      return this._get('accessors', index);
+    }
+  }, {
+    key: "getCamera",
+    value: function getCamera(index) {
+      return null;
+    }
+  }, {
+    key: "getTexture",
+    value: function getTexture(index) {
+      return this._get('textures', index);
+    }
+  }, {
+    key: "getSampler",
+    value: function getSampler(index) {
+      return this._get('samplers', index);
+    }
+  }, {
+    key: "getImage",
+    value: function getImage(index) {
+      return this._get('images', index);
+    }
+  }, {
+    key: "getBufferView",
+    value: function getBufferView(index) {
+      return this._get('bufferViews', index);
+    }
+  }, {
+    key: "getBuffer",
+    value: function getBuffer(index) {
+      return this._get('buffers', index);
+    }
+  }, {
+    key: "_get",
+    value: function _get(array, index) {
+      if (_typeof(index) === 'object') {
+        return index;
+      }
+
+      var object = this.json[array] && this.json[array][index];
+
+      if (!object) {
+        console.warn("glTF file error: Could not find ".concat(array, "[").concat(index, "]"));
+      }
+
+      return object;
+    }
+  }, {
+    key: "_resolveScene",
+    value: function _resolveScene(scene, index) {
+      var _this2 = this;
+
+      scene.id = scene.id || "scene-".concat(index);
+      scene.nodes = (scene.nodes || []).map(function (node) {
+        return _this2.getNode(node);
+      });
+      return scene;
+    }
+  }, {
+    key: "_resolveNode",
+    value: function _resolveNode(node, index) {
+      var _this3 = this;
+
+      node.id = node.id || "node-".concat(index);
+
+      if (node.children) {
+        node.children = node.children.map(function (child) {
+          return _this3.getNode(child);
+        });
+      }
+
+      if (node.mesh !== undefined) {
+        node.mesh = this.getMesh(node.mesh);
+      }
+
+      if (node.camera !== undefined) {
+        node.camera = this.getCamera(node.camera);
+      }
+
+      if (node.skin !== undefined) {
+        node.skin = this.getSkin(node.skin);
+      }
+
+      return node;
+    }
+  }, {
+    key: "_resolveSkin",
+    value: function _resolveSkin(skin, index) {
+      skin.id = skin.id || "skin-".concat(index);
+      skin.inverseBindMatrices = this.getAccessor(skin.inverseBindMatrices);
+      return skin;
+    }
+  }, {
+    key: "_resolveMesh",
+    value: function _resolveMesh(mesh, index) {
+      var _this4 = this;
+
+      mesh.id = mesh.id || "mesh-".concat(index);
+
+      if (mesh.primitives) {
+        mesh.primitives = mesh.primitives.map(function (primitive) {
+          primitive = _objectSpread$1({}, primitive);
+          var attributes = primitive.attributes;
+          primitive.attributes = {};
+
+          for (var attribute in attributes) {
+            primitive.attributes[attribute] = _this4.getAccessor(attributes[attribute]);
+          }
+
+          if (primitive.indices !== undefined) {
+            primitive.indices = _this4.getAccessor(primitive.indices);
+          }
+
+          if (primitive.material !== undefined) {
+            primitive.material = _this4.getMaterial(primitive.material);
+          }
+
+          return primitive;
+        });
+      }
+
+      return mesh;
+    }
+  }, {
+    key: "_resolveMaterial",
+    value: function _resolveMaterial(material, index) {
+      material.id = material.id || "material-".concat(index);
+
+      if (material.normalTexture) {
+        material.normalTexture = _objectSpread$1({}, material.normalTexture);
+        material.normalTexture.texture = this.getTexture(material.normalTexture.index);
+      }
+
+      if (material.occlusionTexture) {
+        material.occlustionTexture = _objectSpread$1({}, material.occlustionTexture);
+        material.occlusionTexture.texture = this.getTexture(material.occlusionTexture.index);
+      }
+
+      if (material.emissiveTexture) {
+        material.emmisiveTexture = _objectSpread$1({}, material.emmisiveTexture);
+        material.emissiveTexture.texture = this.getTexture(material.emissiveTexture.index);
+      }
+
+      if (material.pbrMetallicRoughness) {
+        material.pbrMetallicRoughness = _objectSpread$1({}, material.pbrMetallicRoughness);
+        var mr = material.pbrMetallicRoughness;
+
+        if (mr.baseColorTexture) {
+          mr.baseColorTexture = _objectSpread$1({}, mr.baseColorTexture);
+          mr.baseColorTexture.texture = this.getTexture(mr.baseColorTexture.index);
+        }
+
+        if (mr.metallicRoughnessTexture) {
+          mr.metallicRoughnessTexture = _objectSpread$1({}, mr.metallicRoughnessTexture);
+          mr.metallicRoughnessTexture.texture = this.getTexture(mr.metallicRoughnessTexture.index);
+        }
+      }
+
+      return material;
+    }
+  }, {
+    key: "_resolveAccessor",
+    value: function _resolveAccessor(accessor, index) {
+      accessor.id = accessor.id || "accessor-".concat(index);
+
+      if (accessor.bufferView !== undefined) {
+        accessor.bufferView = this.getBufferView(accessor.bufferView);
+      }
+
+      accessor.bytesPerComponent = getBytesFromComponentType(accessor.componentType);
+      accessor.components = getSizeFromAccessorType(accessor.type);
+      accessor.bytesPerElement = accessor.bytesPerComponent * accessor.components;
+
+      if (accessor.bufferView) {
+        var buffer = accessor.bufferView.buffer;
+
+        var _getAccessorArrayType = getAccessorArrayTypeAndLength(accessor, accessor.bufferView),
+            ArrayType = _getAccessorArrayType.ArrayType,
+            length = _getAccessorArrayType.length;
+
+        var byteOffset = (accessor.bufferView.byteOffset || 0) + (accessor.byteOffset || 0) + buffer.byteOffset;
+        accessor.value = new ArrayType(buffer.arrayBuffer, byteOffset, length);
+      }
+
+      return accessor;
+    }
+  }, {
+    key: "_resolveTexture",
+    value: function _resolveTexture(texture, index) {
+      texture.id = texture.id || "texture-".concat(index);
+      texture.sampler = 'sampler' in texture ? this.getSampler(texture.sampler) : DEFAULT_SAMPLER;
+      texture.source = this.getImage(texture.source);
+      return texture;
+    }
+  }, {
+    key: "_resolveSampler",
+    value: function _resolveSampler(sampler, index) {
+      sampler.id = sampler.id || "sampler-".concat(index);
+      sampler.parameters = {};
+
+      for (var key in sampler) {
+        var glEnum = this._enumSamplerParameter(key);
+
+        if (glEnum !== undefined) {
+          sampler.parameters[glEnum] = sampler[key];
+        }
+      }
+
+      return sampler;
+    }
+  }, {
+    key: "_enumSamplerParameter",
+    value: function _enumSamplerParameter(key) {
+      return SAMPLER_PARAMETER_GLTF_TO_GL[key];
+    }
+  }, {
+    key: "_resolveImage",
+    value: function _resolveImage(image, index) {
+      image.id = image.id || "image-".concat(index);
+
+      if (image.bufferView !== undefined) {
+        image.bufferView = this.getBufferView(image.bufferView);
+      }
+
+      var preloadedImage = this.images[index];
+
+      if (preloadedImage) {
+        image.image = preloadedImage;
+      }
+
+      return image;
+    }
+  }, {
+    key: "_resolveBufferView",
+    value: function _resolveBufferView(bufferView, index) {
+      bufferView.id = bufferView.id || "bufferView-".concat(index);
+      var bufferIndex = bufferView.buffer;
+      bufferView.buffer = this.buffers[bufferIndex];
+      var arrayBuffer = this.buffers[bufferIndex].arrayBuffer;
+      var byteOffset = this.buffers[bufferIndex].byteOffset || 0;
+
+      if ('byteOffset' in bufferView) {
+        byteOffset += bufferView.byteOffset;
+      }
+
+      bufferView.data = new Uint8Array(arrayBuffer, byteOffset, bufferView.byteLength);
+      return bufferView;
+    }
+  }, {
+    key: "_resolveCamera",
+    value: function _resolveCamera(camera, index) {
+      camera.id = camera.id || "camera-".concat(index);
+
+      if (camera.perspective) ;
+
+      if (camera.orthographic) ;
+
+      return camera;
+    }
+  }]);
+
+  return GLTFPostProcessor;
+}();
+
+function postProcessGLTF(gltf, options) {
+  return new GLTFPostProcessor().postProcess(gltf, options);
+}
+
+function parseGLTF(_x, _x2) {
+  return _parseGLTF.apply(this, arguments);
+}
+
+function _parseGLTF() {
+  _parseGLTF = _asyncToGenerator(regenerator.mark(function _callee(gltf, arrayBufferOrString) {
+    var byteOffset,
+        options,
+        context,
+        promises,
+        _promise,
+        promise,
+        _args = arguments;
+
+    return regenerator.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            byteOffset = _args.length > 2 && _args[2] !== undefined ? _args[2] : 0;
+            options = _args.length > 3 ? _args[3] : undefined;
+            context = _args.length > 4 ? _args[4] : undefined;
+            parseGLTFContainerSync(gltf, arrayBufferOrString, byteOffset, options);
+            normalizeGLTFV1(gltf, {
+              normalize: options.gltf.normalize
+            });
+            promises = [];
+
+            if (!(options.gltf.loadBuffers && gltf.json.buffers)) {
+              _context.next = 9;
+              break;
+            }
+
+            _context.next = 9;
+            return loadBuffers(gltf, options, context);
+
+          case 9:
+            if (options.gltf.loadImages) {
+              _promise = loadImages(gltf, options, context);
+              promises.push(_promise);
+            }
+
+            promise = decodeExtensions(gltf, options, context);
+            promises.push(promise);
+            _context.next = 14;
+            return Promise.all(promises);
+
+          case 14:
+            return _context.abrupt("return", options.gltf.postProcess ? postProcessGLTF(gltf, options) : gltf);
+
+          case 15:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee);
+  }));
+  return _parseGLTF.apply(this, arguments);
+}
+
+function parseGLTFContainerSync(gltf, data, byteOffset, options) {
+  if (options.uri) {
+    gltf.baseUri = options.uri;
+  }
+
+  if (data instanceof ArrayBuffer && !isGLB(data, byteOffset, options)) {
+    var textDecoder = new TextDecoder();
+    data = textDecoder.decode(data);
+  }
+
+  if (typeof data === 'string') {
+    gltf.json = parseJSON(data);
+  } else if (data instanceof ArrayBuffer) {
+    var glb = {};
+    byteOffset = parseGLBSync(glb, data, byteOffset, options);
+    assert(glb.type === 'glTF', "Invalid GLB magic string ".concat(glb.type));
+    gltf._glb = glb;
+    gltf.json = glb.json;
+  } else {
+    assert(false, "GLTF: must be ArrayBuffer or string");
+  }
+
+  var buffers = gltf.json.buffers || [];
+  gltf.buffers = new Array(buffers.length).fill(null);
+
+  if (gltf._glb && gltf._glb.header.hasBinChunk) {
+    var binChunks = gltf._glb.binChunks;
+    gltf.buffers[0] = {
+      arrayBuffer: binChunks[0].arrayBuffer,
+      byteOffset: binChunks[0].byteOffset,
+      byteLength: binChunks[0].byteLength
+    };
+  }
+
+  var images = gltf.json.images || [];
+  gltf.images = new Array(images.length).fill({});
+}
+
+function loadBuffers(_x3, _x4, _x5) {
+  return _loadBuffers.apply(this, arguments);
+}
+
+function _loadBuffers() {
+  _loadBuffers = _asyncToGenerator(regenerator.mark(function _callee2(gltf, options, context) {
+    var i, buffer, fetch, uri, response, arrayBuffer;
+    return regenerator.wrap(function _callee2$(_context2) {
+      while (1) {
+        switch (_context2.prev = _context2.next) {
+          case 0:
+            i = 0;
+
+          case 1:
+            if (!(i < gltf.json.buffers.length)) {
+              _context2.next = 18;
+              break;
+            }
+
+            buffer = gltf.json.buffers[i];
+
+            if (!buffer.uri) {
+              _context2.next = 15;
+              break;
+            }
+
+            fetch = context.fetch;
+            assert(fetch);
+            uri = resolveUrl(buffer.uri, options);
+            _context2.next = 9;
+            return fetch(uri);
+
+          case 9:
+            response = _context2.sent;
+            _context2.next = 12;
+            return response.arrayBuffer();
+
+          case 12:
+            arrayBuffer = _context2.sent;
+            gltf.buffers[i] = {
+              arrayBuffer: arrayBuffer,
+              byteOffset: 0,
+              byteLength: arrayBuffer.byteLength
+            };
+            delete buffer.uri;
+
+          case 15:
+            ++i;
+            _context2.next = 1;
+            break;
+
+          case 18:
+          case "end":
+            return _context2.stop();
+        }
+      }
+    }, _callee2);
+  }));
+  return _loadBuffers.apply(this, arguments);
+}
+
+function loadImages(_x6, _x7, _x8) {
+  return _loadImages.apply(this, arguments);
+}
+
+function _loadImages() {
+  _loadImages = _asyncToGenerator(regenerator.mark(function _callee3(gltf, options, context) {
+    var images, promises, i;
+    return regenerator.wrap(function _callee3$(_context3) {
+      while (1) {
+        switch (_context3.prev = _context3.next) {
+          case 0:
+            images = gltf.json.images || [];
+            promises = [];
+
+            for (i = 0; i < images.length; ++i) {
+              promises.push(loadImage(gltf, images[i], i, options, context));
+            }
+
+            _context3.next = 5;
+            return Promise.all(promises);
+
+          case 5:
+            return _context3.abrupt("return", _context3.sent);
+
+          case 6:
+          case "end":
+            return _context3.stop();
+        }
+      }
+    }, _callee3);
+  }));
+  return _loadImages.apply(this, arguments);
+}
+
+function loadImage(_x9, _x10, _x11, _x12, _x13) {
+  return _loadImage.apply(this, arguments);
+}
+
+function _loadImage() {
+  _loadImage = _asyncToGenerator(regenerator.mark(function _callee4(gltf, image, i, options, context) {
+    var fetch, parse, arrayBuffer, uri, response, array, parsedImage;
+    return regenerator.wrap(function _callee4$(_context4) {
+      while (1) {
+        switch (_context4.prev = _context4.next) {
+          case 0:
+            fetch = context.fetch, parse = context.parse;
+
+            if (!image.uri) {
+              _context4.next = 9;
+              break;
+            }
+
+            uri = resolveUrl(image.uri, options);
+            _context4.next = 5;
+            return fetch(uri);
+
+          case 5:
+            response = _context4.sent;
+            _context4.next = 8;
+            return response.arrayBuffer();
+
+          case 8:
+            arrayBuffer = _context4.sent;
+
+          case 9:
+            if (Number.isFinite(image.bufferView)) {
+              array = getTypedArrayForBufferView(gltf.json, gltf.buffers, image.bufferView);
+              arrayBuffer = getZeroOffsetArrayBuffer(array.buffer, array.byteOffset, array.byteLength);
+            }
+
+            assert(arrayBuffer, 'glTF image has no data');
+            _context4.next = 13;
+            return parse(arrayBuffer, ImageLoader, {}, context);
+
+          case 13:
+            parsedImage = _context4.sent;
+            gltf.images[i] = parsedImage;
+
+          case 15:
+          case "end":
+            return _context4.stop();
+        }
+      }
+    }, _callee4);
+  }));
+  return _loadImage.apply(this, arguments);
+}
+
+function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys$1(Object(source), true).forEach(function (key) { _defineProperty$1(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+var VERSION$1 = "2.3.13" ;
+var GLTFLoader = {
+  id: 'gltf',
+  name: 'glTF',
+  version: VERSION$1,
+  extensions: ['gltf', 'glb'],
+  mimeTypes: ['model/gltf+json', 'model/gltf-binary'],
+  text: true,
+  binary: true,
+  tests: ['glTF'],
+  parse: parse,
+  options: {
+    gltf: {
+      normalize: false,
+      loadBuffers: true,
+      loadImages: true,
+      decompressMeshes: true,
+      postProcess: true
+    },
+    baseUri: '',
+    log: console
+  },
+  deprecatedOptions: {
+    fetchImages: 'gltf.loadImages',
+    createImages: 'gltf.loadImages',
+    decompress: 'gltf.decompressMeshes',
+    postProcess: 'gltf.postProcess',
+    gltf: {
+      decompress: 'gltf.decompressMeshes'
+    }
+  }
+};
+function parse(_x) {
+  return _parse.apply(this, arguments);
+}
+
+function _parse() {
+  _parse = _asyncToGenerator(regenerator.mark(function _callee(arrayBuffer) {
+    var options,
+        context,
+        _options,
+        _options$byteOffset,
+        byteOffset,
+        gltf,
+        _args = arguments;
+
+    return regenerator.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            options = _args.length > 1 && _args[1] !== undefined ? _args[1] : {};
+            context = _args.length > 2 ? _args[2] : undefined;
+            options = _objectSpread(_objectSpread({}, GLTFLoader.options), options);
+            options.gltf = _objectSpread(_objectSpread({}, GLTFLoader.options.gltf), options.gltf);
+            addDeprecatedGLTFOptions(options);
+            _options = options, _options$byteOffset = _options.byteOffset, byteOffset = _options$byteOffset === void 0 ? 0 : _options$byteOffset;
+            gltf = {};
+            _context.next = 9;
+            return parseGLTF(gltf, arrayBuffer, byteOffset, options, context);
+
+          case 9:
+            return _context.abrupt("return", _context.sent);
+
+          case 10:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee);
+  }));
+  return _parse.apply(this, arguments);
+}
+
+function addDeprecatedGLTFOptions(options) {
+  if ('fetchImages' in options) {
+    options.gltf.loadImages = options.fetchImages;
+  }
+
+  if ('createImages' in options) {
+    options.gltf.loadImages = options.createImages;
+  }
+
+  if ('fetchLinkedResources' in options) {
+    options.gltf.fetchBuffers = options.fetchLinkedResources;
+  }
+
+  if ('decompress' in options) {
+    options.gltf.decompressMeshes = options.decompress;
+  }
+
+  if ('decompress' in options.gltf) {
+    options.gltf.decompressMeshes = options.gltf.decompress;
+  }
+
+  if ('postProcess' in options) {
+    options.gltf.postProcess = options.postProcess;
+  }
+}
+
+var MAGIC_glTF = 0x46546c67;
+var MAGIC_JSON = 0x4e4f534a;
+var MAGIC_BIN = 0x004e4942;
+var LE = true;
+function encodeGLBSync(glb, dataView) {
+  var byteOffset = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
+  var _glb$magic = glb.magic,
+      magic = _glb$magic === void 0 ? MAGIC_glTF : _glb$magic,
+      _glb$version = glb.version,
+      version = _glb$version === void 0 ? 2 : _glb$version,
+      _glb$json = glb.json,
+      json = _glb$json === void 0 ? {} : _glb$json,
+      binary = glb.binary;
+  var byteOffsetStart = byteOffset;
+
+  if (dataView) {
+    dataView.setUint32(byteOffset + 0, magic, LE);
+    dataView.setUint32(byteOffset + 4, version, LE);
+    dataView.setUint32(byteOffset + 8, 0, LE);
+  }
+
+  var byteOffsetFileLength = byteOffset + 8;
+  byteOffset += 12;
+  var byteOffsetJsonHeader = byteOffset;
+
+  if (dataView) {
+    dataView.setUint32(byteOffset + 0, 0, LE);
+    dataView.setUint32(byteOffset + 4, MAGIC_JSON, LE);
+  }
+
+  byteOffset += 8;
+  var jsonString = JSON.stringify(json);
+  byteOffset = copyPaddedStringToDataView(dataView, byteOffset, jsonString);
+
+  if (dataView) {
+    var jsonByteLength = byteOffset - byteOffsetJsonHeader - 8;
+    dataView.setUint32(byteOffsetJsonHeader + 0, jsonByteLength, LE);
+  }
+
+  if (binary) {
+    var byteOffsetBinHeader = byteOffset;
+
+    if (dataView) {
+      dataView.setUint32(byteOffset + 0, 0, LE);
+      dataView.setUint32(byteOffset + 4, MAGIC_BIN, LE);
+    }
+
+    byteOffset += 8;
+    byteOffset = copyPaddedArrayBufferToDataView(dataView, byteOffset, binary);
+
+    if (dataView) {
+      var binByteLength = byteOffset - byteOffsetBinHeader - 8;
+      dataView.setUint32(byteOffsetBinHeader + 0, binByteLength, LE);
+    }
+  }
+
+  if (dataView) {
+    var fileByteLength = byteOffset - byteOffsetStart;
+    dataView.setUint32(byteOffsetFileLength, fileByteLength, LE);
+  }
+
+  return byteOffset;
+}
+
+function encodeGLTFSync(gltf, arrayBuffer, byteOffset, options) {
+  convertBuffersToBase64(gltf);
+  return encodeGLBSync(gltf, arrayBuffer, byteOffset, options);
+}
+
+function convertBuffersToBase64(gltf) {
+  var _ref = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+      _ref$firstBuffer = _ref.firstBuffer,
+      firstBuffer = _ref$firstBuffer === void 0 ? 0 : _ref$firstBuffer;
+
+  if (gltf.buffers && gltf.buffers.length > firstBuffer) {
+    throw new Error('encodeGLTF: multiple buffers not yet implemented');
+  }
+}
+
+var gltfWriter = {
+  name: 'glTF',
+  extensions: ['glb'],
+  mimeTypes: ['model/gltf-binary'],
+  encodeSync: encodeSync$1,
+  binary: true,
+  options: {}
+};
+
+function encodeSync$1(gltf) {
+  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  var _options$byteOffset = options.byteOffset,
+      byteOffset = _options$byteOffset === void 0 ? 0 : _options$byteOffset;
+  var byteLength = encodeGLTFSync(gltf, null, byteOffset, options);
+  var arrayBuffer = new ArrayBuffer(byteLength);
+  var dataView = new DataView(arrayBuffer);
+  encodeGLTFSync(gltf, dataView, byteOffset, options);
+  return arrayBuffer;
+}
+
+var VERSION = "2.3.13" ;
+var glbLoader = {
+  id: 'glb',
+  name: 'GLB',
+  version: VERSION,
+  extensions: ['glb'],
+  mimeTypes: ['model/gltf-binary'],
+  binary: true,
+  parse: function () {
+    var _parse = _asyncToGenerator(regenerator.mark(function _callee(arrayBuffer, options) {
+      return regenerator.wrap(function _callee$(_context) {
+        while (1) {
+          switch (_context.prev = _context.next) {
+            case 0:
+              return _context.abrupt("return", parseSync(arrayBuffer, options));
+
+            case 1:
+            case "end":
+              return _context.stop();
+          }
+        }
+      }, _callee);
+    }));
+
+    function parse(_x, _x2) {
+      return _parse.apply(this, arguments);
+    }
+
+    return parse;
+  }(),
+  parseSync: parseSync,
+  options: {
+    glb: {
+      strict: false
+    }
+  }
+};
+
+function parseSync(arrayBuffer, options) {
+  var _options$byteOffset = options.byteOffset,
+      byteOffset = _options$byteOffset === void 0 ? 0 : _options$byteOffset;
+  var glb = {};
+  parseGLBSync(glb, arrayBuffer, byteOffset, options);
+  return glb;
+}
+
+var glbWriter = {
+  name: 'GLB',
+  extensions: ['glb'],
+  mimeTypes: ['model/gltf-binary'],
+  encodeSync: encodeSync,
+  binary: true,
+  options: {
+    glb: {}
+  }
+};
+
+function encodeSync(glb, options) {
+  var _options$byteOffset = options.byteOffset,
+      byteOffset = _options$byteOffset === void 0 ? 0 : _options$byteOffset;
+  var byteLength = encodeGLBSync(glb, null, byteOffset, options);
+  var arrayBuffer = new ArrayBuffer(byteLength);
+  var dataView = new DataView(arrayBuffer);
+  encodeGLBSync(glb, dataView, byteOffset, options);
+  return arrayBuffer;
+}
+
+var GLBBuilder = function () {
+  function GLBBuilder() {
+    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+    _classCallCheck$1(this, GLBBuilder);
+
+    this.byteLength = 0;
+    this.json = {
+      buffers: [{
+        byteLength: 0
+      }],
+      bufferViews: [],
+      accessors: [],
+      images: [],
+      meshes: []
+    };
+    this.sourceBuffers = [];
+    this.log = options.log || console;
+  }
+
+  _createClass$1(GLBBuilder, [{
+    key: "getByteLength",
+    value: function getByteLength() {
+      return this.byteLength;
+    }
+  }, {
+    key: "isImage",
+    value: function isImage$1(imageData) {
+      return isImage(imageData);
+    }
+  }, {
+    key: "encodeSync",
+    value: function encodeSync() {
+      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      return this.encodeAsGLB(options);
+    }
+  }, {
+    key: "encodeAsGLB",
+    value: function encodeAsGLB() {
+      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+      this._packBinaryChunk();
+
+      if (options.magic) {
+        console.warn('Custom glTF magic number no longer supported');
+      }
+
+      var glb = {
+        version: 2,
+        json: this.json,
+        binary: this.arrayBuffer
+      };
+      var byteLength = encodeGLBSync(glb, null, 0, options);
+      var glbArrayBuffer = new ArrayBuffer(byteLength);
+      var dataView = new DataView(glbArrayBuffer);
+      encodeGLBSync(glb, dataView, 0, options);
+      return glbArrayBuffer;
+    }
+  }, {
+    key: "addApplicationData",
+    value: function addApplicationData(key, data) {
+      this.json[key] = data;
+      return this;
+    }
+  }, {
+    key: "addBuffer",
+    value: function addBuffer(sourceBuffer) {
+      var accessor = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {
+        size: 3
+      };
+      var bufferViewIndex = this.addBufferView(sourceBuffer);
+      var accessorDefaults = {
+        size: accessor.size,
+        componentType: getComponentTypeFromArray(sourceBuffer),
+        count: Math.round(sourceBuffer.length / accessor.size)
+      };
+      return this.addAccessor(bufferViewIndex, Object.assign(accessorDefaults, accessor));
+    }
+  }, {
+    key: "addBufferView",
+    value: function addBufferView(buffer) {
+      var byteLength = buffer.byteLength || buffer.length;
+      this.json.bufferViews.push({
+        buffer: 0,
+        byteOffset: this.byteLength,
+        byteLength: byteLength
+      });
+      this.byteLength += padTo4Bytes(byteLength);
+      this.sourceBuffers.push(buffer);
+      return this.json.bufferViews.length - 1;
+    }
+  }, {
+    key: "addAccessor",
+    value: function addAccessor(bufferViewIndex, accessor) {
+      this.json.accessors.push({
+        bufferView: bufferViewIndex,
+        type: getAccessorTypeFromSize(accessor.size),
+        componentType: accessor.componentType,
+        count: accessor.count
+      });
+      return this.json.accessors.length - 1;
+    }
+  }, {
+    key: "_pack",
+    value: function _pack() {
+      this._packBinaryChunk();
+
+      return {
+        arrayBuffer: this.arrayBuffer,
+        json: this.json
+      };
+    }
+  }, {
+    key: "_packBinaryChunk",
+    value: function _packBinaryChunk() {
+      if (this.arrayBuffer) {
+        return;
+      }
+
+      var totalByteLength = this.byteLength;
+      var arrayBuffer = new ArrayBuffer(totalByteLength);
+      var targetArray = new Uint8Array(arrayBuffer);
+      var dstByteOffset = 0;
+
+      for (var i = 0; i < this.sourceBuffers.length; i++) {
+        var sourceBuffer = this.sourceBuffers[i];
+        dstByteOffset = copyToArray(sourceBuffer, targetArray, dstByteOffset);
+      }
+
+      this.json.buffers[0].byteLength = totalByteLength;
+      this.arrayBuffer = arrayBuffer;
+      this.sourceBuffers = [];
+    }
+  }, {
+    key: "_getInternalCounts",
+    value: function _getInternalCounts() {
+      return {
+        buffers: this.json.buffers.length,
+        bufferViews: this.json.bufferViews.length,
+        accessors: this.json.accessors.length,
+        images: this.json.images.length
+      };
+    }
+  }]);
+
+  return GLBBuilder;
+}();
+
+var index = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  KHR_DRACO_MESH_COMPRESSION: KHR_DRACO_MESH_COMPRESSION,
+  UBER_POINT_CLOUD_EXTENSION: UBER_POINT_CLOUD_EXTENSION,
+  GLTFLoader: GLTFLoader,
+  GLTFWriter: gltfWriter,
+  GLBLoader: glbLoader,
+  GLBWriter: glbWriter,
+  GLTFScenegraph: GLTFScenegraph,
+  postProcessGLTF: postProcessGLTF,
+  GLBBuilder: GLBBuilder,
+  encodeGLTFSync: encodeGLTFSync
+});
+
 function _classCallCheck(instance, Constructor) {
   if (!(instance instanceof Constructor)) {
     throw new TypeError("Cannot call a class as a function");
@@ -18047,4 +28530,4 @@ var BufferAttribute = /*#__PURE__*/function () {
   return BufferAttribute;
 }();
 
-export { BufferAttribute, Camera, Control, Light, webglObjLoader_min$1 as OBJ, Program, Renderer, index as glMatrix, twglFull_module as twgl };
+export { BufferAttribute, Camera, Control, Light, webglObjLoader_min$1 as OBJ, Program, Renderer, index$2 as glMatrix, index$1 as loadersCore, index as loadersGLTF, twglFull_module as twgl };
