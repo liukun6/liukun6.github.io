@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tone Mapping</title>
+
+  <link rel="stylesheet" type="text/css" href="./main.css">
+</head>
+<body>
+  <main>
+    <canvas id="container"></canvas>
+
+    <div id="control">
+      <div class="item">
+        <input type="radio" id="Reinhard" name="tonemapping" value="0" checked>
+        <label for="Reinhard">Reinhard</label>
+      </div>
+
+      <div class="item">
+        <input type="radio" id="CE" name="tonemapping" value="1">
+        <label for="CE">CE</label>
+      </div>
+
+      <div class="item">
+        <input type="radio" id="Uncharted2" name="tonemapping" value="2">
+        <label for="Uncharted2">Uncharted2</label>
+      </div>
+
+      <div class="item">
+        <input type="radio" id="ACESFilmic" name="tonemapping" value="3">
+        <label for="ACESFilmic">ACES Filmic</label>
+      </div>
+    </div>
+  </main>
+
+  <script id="vs" type="notjs">#version 300 es
+    in vec4 a_position;
+    in vec2 a_texcoord;
+
+    out vec2 v_texcoord;
+
+    void main() {
+      gl_Position = a_position;
+      v_texcoord = a_texcoord;
+    }
+  </script>
+
+  <script id="fs" type="notjs">#version 300 es
+    precision highp float;
+
+    uniform sampler2D u_texture;
+    uniform float u_averageLum;
+    uniform int u_toneMapping;
+
+    in vec2 v_texcoord;
+
+    out vec4 o_FragColor;
+
+
+    vec3 ReinhardToneMapping(vec3 color, float adapted_lum)
+    {
+      const float MIDDLE_GREY = 1.0;
+      color *= MIDDLE_GREY / adapted_lum;
+
+      return color / (1.0 + color);
+    }
+
+    vec3 CEToneMapping(vec3 color, float adapted_lum)
+    {
+        return 1.0 - exp(-adapted_lum * color);
+    }
+
+    vec3 F(vec3 x)
+    {
+      const float A = 0.22;
+      const float B = 0.30;
+      const float C = 0.10;
+      const float D = 0.20;
+      const float E = 0.01;
+      const float F = 0.30;
+
+      return ((x * (A * x + C * B) + D * E) / (x * (A * x + B) + D * F)) - E / F;
+    }
+
+    vec3 Uncharted2ToneMapping(vec3 color, float adapted_lum)
+    {
+      const vec3 WHITE = vec3(11.2);
+
+      return F(1.6 * adapted_lum * color) / F(WHITE);
+    }
+
+    vec3 ACESToneMapping(vec3 color, float adapted_lum)
+    {
+        const float A = 2.51;
+        const float B = 0.03;
+        const float C = 2.43;
+        const float D = 0.59;
+        const float E = 0.14;
+
+        color *= adapted_lum;
+        return clamp((color * (A * color + B)) / (color * (C * color + D) + E), 0.0, 1.0);
+    }
+
+    void main() {
+      vec3 color = texture(u_texture, v_texcoord).rgb;
+
+      // Tone Mapping: HDR -> LDR [0, 1]
+      if (u_toneMapping == 0) {
+        color = ReinhardToneMapping(color, u_averageLum);
+      } else if (u_toneMapping == 1) {
+        color = CEToneMapping(color, u_averageLum);
+      } else if (u_toneMapping == 2) {
+        color = Uncharted2ToneMapping(color, u_averageLum);
+      } else {
+        color = ACESToneMapping(color, u_averageLum);
+      }
+
+      // Gamma Correction: LDR -> sRGB
+      color = pow(color, vec3(1.0 / 2.2));
+
+      o_FragColor = vec4(color, 1.0);
+    }
+  </script>
+
+  <script type="module">
+    import { twgl, glMatrix, Camera } from './lib/bundle.js';
+    import { loadHDR } from './lib/hdrpng.js';
+
+    const canvas = document.getElementById('container');
+    const gl = canvas.getContext("webgl2")
+    const programInfo = twgl.createProgramInfo(gl, ['vs', 'fs'])
+
+    const positionArray = new Float32Array([
+      -1.0,  1.0,   0.0,
+      -1.0, -1.0,   0.0,
+       1.0, -1.0,   0.0,
+
+      -1.0,  1.0,   0.0,
+       1.0, -1.0,   0.0,
+       1.0,  1.0,   0.0,
+    ]);
+    const texcoordArray = new Float32Array([
+       0.0,  1.0,
+       0.0,  0.0,
+       1.0,  0.0,
+
+       0.0,  1.0,
+       1.0,  0.0,
+       1.0,  1.0,
+    ]);
+
+
+    let floatRGB;
+    (async() => {
+      const HDR_URL = './data/DamagedHelmet/footprint_court.hdr';
+      const hdr = await fetch(HDR_URL).then(response => response.arrayBuffer());
+      floatRGB = await loadHDR(new Uint8Array(hdr));
+      render(floatRGB);
+
+      initControl();
+    })()
+
+    let TONE_MAPPING;
+    function initControl() {
+      const controlEle = document.getElementById('control');
+      controlEle.addEventListener('change', (e) => {
+        TONE_MAPPING = e.target.value;
+
+        render(floatRGB);
+      })
+    }
+
+    let AVERAGE_LUMINANCE = 1.0;
+    function render(floatRGB) {
+
+      const uniforms = {
+        u_texture: twgl.createTexture(gl, {
+          src: floatRGB.dataFloat,
+          // HDR
+          internalFormat: gl.RGB32F,
+          format: gl.RGB,
+          type: gl.FLOAT,
+          width: floatRGB.width,
+          height: floatRGB.height,
+
+          target: gl.TEXTURE_2D,
+          flipY: 1,
+        }),
+        u_averageLum: AVERAGE_LUMINANCE,
+        u_toneMapping: TONE_MAPPING,
+      };
+
+      const geometry = {
+        a_position: { numComponents: 3, data: positionArray },
+        a_texcoord: { numComponents: 2, data: texcoordArray },
+      }
+      const bufferInfo = twgl.createBufferInfoFromArrays(gl, geometry);
+
+      twgl.resizeCanvasToDisplaySize(gl.canvas);
+      gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+      gl.enable(gl.DEPTH_TEST);
+      gl.enable(gl.CULL_FACE);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+      gl.useProgram(programInfo.program);
+      twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
+      twgl.setUniforms(programInfo, uniforms);
+      gl.drawArrays(gl.TRIANGLES, 0, bufferInfo.numElements);
+    }
+  </script>
+</body>
+</html>
