@@ -10,6 +10,23 @@
 <body>
   <main>
     <canvas id="container"></canvas>
+
+    <div id="control">
+      <div class="item">
+        <input type="radio" id="glTF" name="brdf" value="0" checked>
+        <label for="glTF">glTF Implementation</label>
+      </div>
+
+      <div class="item">
+        <input type="radio" id="Filament" name="brdf" value="1">
+        <label for="Filament">Filament Standard Model</label>
+      </div>
+
+      <div class="item">
+        <input type="radio" id="Microfacet" name="brdf" value="2">
+        <label for="Microfacet">Microfacet Model</label>
+      </div>
+    </div>
   </main>
 
   <script id="vs" type="notjs">#version 300 es
@@ -45,6 +62,8 @@
 
     const float PI = 3.14159265359;
 
+    // 0: GLTF_BRDF, 1: Filament_BRDF, 2: Microfacet_BRDF
+    uniform int u_brdf;
 
     // pbrMetallicRoughness
     uniform sampler2D u_baseColorTexture;
@@ -115,18 +134,13 @@
       return nv_ggx * nl_ggx;
     }
 
-
-    float SmithGGXCorrelated(float NdotV, float NdotL, float alphaRoughness) {
+    // Visibility term
+    float V_SmithGGXCorrelated(float NdotV, float NdotL, float alphaRoughness) {
       float a2 = alphaRoughness * alphaRoughness;
       float GGXL = NdotV * sqrt((-NdotL * a2 + NdotL) * NdotL + a2);
       float GGXV = NdotL * sqrt((-NdotV * a2 + NdotV) * NdotV + a2);
 
-      float GGX = GGXV + GGXL;
-      if (GGX > 0.0001)
-      {
-          return 0.5 / GGX;
-      }
-      return 0.0;
+      return 0.5 / (GGXV + GGXL);
     }
 
 
@@ -136,44 +150,109 @@
       return F0 + (F90 - F0) * pow(1.0 - HdotV, 5.0);
     }
 
-
-    void main() {
-      vec3 V = normalize(u_cameraPosition - v_position);
-      vec3 L = normalize(u_lightPosition - v_position);
+    // https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md#appendix-b-brdf-implementation
+    vec3 GLTF_BRDF(vec3 N, vec3 V, vec3 L, vec3 albedo)
+    {
       vec3 H = normalize(V + L);
-
-      vec3 perturbedNormal = texture(u_normalTexture, v_texcoord).rgb * 2.0 - 1.0;
-      mat3 tbn = TBN(V, v_texcoord, normalize(v_normal));
-      vec3 N = normalize(tbn * perturbedNormal);
-
       float NdotV = max(dot(N, V), 0.0);
       float NdotL = max(dot(N, L), 0.0);
       float NdotH = max(dot(N, H), 0.0);
       float HdotV = max(dot(H, V), 0.0);
 
-      // BRDF
-      vec4 baseColor = texture(u_baseColorTexture, v_texcoord) * u_baseColorFactor;
       vec4 mr = texture(u_metallicRoughnessTexture, v_texcoord);
       float roughness = mr.g * u_roughnessFactor;
       float metallic = mr.b * u_metallicFactor;
+      float alphaRoughness = roughness * roughness;
 
       vec3 F0 = vec3(0.04);
       vec3 F90 = vec3(1.0);
-      F0 = mix(F0, baseColor.rgb, metallic);
-
-      float alphaRoughness = roughness * roughness;
+      F0 = mix(F0, albedo, metallic);
 
       float NDF = DistributionGGX(NdotH, alphaRoughness);
-      float G   = GeometrySmith(NdotV, NdotL, roughness);
-      // float G   = SmithGGXCorrelated(NdotV, NdotL, alphaRoughness);
-      vec3 F    = FresnelSchlick(HdotV, F0, F90);
+      float V_GGX = V_SmithGGXCorrelated(NdotV, NdotL, alphaRoughness);
+      vec3 F = FresnelSchlick(HdotV, F0, F90);
 
-      vec3 c_diff = mix(baseColor.rgb * (vec3(1.0) - vec3(0.04)), vec3(0.0), metallic);
+      vec3 f_specular = F * NDF * V_GGX;
+
+      vec3 c_diff = mix(albedo * (vec3(1.0) - vec3(0.04)), vec3(0.0), metallic);
       vec3 f_diffuse = (1.0 - F) * (c_diff / PI);
 
-      vec3 f_specular = NDF * G * F / max((4.0 * NdotL * NdotV), 0.001);
+      return (f_diffuse + f_specular) * NdotL;
+    }
 
-      vec3 color = (f_diffuse + f_specular) * NdotL;
+    vec3 Filament_BRDF(vec3 N, vec3 V, vec3 L, vec3 albedo) {
+      vec3 H = normalize(V + L);
+      float NdotV = max(dot(N, V), 0.0);
+      float NdotL = max(dot(N, L), 0.0);
+      float NdotH = max(dot(N, H), 0.0);
+      float HdotV = max(dot(H, V), 0.0);
+
+      vec4 mr = texture(u_metallicRoughnessTexture, v_texcoord);
+      float roughness = mr.g * u_roughnessFactor;
+      float metallic = mr.b * u_metallicFactor;
+      float alphaRoughness = roughness * roughness;
+
+      vec3 F0 = vec3(0.04);
+      vec3 F90 = vec3(1.0);
+      F0 = mix(F0, albedo, metallic);
+
+      float NDF = DistributionGGX(NdotH, alphaRoughness);
+      float V_GGX = V_SmithGGXCorrelated(NdotV, NdotL, alphaRoughness);
+      vec3 F = FresnelSchlick(HdotV, F0, F90);
+
+      // specular BRDF
+      vec3 Fr = (NDF * V_GGX) * F;
+
+      // diffuse BRDF
+      vec3 diffuseColor = (1.0 - metallic) * albedo;
+      vec3 Fd = diffuseColor / PI;
+
+      return (Fr + Fd) * NdotL;
+    }
+
+    vec3 Microfacet_BRDF(vec3 N, vec3 V, vec3 L, vec3 albedo) {
+      vec3 H = normalize(V + L);
+      float NdotV = max(dot(N, V), 0.0);
+      float NdotL = max(dot(N, L), 0.0);
+      float NdotH = max(dot(N, H), 0.0);
+      float HdotV = max(dot(H, V), 0.0);
+
+      vec4 mr = texture(u_metallicRoughnessTexture, v_texcoord);
+      float roughness = mr.g * u_roughnessFactor;
+      float metallic = mr.b * u_metallicFactor;
+      float alphaRoughness = roughness * roughness;
+
+      vec3 F0 = vec3(0.04);
+      vec3 F90 = vec3(1.0);
+      F0 = mix(F0, albedo, metallic);
+
+      float NDF = DistributionGGX(NdotH, alphaRoughness);
+      float G = GeometrySmith(NdotV, NdotL, roughness);
+      vec3 F = FresnelSchlick(HdotV, F0, F90);
+
+      vec3 BRDF = NDF * G * F / max((4.0 * NdotL * NdotV), 0.001);
+
+      return BRDF * NdotL;
+    }
+
+    void main() {
+      vec3 V = normalize(u_cameraPosition - v_position);
+      vec3 L = normalize(u_lightPosition - v_position);
+      vec3 perturbedNormal = texture(u_normalTexture, v_texcoord).rgb * 2.0 - 1.0;
+      mat3 tbn = TBN(V, v_texcoord, normalize(v_normal));
+      vec3 N = normalize(tbn * perturbedNormal);
+
+      vec4 baseColor = texture(u_baseColorTexture, v_texcoord) * u_baseColorFactor;
+      vec3 albedo = pow(baseColor.rgb, vec3(2.2));
+
+      vec3 color = vec3(0.0);
+      if (u_brdf == 0) {
+        color = GLTF_BRDF(N, V, L, albedo);
+      } else if (u_brdf == 1) {
+        color = Filament_BRDF(N, V, L, albedo);
+      } else if (u_brdf == 2) {
+        color = Microfacet_BRDF(N, V, L, albedo);
+      }
 
       // Occlusion
       float ao = texture(u_occlusionTexture, v_texcoord).r;
@@ -183,12 +262,13 @@
       vec3 emissive = texture(u_emissiveTexture, v_texcoord).rgb * u_emissiveFactor;
       color += emissive;
 
-
+      // color = vec3(roughness);
       // color = vec3(metallic);
       // color = (N + 1.0) / 2.0;
       // color = vec3(NdotL);
       // color = f_diffuse;
       // color = f_specular;
+      // color = albedo;
 
       color = pow(color, vec3(1.0/2.2));
       o_FragColor = vec4(color, baseColor.a);
@@ -287,7 +367,16 @@
       const gltf = await loadersCore.load(gltfUrl, loadersGLTF.GLTFLoader);
 
       renderScene(gltf.scenes[0]);
+      initControl()
     })();
+
+    let U_BRDF = 0;
+    function initControl() {
+      const controlEle = document.getElementById('control');
+      controlEle.addEventListener('change', (e) => {
+        U_BRDF = e.target.value;
+      })
+    }
 
     function anim(mesh) {
 
@@ -295,6 +384,8 @@
         u_viewMatrix: camera.viewMatrix,
         u_cameraPosition: camera.position,
         u_lightPosition: vec3.add([], camera.position, [0, 1, 0]),
+
+        u_brdf: U_BRDF,
       });
 
       drawMesh(programInfo, mesh);
