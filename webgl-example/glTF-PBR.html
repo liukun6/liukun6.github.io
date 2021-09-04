@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>glTF</title>
+  <title>glTF-PBR</title>
 
   <link rel="stylesheet" type="text/css" href="./main.css">
 </head>
@@ -164,9 +164,8 @@
       float metallic = mr.b * u_metallicFactor;
       float alphaRoughness = roughness * roughness;
 
-      vec3 F0 = vec3(0.04);
       vec3 F90 = vec3(1.0);
-      F0 = mix(F0, albedo, metallic);
+      vec3 F0 = mix(vec3(0.04), albedo, metallic);
 
       float NDF = DistributionGGX(NdotH, alphaRoughness);
       float V_GGX = V_SmithGGXCorrelated(NdotV, NdotL, alphaRoughness);
@@ -192,9 +191,8 @@
       float metallic = mr.b * u_metallicFactor;
       float alphaRoughness = roughness * roughness;
 
-      vec3 F0 = vec3(0.04);
       vec3 F90 = vec3(1.0);
-      F0 = mix(F0, albedo, metallic);
+      vec3 F0 = mix(vec3(0.04), albedo, metallic);
 
       float NDF = DistributionGGX(NdotH, alphaRoughness);
       float V_GGX = V_SmithGGXCorrelated(NdotV, NdotL, alphaRoughness);
@@ -222,9 +220,8 @@
       float metallic = mr.b * u_metallicFactor;
       float alphaRoughness = roughness * roughness;
 
-      vec3 F0 = vec3(0.04);
       vec3 F90 = vec3(1.0);
-      F0 = mix(F0, albedo, metallic);
+      vec3 F0 = mix(vec3(0.04), albedo, metallic);
 
       float NDF = DistributionGGX(NdotH, alphaRoughness);
       float G = GeometrySmith(NdotV, NdotL, roughness);

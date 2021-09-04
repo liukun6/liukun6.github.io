@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>cubemap</title>
+
+  <link rel="stylesheet" type="text/css" href="./main.css">
+</head>
+<body>
+  <main>
+    <canvas id="container"></canvas>
+
+    <div id="control">
+      <div class="item">
+        <input type="radio" id="panorama" name="image" value="0" checked>
+        <label for="panorama">Panorama Image</label>
+      </div>
+      <div class="item">
+        <input type="radio" id="cubemap" name="image" value="1">
+        <label for="cubemap">Cubemap Image</label>
+      </div>
+
+
+      <div class="item">
+        <input type="radio" id="skybox" name="render" value="0" checked>
+        <label for="skybox">Skybox</label>
+      </div>
+      <div class="item">
+        <input type="radio" id="cubemap-box" name="render" value="1">
+        <label for="cubemap-box">Cubemap</label>
+      </div>
+    </div>
+  </main>
+
+  <script id="cubemap-vs" type="notjs">#version 300 es
+    in vec4 a_position;
+    in vec2 a_texcoord;
+
+    out vec2 v_texcoord;
+
+    void main() {
+      v_texcoord = a_texcoord;
+      // flipY
+      // texture2d image origin is left bottom
+      // texturecube image origin is left top
+      gl_Position = a_position;
+      gl_Position.y *= -1.0;
+    }
+  </script>
+
+  <script id="cubemap-fs" type="notjs">#version 300 es
+    precision highp float;
+
+    const float PI = 3.14159265359;
+
+    uniform sampler2D u_panorama;
+    uniform int u_face;
+
+    in vec2 v_texcoord;
+
+    out vec4 o_FragColor;
+
+    vec3 cubeUVToDirction(int face, vec2 uv)
+    {
+      if(face == 0)
+        return vec3(1.0, uv.y, -uv.x);
+
+      else if(face == 1)
+        return vec3(-1.0, uv.y, uv.x);
+
+      else if(face == 2)
+        return vec3(+uv.x, 1.0, -uv.y);
+
+      else if(face == 3)
+        return vec3(+uv.x, -1.0, uv.y);
+
+      else if(face == 4)
+        return vec3(+uv.x, uv.y, 1.0);
+
+      else //if(face == 5)
+        return vec3(-uv.x, +uv.y, -1.0);
+    }
+
+    vec2 dirToPanoUV(vec3 dir)
+    {
+      return vec2(
+        0.5 + 0.5 * atan(dir.z, dir.x) / PI,
+        1.0 - acos(dir.y) / PI);
+    }
+
+    vec3 ACESToneMapping(vec3 color, float adapted_lum)
+    {
+        const float A = 2.51;
+        const float B = 0.03;
+        const float C = 2.43;
+        const float D = 0.59;
+        const float E = 0.14;
+
+        color *= adapted_lum;
+        return clamp((color * (A * color + B)) / (color * (C * color + D) + E), 0.0, 1.0);
+    }
+
+    void main() {
+
+      vec2 coord = v_texcoord * 2.0 - 1.0;
+      vec3 direction = cubeUVToDirction(u_face, coord);
+      vec2 uv = dirToPanoUV(normalize(direction));
+      vec3 color = texture(u_panorama, uv).rgb;
+      color = ACESToneMapping(color, 1.0);
+
+      o_FragColor = vec4(color, 1.0);
+    }
+  </script>
+
+  <script id="cubemap-box-vs" type="notjs">#version 300 es
+
+    uniform mat4 u_MVP;
+
+    in vec4 a_position;
+    out vec3 v_normal;
+
+    void main() {
+      gl_Position = u_MVP * a_position;
+
+      v_normal = normalize(a_position.xyz);
+    }
+  </script>
+
+  <script id="cubemap-box-fs" type="notjs">#version 300 es
+    precision highp float;
+
+    uniform samplerCube u_cubmap;
+
+    in vec3 v_normal;
+    out vec4 o_FragColor;
+
+    void main() {
+      vec3 normal = normalize(v_normal);
+      vec3 color = texture(u_cubmap, normalize(v_normal)).rgb;
+
+      color = pow(color, vec3(1.0/2.2));
+      o_FragColor = vec4(color, 1.0);
+    }
+  </script>
+
+
+  <script id="skybox-vs" type="notjs">#version 300 es
+    precision highp float;
+
+    in vec4 a_position;
+    out vec4 v_position;
+
+    void main() {
+      v_position = a_position;
+      gl_Position = a_position;
+      gl_Position.z = 1.0;
+    }
+  </script>
+
+  <script id="skybox-fs" type="notjs">#version 300 es
+    precision highp float;
+
+    uniform samplerCube u_cubmap;
+    uniform mat4 u_viewProjectionInverse;
+
+    in vec4 v_position;
+    out vec4 o_FragColor;
+
+    void main() {
+
+      vec4 dirction = u_viewProjectionInverse * v_position;
+      vec3 normal = normalize(dirction.xyz / dirction.w);
+      vec3 color = texture(u_cubmap, normal).rgb;
+
+      color = pow(color, vec3(1.0/2.2));
+      o_FragColor = vec4(color, 1.0);
+    }
+  </script>
+
+  <script type="module">
+    import { twgl, glMatrix, Camera, Control, fetchImage } from './lib/bundle.js';
+    import { loadHDR } from './lib/hdrpng.js';
+
+    const canvas = document.getElementById('container');
+    const gl = canvas.getContext("webgl2");
+    const cubemapProgramInfo = twgl.createProgramInfo(gl, ['cubemap-vs', 'cubemap-fs']);
+    const cubemapBoxProgramInfo = twgl.createProgramInfo(gl, ['cubemap-box-vs', 'cubemap-box-fs'])
+    const skyboxProgramInfo = twgl.createProgramInfo(gl, ['skybox-vs', 'skybox-fs']);
+
+    const camera = new Camera({
+      type: 'PerspectiveCamera',
+      fov: 45,
+      aspect: canvas.offsetWidth / canvas.offsetHeight,
+      near: 1,
+      far: 2000,
+      zoom: 0.8,
+    });
+    camera.setPosition(0, 0, 2);
+    camera.lookAt(0, 0, 0);
+    const control = new Control(camera, canvas, {
+      minZoom: 0.4,
+      maxZoom: 4,
+      zoomScale: 0.1
+    });
+    control.start();
+
+
+    let CUBEMAP, PANORAMA_CUBEMAP, IMAGES_CUBEMAP;
+    const positionArray = new Float32Array([
+      -1.0, -1.0,
+       1.0, -1.0,
+      -1.0,  1.0,
+
+      -1.0,  1.0,
+       1.0, -1.0,
+       1.0,  1.0,
+    ]);
+    const texcoordArray = new Float32Array([
+       0.0,  0.0,
+       1.0,  0.0,
+       0.0,  1.0,
+
+       0.0,  1.0,
+       1.0,  0.0,
+       1.0,  1.0,
+    ]);
+
+    async function loadCubemap() {
+      const faceInfos = [
+        { target: gl.TEXTURE_CUBE_MAP_POSITIVE_X, name: 'pos-x' },
+        { target: gl.TEXTURE_CUBE_MAP_NEGATIVE_X, name: 'neg-x' },
+        { target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y, name: 'pos-y' },
+        { target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, name: 'neg-y' },
+        { target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z, name: 'pos-z' },
+        { target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, name: 'neg-z' },
+      ];
+      const loadImages = faceInfos.map(({name}) => {
+        const filePath = `./data/cubemap/${name}.jpg`;
+        return fetchImage(filePath);
+      })
+      const images = await Promise.all(loadImages);
+
+      const cubemap = gl.createTexture();
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubemap);
+      gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+      const textureSize = images[0].width;
+      for (let i = 0; i < 6; i++) {
+        gl.texImage2D(faceInfos[i].target, 0, gl.RGBA, textureSize, textureSize, 0, gl.RGBA, gl.UNSIGNED_BYTE, images[i]);
+      }
+
+      return cubemap;
+    }
+
+    function drawCubemap_webgl(HDR_Texture) {
+      const textureSize = 256;
+      gl.viewport(0, 0, textureSize, textureSize);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+      const cubemap = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubemap);
+      gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      for (let i = 0; i < 6; i++) {
+        gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, gl.RGBA, textureSize, textureSize, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      }
+
+      const geometry = {
+        a_position: { numComponents: 2, data: positionArray },
+        a_texcoord: { numComponents: 2, data: texcoordArray },
+      }
+      const bufferInfo = twgl.createBufferInfoFromArrays(gl, geometry);
+      const vao = twgl.createVAOFromBufferInfo(gl, cubemapProgramInfo, bufferInfo);
+
+      gl.useProgram(cubemapProgramInfo.program);
+      for (let i = 0; i < 6; i++) {
+        const fb = gl.createFramebuffer(gl.FRAMEBUFFER);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, cubemap, 0);
+
+        const rb = gl.createRenderbuffer();
+        gl.bindRenderbuffer(gl.RENDERBUFFER, rb);
+        gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_STENCIL, textureSize, textureSize);
+        gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_STENCIL_ATTACHMENT, gl.RENDERBUFFER, rb);
+
+        gl.bindVertexArray(vao);
+        twgl.setUniforms(cubemapProgramInfo, {
+          u_panorama: HDR_Texture,
+          u_face: i
+        });
+
+        gl.drawArrays(gl.TRIANGLES, 0, bufferInfo.numElements);
+      }
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+      return cubemap;
+    }
+
+
+    function panoramaToCubemap(HDR_Texture) {
+      const textureSize = 256;
+      gl.viewport(0, 0, textureSize, textureSize);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      gl.useProgram(cubemapProgramInfo.program);
+
+      const cubemap = twgl.createTexture(gl, {
+        target: gl.TEXTURE_CUBE_MAP,
+        width: textureSize,
+        height: textureSize,
+        minMag: gl.LINEAR,
+      });
+
+      const geometry = {
+        a_position: { numComponents: 2, data: positionArray },
+        a_texcoord: { numComponents: 2, data: texcoordArray },
+      }
+      const bufferInfo = twgl.createBufferInfoFromArrays(gl, geometry);
+      const vao = twgl.createVAOFromBufferInfo(gl, cubemapProgramInfo, bufferInfo);
+
+      for (let i = 0; i < 6; i++) {
+        const framebufferInfo = twgl.createFramebufferInfo(gl,
+          [{
+            attachment: cubemap,
+            target: gl.TEXTURE_CUBE_MAP_POSITIVE_X + i
+          }], textureSize, textureSize);
+        twgl.bindFramebufferInfo(gl, framebufferInfo);
+
+        gl.bindVertexArray(vao);
+        twgl.setUniforms(cubemapProgramInfo, {
+          u_panorama: HDR_Texture,
+          u_face: i
+        });
+
+        gl.drawArrays(gl.TRIANGLES, 0, bufferInfo.numElements);
+      }
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+      return cubemap;
+    }
+
+    function drawCube() {
+      var positions = new Float32Array(
+      [
+        -0.5, -0.5,  -0.5,
+        -0.5,  0.5,  -0.5,
+        0.5, -0.5,  -0.5,
+        -0.5,  0.5,  -0.5,
+        0.5,  0.5,  -0.5,
+        0.5, -0.5,  -0.5,
+
+        -0.5, -0.5,   0.5,
+        0.5, -0.5,   0.5,
+        -0.5,  0.5,   0.5,
+        -0.5,  0.5,   0.5,
+        0.5, -0.5,   0.5,
+        0.5,  0.5,   0.5,
+
+        -0.5,   0.5, -0.5,
+        -0.5,   0.5,  0.5,
+        0.5,   0.5, -0.5,
+        -0.5,   0.5,  0.5,
+        0.5,   0.5,  0.5,
+        0.5,   0.5, -0.5,
+
+        -0.5,  -0.5, -0.5,
+        0.5,  -0.5, -0.5,
+        -0.5,  -0.5,  0.5,
+        -0.5,  -0.5,  0.5,
+        0.5,  -0.5, -0.5,
+        0.5,  -0.5,  0.5,
+
+        -0.5,  -0.5, -0.5,
+        -0.5,  -0.5,  0.5,
+        -0.5,   0.5, -0.5,
+        -0.5,  -0.5,  0.5,
+        -0.5,   0.5,  0.5,
+        -0.5,   0.5, -0.5,
+
+        0.5,  -0.5, -0.5,
+        0.5,   0.5, -0.5,
+        0.5,  -0.5,  0.5,
+        0.5,  -0.5,  0.5,
+        0.5,   0.5, -0.5,
+        0.5,   0.5,  0.5,
+      ]);
+
+      twgl.resizeCanvasToDisplaySize(gl.canvas, 2.0);
+      gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+      gl.enable(gl.DEPTH_TEST);
+      gl.enable(gl.CULL_FACE);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+      gl.useProgram(cubemapBoxProgramInfo.program);
+      const bufferInfo = twgl.createBufferInfoFromArrays(gl, {
+        a_position: { numComponents: 3, data: positions },
+      });
+      const vao = twgl.createVAOFromBufferInfo(gl, cubemapBoxProgramInfo, bufferInfo);
+      gl.bindVertexArray(vao);
+
+      twgl.setUniforms(cubemapBoxProgramInfo, {
+        u_cubmap: CUBEMAP,
+        u_MVP: glMatrix.mat4.multiply([], camera.projectionMatrix, camera.viewMatrix)
+      });
+      twgl.drawBufferInfo(gl, bufferInfo);
+    }
+
+    function drawSkybox() {
+      twgl.resizeCanvasToDisplaySize(gl.canvas, 2.0);
+      gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+      gl.disable(gl.DEPTH_TEST);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      gl.useProgram(skyboxProgramInfo.program);
+
+      const bufferInfo = twgl.createBufferInfoFromArrays(gl, {
+        a_position: { numComponents: 2, data: positionArray },
+      });
+      const vao = twgl.createVAOFromBufferInfo(gl, skyboxProgramInfo, bufferInfo);
+      gl.bindVertexArray(vao);
+
+      const viewDirectionMatrix = glMatrix.mat4.copy([], camera.viewMatrix);
+      viewDirectionMatrix[12] = 0;
+      viewDirectionMatrix[13] = 0;
+      viewDirectionMatrix[14] = 0;
+      const viewProjectionInverseMatrix = glMatrix.mat4.invert([],
+        glMatrix.mat4.multiply([], camera.projectionMatrix, viewDirectionMatrix));
+
+      twgl.setUniforms(skyboxProgramInfo, {
+        u_cubmap: CUBEMAP,
+        u_viewProjectionInverse: viewProjectionInverseMatrix
+      });
+      twgl.drawBufferInfo(gl, bufferInfo);
+    }
+
+
+    let RENDER_MODE = 0;
+    function initControl() {
+      const controlEle = document.getElementById('control');
+      controlEle.addEventListener('change', (e) => {
+        const mode = parseInt(e.target.value);
+        if (e.target.name === 'image') {
+          if (mode === 0) {
+            CUBEMAP = PANORAMA_CUBEMAP;
+          } else {
+            CUBEMAP = IMAGES_CUBEMAP;
+          }
+        } else {
+          RENDER_MODE = mode;
+        }
+      })
+    }
+
+    (async() => {
+      const HDR_URL = './data/DamagedHelmet/footprint_court.hdr';
+      const hdr = await fetch(HDR_URL).then(response => response.arrayBuffer());
+      const floatRGB = await loadHDR(new Uint8Array(hdr));
+      const HDR_TEXTURE = twgl.createTexture(gl, {
+        src: floatRGB.dataFloat,
+        // HDR
+        internalFormat: gl.RGB32F,
+        format: gl.RGB,
+        type: gl.FLOAT,
+        width: floatRGB.width,
+        height: floatRGB.height,
+
+        target: gl.TEXTURE_2D,
+        flipY: 1,
+      })
+
+      PANORAMA_CUBEMAP = panoramaToCubemap(HDR_TEXTURE);
+      // PANORAMA_CUBEMAP = drawCubemap_webgl(HDR_TEXTURE);
+      IMAGES_CUBEMAP = await loadCubemap();
+      CUBEMAP = PANORAMA_CUBEMAP;
+
+      anim()
+      initControl()
+    })()
+
+    function anim() {
+      if (RENDER_MODE === 0) {
+        drawSkybox();
+      } else {
+        drawCube();
+      }
+
+      requestAnimationFrame(anim)
+    }
+  </script>
+</body>
+</html>

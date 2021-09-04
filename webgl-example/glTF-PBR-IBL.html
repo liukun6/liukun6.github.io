@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>glTF-PBR-IBL</title>
+
+  <link rel="stylesheet" type="text/css" href="./main.css">
+</head>
+<body>
+  <main>
+    <canvas id="container"></canvas>
+  </main>
+
+  <script id="cubemap-vs" type="notjs">#version 300 es
+    in vec4 a_position;
+    in vec2 a_texcoord;
+
+    out vec2 v_texcoord;
+
+    void main() {
+      v_texcoord = a_texcoord;
+      // flipY
+      // texture2d image origin is left bottom
+      // texturecube image origin is left top
+      gl_Position = a_position;
+      gl_Position.y *= -1.0;
+    }
+  </script>
+
+  <script id="cubemap-fs" type="notjs">#version 300 es
+    precision highp float;
+
+    const float PI = 3.14159265359;
+
+    uniform sampler2D u_panorama;
+    uniform int u_face;
+
+    in vec2 v_texcoord;
+    out vec4 o_FragColor;
+
+    vec3 cubeUVToDirection(int face, vec2 uv)
+    {
+      if(face == 0)
+        return vec3(1.0, uv.y, -uv.x);
+
+      else if(face == 1)
+        return vec3(-1.0, uv.y, uv.x);
+
+      else if(face == 2)
+        return vec3(+uv.x, 1.0, -uv.y);
+
+      else if(face == 3)
+        return vec3(+uv.x, -1.0, uv.y);
+
+      else if(face == 4)
+        return vec3(+uv.x, uv.y, 1.0);
+
+      else //if(face == 5)
+        return vec3(-uv.x, +uv.y, -1.0);
+    }
+
+    vec2 dirToPanoUV(vec3 dir)
+    {
+      return vec2(
+        0.5 + 0.5 * atan(dir.z, dir.x) / PI,
+        1.0 - acos(dir.y) / PI);
+    }
+
+    vec3 ACESToneMapping(vec3 color, float adapted_lum)
+    {
+        const float A = 2.51;
+        const float B = 0.03;
+        const float C = 2.43;
+        const float D = 0.59;
+        const float E = 0.14;
+
+        color *= adapted_lum;
+        return clamp((color * (A * color + B)) / (color * (C * color + D) + E), 0.0, 1.0);
+    }
+
+    void main() {
+
+      vec2 coord = v_texcoord * 2.0 - 1.0;
+      vec3 direction = cubeUVToDirection(u_face, coord);
+      vec2 uv = dirToPanoUV(normalize(direction));
+      vec3 color = texture(u_panorama, uv).rgb;
+      color = ACESToneMapping(color, 1.0);
+
+      o_FragColor = vec4(color, 1.0);
+    }
+  </script>
+
+  <script id="precomputedIrradiance-vs" type="notjs">#version 300 es
+    precision highp float;
+
+    in vec4 a_position;
+    in vec2 a_texcoord;
+    out vec2 v_texcoord;
+
+    void main() {
+      v_texcoord = a_texcoord;
+      gl_Position = a_position;
+      gl_Position.y *= -1.0;
+    }
+  </script>
+  <script id="precomputedIrradiance-fs" type="notjs">#version 300 es
+    precision highp float;
+    const float PI = 3.14159265359;
+
+    uniform uint u_sampleCount;
+    uniform samplerCube u_cubemap;
+    uniform int u_face;
+
+    in vec2 v_texcoord;
+    out vec4 o_FragColor;
+
+    vec3 cubeUVToDirection(int face, vec2 uv)
+    {
+      if(face == 0)
+        return vec3(1.0, uv.y, -uv.x);
+
+      else if(face == 1)
+        return vec3(-1.0, uv.y, uv.x);
+
+      else if(face == 2)
+        return vec3(+uv.x, 1.0, -uv.y);
+
+      else if(face == 3)
+        return vec3(+uv.x, -1.0, uv.y);
+
+      else if(face == 4)
+        return vec3(+uv.x, uv.y, 1.0);
+
+      else //if(face == 5)
+        return vec3(-uv.x, +uv.y, -1.0);
+    }
+
+    // TBN generates a tangent bitangent normal coordinate frame from the normal
+    // (the normal must be normalized)
+    mat3 generateTBN(vec3 normal)
+    {
+        vec3 bitangent = vec3(0.0, 1.0, 0.0);
+
+        float NdotUp = dot(normal, vec3(0.0, 1.0, 0.0));
+        float epsilon = 0.0000001;
+        if (1.0 - abs(NdotUp) <= epsilon)
+        {
+            // Sampling +Y or -Y, so we need a more robust bitangent.
+            if (NdotUp > 0.0)
+            {
+                bitangent = vec3(0.0, 0.0, 1.0);
+            }
+            else
+            {
+                bitangent = vec3(0.0, 0.0, -1.0);
+            }
+        }
+
+        vec3 tangent = normalize(cross(bitangent, normal));
+        bitangent = cross(normal, tangent);
+
+        return mat3(tangent, bitangent, normal);
+    }
+
+    // hammersley describes a sequence of points in the 2d uint square [0,1)^2
+    // that can be used for quasi Monte Carlo integration
+    vec2 hammersley(uint i, uint N) {
+      uint bits = (i << 16u) | (i >> 16u);
+      bits = ((bits & 0x55555555u) << 1u) | ((bits & 0xAAAAAAAAu) >> 1u);
+      bits = ((bits & 0x33333333u) << 2u) | ((bits & 0xCCCCCCCCu) >> 2u);
+      bits = ((bits & 0x0F0F0F0Fu) << 4u) | ((bits & 0xF0F0F0F0u) >> 4u);
+      bits = ((bits & 0x00FF00FFu) << 8u) | ((bits & 0xFF00FF00u) >> 8u);
+      float rdi = float(bits) * 2.3283064365386963e-10;
+
+      return vec2(float(i)/float(N), rdi);
+    }
+
+    // https://www.pbr-book.org/3ed-2018/Monte_Carlo_Integration/2D_Sampling_with_Multidimensional_Transformations#Cosine-WeightedHemisphereSampling
+    vec4 cosineSampleHemisphere(vec2 u) {
+      float cosTheta = sqrt(1.0 - u.y);
+      float sinTheta = sqrt(u.y);
+      float phi = 2.0 * PI * u.x;
+      vec3 direction = normalize(vec3(sinTheta * cos(phi), sinTheta * sin(phi), cosTheta));
+
+      float pdf = cosTheta / PI;
+
+      return vec4(direction, pdf);
+    }
+
+    vec3 integrateIrradiance(vec3 N) {
+      vec3 irradiance = vec3(0.0);
+      mat3 TBN = generateTBN(N);
+
+      for (uint i = 0u; i < u_sampleCount; i++) {
+        vec2 Xi = hammersley(i, u_sampleCount);
+        vec3 sphericalDirection = cosineSampleHemisphere(Xi).xyz;
+        vec3 sampleDirection = TBN * sphericalDirection;
+
+        irradiance += texture(u_cubemap, sampleDirection).rgb;
+      }
+
+      return irradiance / float(u_sampleCount);
+    }
+
+    void main() {
+      vec2 coord = v_texcoord * 2.0 - 1.0;
+      vec3 N = cubeUVToDirection(u_face, coord);
+      vec3 irradiance = integrateIrradiance(N);
+
+      o_FragColor = vec4(irradiance, 1.0);
+    }
+
+  </script>
+
+  <script id="preFilteredEnvironment-vs" type="notjs">#version 300 es
+    precision highp float;
+
+    in vec4 a_position;
+    in vec2 a_texcoord;
+    out vec2 v_texcoord;
+
+    void main() {
+      v_texcoord = a_texcoord;
+      gl_Position = a_position;
+      gl_Position.y *= -1.0;
+    }
+  </script>
+  <script id="preFilteredEnvironment-fs" type="notjs">#version 300 es
+    precision highp float;
+    const float PI = 3.14159265359;
+
+    uniform uint u_sampleCount;
+    uniform samplerCube u_cubemap;
+    uniform float u_roughness;
+    uniform float u_width;
+    uniform int u_face;
+
+    in vec2 v_texcoord;
+    out vec4 o_FragColor;
+
+    vec3 cubeUVToDirection(int face, vec2 uv)
+    {
+      if(face == 0)
+        return vec3(1.0, uv.y, -uv.x);
+
+      else if(face == 1)
+        return vec3(-1.0, uv.y, uv.x);
+
+      else if(face == 2)
+        return vec3(+uv.x, 1.0, -uv.y);
+
+      else if(face == 3)
+        return vec3(+uv.x, -1.0, uv.y);
+
+      else if(face == 4)
+        return vec3(+uv.x, uv.y, 1.0);
+
+      else //if(face == 5)
+        return vec3(-uv.x, +uv.y, -1.0);
+    }
+
+    // TBN generates a tangent bitangent normal coordinate frame from the normal
+    // (the normal must be normalized)
+    mat3 generateTBN(vec3 normal)
+    {
+        vec3 bitangent = vec3(0.0, 1.0, 0.0);
+
+        float NdotUp = dot(normal, vec3(0.0, 1.0, 0.0));
+        float epsilon = 0.0000001;
+        if (1.0 - abs(NdotUp) <= epsilon)
+        {
+            // Sampling +Y or -Y, so we need a more robust bitangent.
+            if (NdotUp > 0.0)
+            {
+                bitangent = vec3(0.0, 0.0, 1.0);
+            }
+            else
+            {
+                bitangent = vec3(0.0, 0.0, -1.0);
+            }
+        }
+
+        vec3 tangent = normalize(cross(bitangent, normal));
+        bitangent = cross(normal, tangent);
+
+        return mat3(tangent, bitangent, normal);
+    }
+
+    // hammersley describes a sequence of points in the 2d uint square [0,1)^2
+    // that can be used for quasi Monte Carlo integration
+    vec2 hammersley(uint i, uint N) {
+      uint bits = (i << 16u) | (i >> 16u);
+      bits = ((bits & 0x55555555u) << 1u) | ((bits & 0xAAAAAAAAu) >> 1u);
+      bits = ((bits & 0x33333333u) << 2u) | ((bits & 0xCCCCCCCCu) >> 2u);
+      bits = ((bits & 0x0F0F0F0Fu) << 4u) | ((bits & 0xF0F0F0F0u) >> 4u);
+      bits = ((bits & 0x00FF00FFu) << 8u) | ((bits & 0xFF00FF00u) >> 8u);
+      float rdi = float(bits) * 2.3283064365386963e-10;
+
+      return vec2(float(i)/float(N), rdi);
+    }
+
+    // Calculate GGX NDF
+    float DistributionGGX(float NdotH, float alphaRoughness)
+    {
+      float a = NdotH * alphaRoughness;
+      float k = alphaRoughness / (1.0 - NdotH * NdotH + a * a);
+      return k * k * (1.0 / PI);
+    }
+
+    vec4 ggxSampleHemisphere(vec2 u, float roughness) {
+      float alpha = roughness * roughness;
+      float phi = 2.0 * PI * u.x;
+      float cosTheta = clamp(sqrt((1.0 - u.y) / (1.0 + (alpha * alpha - 1.0) * u.y)), 0.0, 1.0);
+      float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
+      vec3 direction = normalize(vec3(sinTheta * cos(phi), sinTheta * sin(phi), cosTheta));
+
+      float pdf = DistributionGGX(cosTheta, alpha) / 4.0;
+
+      return vec4(direction, pdf);
+    }
+
+
+    vec3 prefilterEnvMap(vec3 N) {
+
+      vec3 radiance = vec3(0.0);
+      mat3 TBN = generateTBN(N);
+
+      float weight = 0.0;
+      for (uint i = 0u; i < u_sampleCount; i++) {
+        vec2 Xi = hammersley(i, u_sampleCount);
+        vec4 sampleResult = ggxSampleHemisphere(Xi, u_roughness);
+        vec3 sampleDirection = TBN * sampleResult.xyz;
+        float pdf = sampleResult.w;
+
+        // https://cgg.mff.cuni.cz/~jaroslav/papers/2007-sketch-fis/Final_sap_0073.pdf
+        float mipLevel =  0.5 * log2( 6.0 * float(u_width) * float(u_width) / (float(u_sampleCount) * pdf));
+
+        // v = n, h = sampleDirection
+        vec3 L = normalize(reflect(-N, sampleDirection));
+        float NdotL = max(dot(N, L), 0.0);
+
+        radiance += textureLod(u_cubemap, L, mipLevel).rgb * NdotL;
+        weight += NdotL;
+      }
+
+      return radiance / weight;
+    }
+
+    void main() {
+      vec2 coord = v_texcoord * 2.0 - 1.0;
+      vec3 N = cubeUVToDirection(u_face, coord);
+      // vec3 N = normalize(v_normal);
+      vec3 radiance = prefilterEnvMap(N);
+
+      o_FragColor = vec4(radiance, 1.0);
+    }
+  </script>
+
+  <script id="vs" type="notjs">#version 300 es
+    precision highp float;
+
+    uniform mat4 u_modelMatrix;
+    uniform mat4 u_viewMatrix;
+    uniform mat4 u_projectionMatrix;
+    uniform mat4 u_normalMatrix;
+
+    in vec3 a_position;
+    in vec3 a_normal;
+    in vec2 a_texcoord;
+
+    out vec2 v_texcoord;
+    out vec3 v_normal;
+    out vec3 v_position;
+
+    void main() {
+      gl_Position = u_projectionMatrix * u_viewMatrix * u_modelMatrix * vec4(a_position, 1.0);
+
+      // Word space
+      vec4 worldPosition = u_modelMatrix * vec4(a_position, 1.0);
+      v_position = worldPosition.xyz / worldPosition.w;
+
+      v_texcoord = a_texcoord;
+      v_normal = normalize(mat3(u_normalMatrix) * a_normal);
+    }
+  </script>
+  <script id="fs" type="notjs">#version 300 es
+    precision highp float;
+
+    const float PI = 3.14159265359;
+
+    uniform int u_mipCount;
+    uniform sampler2D u_GGXLUT;
+    uniform samplerCube u_GGXEnv;
+    uniform samplerCube u_lambertianEnv;
+
+    // pbrMetallicRoughness
+    uniform sampler2D u_baseColorTexture;
+    uniform vec4 u_baseColorFactor;
+    uniform sampler2D u_metallicRoughnessTexture;
+    uniform float u_metallicFactor;
+    uniform float u_roughnessFactor;
+
+    uniform sampler2D u_normalTexture;
+    uniform float u_normalScale;
+
+    uniform sampler2D u_occlusionTexture;
+    uniform float u_occlusionStrength;
+
+    uniform sampler2D u_emissiveTexture;
+    uniform vec3 u_emissiveFactor;
+
+    uniform vec3 u_cameraPosition;
+    uniform vec3 u_lightPosition;
+
+    in vec3 v_position;
+    in vec3 v_normal;
+    in vec2 v_texcoord;
+
+    out vec4 o_FragColor;
+
+
+    mat3 TBN(vec3 v, vec2 vTextureCood, vec3 normal) {
+      vec3  N       = normalize(normal);
+      vec3  dp1     = dFdx(v);
+      vec3  dp2     = dFdy(v);
+      vec2  duv1    = dFdx(vTextureCood);
+      vec2  duv2    = dFdy(vTextureCood);
+      vec3  dp2perp = cross(dp2, N);
+      vec3  dp1perp = cross(N, dp1);
+      vec3  T       = dp2perp * duv1.x + dp1perp * duv2.x;
+      vec3  B       = dp2perp * duv1.y + dp1perp * duv2.y;
+      float invmax  = inversesqrt(max(dot(T, T), dot(B, B)));
+      mat3  tm      = mat3(T * invmax, B * invmax, N);
+      // mat3  tbn_inv = mat3(vec3(tm[0].x, tm[1].x, tm[2].x), vec3(tm[0].y, tm[1].y, tm[2].y), vec3(tm[0].z, tm[1].z, tm[2].z));
+
+      return tm;
+    }
+
+    // Calculate GGX NDF
+    float DistributionGGX(float NdotH, float alphaRoughness)
+    {
+      float a = NdotH * alphaRoughness;
+      float k = alphaRoughness / (1.0 - NdotH * NdotH + a * a);
+      return k * k * (1.0 / PI);
+    }
+
+    // Calculate Smith G1
+    float GeometrySchlickGGX(float NdotV, float roughness)
+    {
+      float k = pow(roughness + 1.0, 2.0) / 8.0;
+      float ggx = NdotV / (NdotV * (1.0 - k) + k);
+
+      return ggx;
+    }
+
+    // Calculate Smith G
+    float GeometrySmith(float NdotV, float NdotL, float roughness)
+    {
+      float nv_ggx = GeometrySchlickGGX(NdotV, roughness);
+      float nl_ggx = GeometrySchlickGGX(NdotL, roughness);
+
+      return nv_ggx * nl_ggx;
+    }
+
+    // Visibility term
+    float V_SmithGGXCorrelated(float NdotV, float NdotL, float alphaRoughness) {
+      float a2 = alphaRoughness * alphaRoughness;
+      float GGXL = NdotV * sqrt((-NdotL * a2 + NdotL) * NdotL + a2);
+      float GGXV = NdotL * sqrt((-NdotV * a2 + NdotV) * NdotV + a2);
+
+      return 0.5 / (GGXV + GGXL);
+    }
+
+
+    // Calculate Schlick F
+    vec3 FresnelSchlick(float HdotV, vec3 F0, vec3 F90)
+    {
+      return F0 + (F90 - F0) * pow(1.0 - HdotV, 5.0);
+    }
+
+    // https://bruop.github.io/ibl/#single_scattering_results
+    // http://www.jcgt.org/published/0008/01/03/paper.pdf
+    vec3 IBL_BRDF(vec3 N, vec3 V, vec3 L, vec3 albedo) {
+      vec3 H = normalize(V + L);
+      float NdotV = max(dot(N, V), 0.0);
+      float NdotL = max(dot(N, L), 0.0);
+      float NdotH = max(dot(N, H), 0.0);
+      float HdotV = max(dot(H, V), 0.0);
+
+      vec4 mr = texture(u_metallicRoughnessTexture, v_texcoord);
+      float roughness = mr.g * u_roughnessFactor;
+      float metallic = mr.b * u_metallicFactor;
+      float alphaRoughness = roughness * roughness;
+
+      vec3 F90 = vec3(1.0);
+      vec3 F0 = mix(vec3(0.04), albedo, metallic);
+
+      vec3 c_diff = mix(albedo * (vec3(1.0) - vec3(0.04)), vec3(0.0), metallic);
+
+      float lod = roughness * float(u_mipCount - 1);
+      vec3 reflection = normalize(reflect(-V, N));
+      vec3 radiance = textureLod(u_GGXEnv, reflection, lod).rgb;
+      vec3 irradiance = texture(u_lambertianEnv, N).rgb;
+
+      vec3 Fr = max(vec3(1.0 - roughness), F0) - F0;
+      vec3 k_S = F0 + Fr * pow(1.0 - NdotV, 5.0);
+      vec2 brdfSamplePoint = clamp(vec2(NdotV, roughness), vec2(0.0), vec2(1.0));
+      vec2 f_ab = texture(u_GGXLUT, brdfSamplePoint).rg;
+      vec3 FssEss = k_S * f_ab.x + f_ab.y;
+
+      // Multiple scattering, from Fdez-Aguera
+      float Ems = (1.0 - (f_ab.x + f_ab.y));
+      vec3 Favg = F0 + (1.0 - F0) / 21.0;
+      vec3 Fms = FssEss * Favg / (1.0 - Favg * Ems);
+      vec3 FmsEms = Fms * Ems;
+
+      // Dielectrice
+      vec3 k_D = c_diff * (1.0 - FssEss - FmsEms);
+
+      return FssEss * radiance + (FmsEms + k_D) * irradiance;
+    }
+
+    void main() {
+      vec3 V = normalize(u_cameraPosition - v_position);
+      vec3 L = normalize(u_lightPosition - v_position);
+      vec3 perturbedNormal = texture(u_normalTexture, v_texcoord).rgb * 2.0 - 1.0;
+      mat3 tbn = TBN(V, v_texcoord, normalize(v_normal));
+      vec3 N = normalize(tbn * perturbedNormal);
+
+      vec4 baseColor = texture(u_baseColorTexture, v_texcoord) * u_baseColorFactor;
+      vec3 albedo = pow(baseColor.rgb, vec3(2.2));
+
+      vec3 color = IBL_BRDF(N, V, L, albedo);
+
+      // Occlusion
+      float ao = texture(u_occlusionTexture, v_texcoord).r;
+      color *= mix(1.0, ao, u_occlusionStrength);
+
+      // Emissive
+      vec3 emissive = texture(u_emissiveTexture, v_texcoord).rgb * u_emissiveFactor;
+      color += emissive;
+
+      color = pow(color, vec3(1.0/2.2));
+      o_FragColor = vec4(color, baseColor.a);
+    }
+  </script>
+
+  <script type="module">
+    import { twgl, glMatrix, Camera, Control, loadersCore, loadersGLTF, fetchImage } from './lib/bundle.js';
+    import { loadHDR } from './lib/hdrpng.js';
+
+    const { mat4, vec3, vec4 } = glMatrix;
+
+    const canvas = document.getElementById('container');
+    const gl = canvas.getContext("webgl2")
+    const programInfo = twgl.createProgramInfo(gl, ['vs', 'fs'])
+
+    const camera = new Camera({
+      type: 'PerspectiveCamera',
+      fov: 45,
+      aspect: canvas.offsetWidth / canvas.offsetHeight,
+      near: 0.01,
+      far: 1000,
+    });
+    camera.setPosition(0, 0, 3);
+    camera.lookAt(0, 0, 0);
+    const control = new Control(camera, canvas, {
+      minZoom: 0.6,
+      maxZoom: 8,
+      zoomScale: 0.01
+    });
+    control.start();
+
+    const CubemapPosition = new Float32Array([
+      -1.0, -1.0,
+      1.0, -1.0,
+      -1.0,  1.0,
+
+      -1.0,  1.0,
+      1.0, -1.0,
+      1.0,  1.0,
+    ]);
+    const CubemapTexcoord = new Float32Array([
+      0.0,  0.0,
+      1.0,  0.0,
+      0.0,  1.0,
+
+      0.0,  1.0,
+      1.0,  0.0,
+      1.0,  1.0,
+    ]);
+
+    function drawMesh(programInfo, mesh) {
+      gl.useProgram(programInfo.program);
+
+      gl.bindVertexArray(mesh.vao);
+      twgl.setUniforms(programInfo, mesh.uniforms);
+      twgl.drawBufferInfo(gl, mesh.bufferInfo);
+    }
+
+    function renderScene(scene, IBL) {
+      twgl.resizeCanvasToDisplaySize(gl.canvas, 2.0);
+      gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+      gl.enable(gl.DEPTH_TEST);
+      gl.enable(gl.CULL_FACE);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+      // Default node mesh
+      const node = scene.nodes[0]
+      const mesh = node.mesh;
+      const primitive = mesh.primitives[0];
+      const geometry = {
+        a_position: primitive.attributes.POSITION.value,
+        a_normal: primitive.attributes.NORMAL.value,
+        a_texcoord: primitive.attributes.TEXCOORD_0.value,
+
+        indices: primitive.indices.value
+      }
+      mesh.bufferInfo = twgl.createBufferInfoFromArrays(gl, geometry);
+      mesh.vao = twgl.createVAOFromBufferInfo(gl, programInfo,  mesh.bufferInfo);
+
+      const { pbrMetallicRoughness, normalTexture, occlusionTexture, emissiveTexture, emissiveFactor } = primitive.material;
+
+      // mat4.fromRotationTranslationScale
+      const modelMatrix = mat4.fromQuat([], node.rotation);
+
+      mesh.uniforms = {
+        u_modelMatrix: modelMatrix,
+        u_viewMatrix: camera.viewMatrix,
+        u_projectionMatrix: camera.projectionMatrix,
+        u_normalMatrix: mat4.transpose([], mat4.invert([], modelMatrix)),
+        u_cameraPosition: camera.position,
+        u_lightPosition: vec3.add([], camera.position, [0, 1, 0]),
+
+        // PBR
+        u_baseColorTexture: twgl.createTexture(gl, { src: pbrMetallicRoughness.baseColorTexture.texture.source.image }),
+        u_baseColorFactor: pbrMetallicRoughness.baseColorFactor || [1.0, 1.0, 1.0, 1.0],
+        u_metallicRoughnessTexture: twgl.createTexture(gl, { src: pbrMetallicRoughness.metallicRoughnessTexture.texture.source.image }),
+        u_metallicFactor: pbrMetallicRoughness.metallicFactor || 1.0,
+        u_roughnessFactor: pbrMetallicRoughness.roughnessFactor || 1.0,
+        u_normalTexture: twgl.createTexture(gl, { src: normalTexture.texture.source.image }),
+        u_normalScale: normalTexture.scale || 1.0,
+        u_occlusionTexture: twgl.createTexture(gl, { src: occlusionTexture.texture.source.image }),
+        u_occlusionStrength: occlusionTexture.strength || 1.0,
+        u_emissiveTexture: twgl.createTexture(gl, { src: emissiveTexture.texture.source.image }),
+        u_emissiveFactor: emissiveFactor || [1.0, 1.0, 1.0],
+
+        // IBL
+        u_GGXLUT: IBL.ggxLutTexture,
+        u_GGXEnv: IBL.ggxEnvTexture,
+        u_lambertianEnv: IBL.lambertianEnvTexture,
+        u_mipCount: IBL.mipCount
+      };
+
+      requestAnimationFrame(() => {
+        anim(mesh)
+      })
+    }
+
+    async function precomputeEnvIBL(envHDR) {
+      const textureSize = 256;
+      const lowestMipLevel = 4;
+      const mipCount = Math.floor(Math.log2(textureSize))+1 - lowestMipLevel;
+
+      // HDR
+      const floatRGB = await loadHDR(new Uint8Array(envHDR));
+      const hdrTexture = twgl.createTexture(gl, {
+        src: floatRGB.dataFloat,
+        internalFormat: gl.RGB32F,
+        format: gl.RGB,
+        type: gl.FLOAT,
+        width: floatRGB.width,
+        height: floatRGB.height,
+
+        target: gl.TEXTURE_2D,
+        flipY: 1,
+      })
+
+      // Panorama HDR to CubeMap
+      const cubemapTexture = panoramaToCubemap(hdrTexture, textureSize);
+
+      // Precomputed Irradiance Map
+      const lambertianEnvTexture = precomputedIrradiance(cubemapTexture, textureSize);
+
+      // Pre-filtered Environment Radiance Map
+      const ggxEnvTexture = twgl.createTexture(gl, {
+        target: gl.TEXTURE_CUBE_MAP,
+        width: textureSize,
+        height: textureSize,
+        min: gl.LINEAR_MIPMAP_LINEAR,
+        mag: gl.LINEAR,
+        // minLod: 0,
+        // maxLod: mipCount - 1,
+      });
+      for (let mipLevel = 0; mipLevel < mipCount; mipLevel++) {
+        const roughness = mipLevel / (mipCount - 1);
+        const size = textureSize >> mipLevel;
+        preFilteredEnvironment(cubemapTexture, ggxEnvTexture, mipLevel, roughness, size);
+      }
+      gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+
+      return { mipCount, lambertianEnvTexture, ggxEnvTexture }
+    }
+
+    function panoramaToCubemap(panorama, textureSize) {
+      gl.viewport(0, 0, textureSize, textureSize);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+      const cubemapProgramInfo = twgl.createProgramInfo(gl, ['cubemap-vs', 'cubemap-fs']);
+      gl.useProgram(cubemapProgramInfo.program);
+
+      const cubemap = twgl.createTexture(gl, {
+        target: gl.TEXTURE_CUBE_MAP,
+        width: textureSize,
+        height: textureSize,
+        min: gl.LINEAR_MIPMAP_LINEAR,
+        mag: gl.LINEAR
+      });
+
+      const geometry = {
+        a_position: { numComponents: 2, data: CubemapPosition },
+        a_texcoord: { numComponents: 2, data: CubemapTexcoord },
+      }
+      const bufferInfo = twgl.createBufferInfoFromArrays(gl, geometry);
+      const vao = twgl.createVAOFromBufferInfo(gl, cubemapProgramInfo, bufferInfo);
+
+      for (let i = 0; i < 6; i++) {
+        const framebufferInfo = twgl.createFramebufferInfo(gl,
+          [{
+            attachment: cubemap,
+            target: gl.TEXTURE_CUBE_MAP_POSITIVE_X + i
+          }], textureSize, textureSize);
+        twgl.bindFramebufferInfo(gl, framebufferInfo);
+
+        gl.bindVertexArray(vao);
+        twgl.setUniforms(cubemapProgramInfo, {
+          u_panorama: panorama,
+          u_face: i
+        });
+
+        gl.drawArrays(gl.TRIANGLES, 0, bufferInfo.numElements);
+      }
+      gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+      return cubemap;
+    }
+
+    function precomputedIrradiance(cubemap, textureSize) {
+      gl.viewport(0, 0, textureSize, textureSize);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+      const programInfo = twgl.createProgramInfo(gl, ['precomputedIrradiance-vs', 'precomputedIrradiance-fs']);
+      gl.useProgram(programInfo.program);
+
+      const irradianceTexture = twgl.createTexture(gl, {
+        target: gl.TEXTURE_CUBE_MAP,
+        width: textureSize,
+        height: textureSize,
+        minMag: gl.LINEAR,
+      });
+
+      const geometry = {
+        a_position: { numComponents: 2, data: CubemapPosition },
+        a_texcoord: { numComponents: 2, data: CubemapTexcoord },
+      }
+      const bufferInfo = twgl.createBufferInfoFromArrays(gl, geometry);
+      const vao = twgl.createVAOFromBufferInfo(gl, programInfo, bufferInfo);
+
+      for (let i = 0; i < 6; i++) {
+        const framebufferInfo = twgl.createFramebufferInfo(gl,
+          [{
+            attachment: irradianceTexture,
+            target: gl.TEXTURE_CUBE_MAP_POSITIVE_X + i
+          }], textureSize, textureSize);
+        twgl.bindFramebufferInfo(gl, framebufferInfo);
+
+        gl.bindVertexArray(vao);
+        twgl.setUniforms(programInfo, {
+          u_cubemap: cubemap,
+          u_face: i,
+          u_sampleCount: 256,
+        });
+
+        gl.drawArrays(gl.TRIANGLES, 0, bufferInfo.numElements);
+      }
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+      return irradianceTexture;
+    }
+
+    function preFilteredEnvironment(cubemap, radianceTexture, mipmapLevel, roughness, textureSize) {
+      gl.viewport(0, 0, textureSize, textureSize);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+      const programInfo = twgl.createProgramInfo(gl, ['preFilteredEnvironment-vs', 'preFilteredEnvironment-fs']);
+      gl.useProgram(programInfo.program);
+
+      const geometry = {
+        a_position: { numComponents: 2, data: CubemapPosition },
+        a_texcoord: { numComponents: 2, data: CubemapTexcoord },
+      }
+      const bufferInfo = twgl.createBufferInfoFromArrays(gl, geometry);
+      const vao = twgl.createVAOFromBufferInfo(gl, programInfo, bufferInfo);
+
+      for (let i = 0; i < 6; i++) {
+        const framebufferInfo = twgl.createFramebufferInfo(gl,
+          [{
+            attachment: radianceTexture,
+            target: gl.TEXTURE_CUBE_MAP_POSITIVE_X + i,
+            level: mipmapLevel
+          }], textureSize, textureSize);
+        twgl.bindFramebufferInfo(gl, framebufferInfo);
+
+        gl.bindVertexArray(vao);
+        twgl.setUniforms(programInfo, {
+          u_cubemap: cubemap,
+          u_face: i,
+          u_roughness: roughness,
+          u_width: textureSize,
+          u_sampleCount: 256,
+        });
+
+        gl.drawArrays(gl.TRIANGLES, 0, bufferInfo.numElements);
+      }
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    }
+
+
+    (async function() {
+      const [
+        gltf,
+        ggxLut,
+        envHDR
+      ] = await Promise.all([
+        loadersCore.load('./data/DamagedHelmet/glTF/DamagedHelmet.gltf', loadersGLTF.GLTFLoader),
+        fetchImage('./data/DamagedHelmet/lut_ggx.png'),
+        fetch('./data/DamagedHelmet/footprint_court.hdr').then(response => response.arrayBuffer())
+      ])
+
+      // ggxLutTexture, ggxEnvTexture, lambertianEnvTexture
+      const IBL = await precomputeEnvIBL(envHDR);
+      IBL.ggxLutTexture = twgl.createTexture(gl, { src: ggxLut, flipY: 0});
+
+      renderScene(gltf.scenes[0], IBL);
+    })();
+
+    function anim(mesh) {
+      mesh.uniforms = Object.assign(mesh.uniforms, {
+        u_viewMatrix: camera.viewMatrix,
+        u_cameraPosition: camera.position,
+        u_lightPosition: vec3.add([], camera.position, [0, 1, 0]),
+      });
+
+      drawMesh(programInfo, mesh);
+      requestAnimationFrame(() => {
+        anim(mesh);
+      })
+    }
+  </script>
+</body>
+</html>

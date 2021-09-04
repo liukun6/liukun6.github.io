@@ -27647,6 +27647,24 @@ var index = /*#__PURE__*/Object.freeze({
   encodeGLTFSync: encodeGLTFSync
 });
 
+function fetchImage(url) {
+  return new Promise(function (resolve) {
+    fetch(url).then(function (response) {
+      return response.blob();
+    }).then(function (data) {
+      var image = new Image();
+
+      image.onload = function () {
+        resolve(image);
+      };
+
+      image.src = URL.createObjectURL(data);
+    })["catch"](function () {
+      console.error("Unable to download texture image: ".concat(url));
+    });
+  });
+}
+
 function _classCallCheck(instance, Constructor) {
   if (!(instance instanceof Constructor)) {
     throw new TypeError("Cannot call a class as a function");
@@ -27803,7 +27821,7 @@ var Camera = /*#__PURE__*/function () {
     this.projectionMatrixInverse = create$6();
     this.needUpdateViewMat = true;
     this.needUpdateProjMat = true;
-    this.zoom = 1.0; // Carmera type:  OrthoCamera | PerspectiveCamera
+    this.zoom = parameters.zoom || 1.0; // Carmera type:  OrthoCamera | PerspectiveCamera
 
     this.type = parameters.type !== undefined ? parameters.type : 'OrthoCamera';
 
@@ -28530,4 +28548,4 @@ var BufferAttribute = /*#__PURE__*/function () {
   return BufferAttribute;
 }();
 
-export { BufferAttribute, Camera, Control, Light, webglObjLoader_min$1 as OBJ, Program, Renderer, index$2 as glMatrix, index$1 as loadersCore, index as loadersGLTF, twglFull_module as twgl };
+export { BufferAttribute, Camera, Control, Light, webglObjLoader_min$1 as OBJ, Program, Renderer, fetchImage, index$2 as glMatrix, index$1 as loadersCore, index as loadersGLTF, twglFull_module as twgl };

@@ -193,7 +193,7 @@
       },
     };
     const lightProgramInfo = twgl.createProgramInfo(gl, ['shadow-vs', 'shadow-fs'], programOptions);
-    const shadowprogramInfo = twgl.createProgramInfo(gl, [vs, fs], programOptions);
+    const shadowProgramInfo = twgl.createProgramInfo(gl, [vs, fs], programOptions);
 
     function drawScene(programInfo, meshes) {
       gl.useProgram(programInfo.program);
@@ -231,7 +231,7 @@
         indices: mesh.indicesPerMaterial.flat()
       }
       mesh.bufferInfo = twgl.createBufferInfoFromArrays(gl, geometry);
-      mesh.vao = twgl.createVAOFromBufferInfo(gl, shadowprogramInfo,  mesh.bufferInfo);
+      mesh.vao = twgl.createVAOFromBufferInfo(gl, shadowProgramInfo,  mesh.bufferInfo);
       // shadow uniforms
 
       const modelMatrix = mat4.create()
@@ -267,9 +267,10 @@
         u_normalMatrix: mat4.transpose([], mat4.invert([], mat4.multiply([], modelMatrix, camera.viewMatrix))),
         // light
         // u_ambientLight: 0.2,
-        u_LEye: vec3.transformMat4([], LightPosition, camera.viewMatrix)
+        u_shadowMap: framebufferInfo.attachments[0],
+        u_lightPositionEye: vec3.transformMat4([], LightPosition, camera.viewMatrix)
       });
-      drawScene(shadowprogramInfo, [mesh]);
+      drawScene(shadowProgramInfo, [mesh]);
     }
 
 
