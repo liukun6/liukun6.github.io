@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
 
   <link rel="stylesheet" type="text/css" href="./main.css">
 </head>
+
 <body>
   <main>
     <canvas id="container"></canvas>
@@ -45,7 +47,7 @@
       vec4 positionEye4 = u_viewMatrix * u_modelMatrix * a_position;
       v_positionEye = positionEye4.xyz / positionEye4.w;
       // v_eyeDirection = -v_positionEye;
-      v_lightDirection = normalize(u_lightPositionEye - v_positionEye);
+      v_lightDirection = u_lightPositionEye - v_positionEye;
     }
   </script>
 
@@ -89,7 +91,7 @@
 
     void main() {
       vec3 perturbedNormal = texture(u_normalSampler, v_texcoord).rgb * 2.0 - 1.0;
-      mat3 tbn = TBN(normalize(v_positionEye), v_texcoord, normalize(v_normal));
+      mat3 tbn = TBN(v_positionEye, v_texcoord, normalize(v_normal));
       vec3 v_normal_n = normalize(tbn * perturbedNormal);
 
       vec3 v_lightDirection_n = normalize(v_lightDirection);
@@ -106,6 +108,9 @@
       vec4 texel = texture(u_sampler, v_texcoord);
 
       o_FragColor = vec4(color * texel.rgb, texel.a);
+
+      // 临时 Debug 代码：把相机空间下的最终计算法线映射到 RGB 颜色
+      // o_FragColor = vec4(v_normal_n * 0.5 + 0.5, 1.0);
     }
   </script>
 
@@ -162,7 +167,7 @@
         u_modelMatrix: modelMatrix,
         u_viewMatrix: camera.viewMatrix,
         u_projectionMatrix: camera.projectionMatrix,
-        u_normalMatrix: mat4.transpose([], mat4.invert([], mat4.multiply([], modelMatrix, camera.viewMatrix))),
+        u_normalMatrix: mat4.transpose([], mat4.invert([], mat4.multiply([], camera.viewMatrix, modelMatrix))),
         // light
         ambient: [0.2, 0.2, 0.2],
         diffuse: [0.6, 0.6, 0.6],
@@ -178,7 +183,7 @@
       twgl.drawBufferInfo(gl, bufferInfo);
     }
 
-    (function() {
+    (function () {
       Promise.all([
         OBJ.downloadModels([
           {
@@ -236,4 +241,5 @@
     }
   </script>
 </body>
+
 </html>

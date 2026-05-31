@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
 
   <link rel="stylesheet" type="text/css" href="./main.css">
 </head>
+
 <body>
   <main>
     <canvas id="container"></canvas>
@@ -63,7 +65,7 @@
       vec4 positionEye4 = u_viewMatrix * u_modelMatrix * vec4(a_position, 1.0);
       vec3 positionEye = positionEye4.xyz / positionEye4.w;
 
-      // Light position is world space coordinates
+      // Light position is world space coordinates
       // vec4 lightPositionEye4 = u_viewMatrix * vec4(u_lightPosition, 1.0);
       // vec3 lightPositionEye = lightPositionEye4.xyz / lightPositionEye4.w;
       vec3 lightDirection = normalize(u_lightPositionEye - positionEye);
@@ -159,7 +161,7 @@
       u_modelMatrix: modelMatrix,
       u_viewMatrix: camera.viewMatrix,
       u_projectionMatrix: camera.projectionMatrix,
-      u_normalMatrix: mat4.transpose([], mat4.invert([], mat4.multiply([], modelMatrix, camera.viewMatrix))),
+      u_normalMatrix: mat4.transpose([], mat4.invert([], mat4.multiply([], camera.viewMatrix, modelMatrix))),
       // light
       u_ambientProduct: [0.2, 0.2, 0.2],
       u_diffuseProduct: [0.4, 0.4, 0.4],
@@ -277,4 +279,5 @@
     initControl();
   </script>
 </body>
+
 </html>

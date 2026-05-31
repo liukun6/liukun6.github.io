@@ -99,7 +99,7 @@
       u_modelMatrix: modelMatrix,
       u_viewMatrix: camera.viewMatrix,
       u_projectionMatrix: camera.projectionMatrix,
-      u_normalMatrix: mat4.transpose([], mat4.invert([], mat4.multiply([], modelMatrix, camera.viewMatrix))),
+      u_normalMatrix: mat4.transpose([], mat4.invert([], mat4.multiply([], camera.viewMatrix, modelMatrix))),
       // light
       u_ambientProduct: [0.2, 0.2, 0.2],
       u_diffuseProduct: [0.4, 0.4, 0.4],

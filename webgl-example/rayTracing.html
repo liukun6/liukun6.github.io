@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +9,7 @@
   <link rel="stylesheet" type="text/css" href="./main.css">
   <script src="lib/WebGLRenderer.js"></script>
 </head>
+
 <body>
   <main>
     <canvas id="container"></canvas>
@@ -15,16 +17,15 @@
 
   <script>
     const vertexShader = `
-      uniform mat4 uRayMatrix;
+      uniform mat3 uRayMatrix;
 
       attribute vec2 aVertexPosition;
-      attribute vec4 aVertexRay;
+      attribute vec3 aVertexRay;
 
       varying vec3 vVertexRay;
 
       void main(void) {
-        vec4 rayDir = uRayMatrix * aVertexRay;
-        vVertexRay = normalize(rayDir.xyz / rayDir.w);
+        vVertexRay = normalize(uRayMatrix * aVertexRay);
         gl_Position = vec4(aVertexPosition, 0.0, 1.0);
       }
     `;
@@ -100,19 +101,27 @@
         vertices[5] = vec3(-4, 0, -4);
       }
 
-      float sphereInter(vec3 rayOrigin, vec3 rayDir, vec3 sphereCenter, float shpereRadius) {
+      float sphereInter(vec3 rayOrigin, vec3 rayDir, vec3 sphereCenter, float sphereRadius, bool testInside) {
           // Transform the ray into object space
           vec3 oro = rayOrigin - sphereCenter;
 
           float a = dot(rayDir, rayDir);
           float b = 2.0 * dot(oro, rayDir);
-          float c = dot(oro, oro) - shpereRadius * shpereRadius;
+          float c = dot(oro, oro) - sphereRadius * sphereRadius;
 
           float d = b * b - 4.0 * a * c;
 
-          if(d < 0.0) return d; // No intersection
+          if (d < 0.0) return -1.0; // No intersection
 
-          return (-b - sqrt(d)) / 2.0;
+          float sqrtD = sqrt(d);
+          float t_near = (-b - sqrtD) / (2.0 * a);
+          float t_far  = (-b + sqrtD) / (2.0 * a);
+
+          // Return nearest positive root: t_near for external hit, t_far for internal exit
+          if (t_near > 0.0) return t_near;
+          if (testInside && t_far > 0.0) return t_far;
+
+          return -1.0; // Sphere is behind the ray
       }
 
 
@@ -147,11 +156,11 @@
         return normalize(cross(v1 - v0, v2 - v1));
       }
 
-      float intersect(vec3 ro, vec3 rd, out vec3 intersection, out vec3 norm, out vec3 color, out int materialType) {
+      float intersect(vec3 ro, vec3 rd, bool testInside, out vec3 intersection, out vec3 norm, out vec3 color, out int materialType) {
           Sphere hitSphere;
           float hitSphereDist = uMaxDist;
           for (int i = 0; i < 3; i++) {
-            float interDist = sphereInter( ro, rd, spheres[i].pos, spheres[i].radius );
+            float interDist = sphereInter( ro, rd, spheres[i].pos, spheres[i].radius, testInside );
             if ( interDist > 0.0 && interDist < hitSphereDist ) {
               hitSphereDist = interDist;
               hitSphere = spheres[i];
@@ -213,7 +222,7 @@
         bool isShadow = false;
         vec3 temp;
         int materialTepeTemp;
-        float lightDist = intersect(objIntersect + lightDir * 0.01, lightDir, temp, temp, temp, materialTepeTemp);
+        float lightDist = intersect(objIntersect + lightDir * 0.01, lightDir, false, temp, temp, temp, materialTepeTemp);
         if (lightDist > 0.0 && lightDist < uMaxDist) {
           isShadow = true;
         }
@@ -246,7 +255,7 @@
         vec3 objIntersect, objNorm, objColor;
         int materialType;
         for(int i = 0; i <= MaxDepth; i++) {
-          float t = intersect(currentRayOrigin, currentRayDir, objIntersect, objNorm, objColor, materialType);
+          float t = intersect(currentRayOrigin, currentRayDir, true, objIntersect, objNorm, objColor, materialType);
           if (t >= uMaxDist) {
             return local_color += pow(0.7, float(i)) * BgColor;
           }
@@ -257,12 +266,45 @@
           } else if (materialType == 1) {
             currentRayDir = reflect(currentRayDir, objNorm);
           } else if (materialType == 2) {
+            // Determine face normal (pointing toward incident side) and eta
+            const float IOR = 1.58; // glass index of refraction
+            float eta;
+            vec3 faceNorm;
+
             if (dot(currentRayDir, objNorm) < 0.0) {
-              // air -> glass
-              currentRayDir = refract(currentRayDir, objNorm, 0.58);
+              // air -> glass: outward normal is correct
+              faceNorm = objNorm;
+              eta = 1.0 / IOR;
             } else {
-              // glass -> air
-              currentRayDir = refract(currentRayDir, objNorm, 1.7);
+              // glass -> air: flip normal to face the incoming ray
+              faceNorm = -objNorm;
+              eta = IOR; // = IOR / 1.0
+            }
+
+            // 1. Schlick Fresnel approximation
+            float R0 = (1.0 - IOR) / (1.0 + IOR);
+            R0 = R0 * R0;
+            float cosTheta = max(dot(-currentRayDir, faceNorm), 0.0);
+            float fresnel = R0 + (1.0 - R0) * pow(1.0 - cosTheta, 5.0);
+
+            // 2. Reflection sample (single bounce to limit cost)
+            vec3 reflectDir = reflect(currentRayDir, faceNorm);
+            vec3 refIntersect, refNorm, refColor;
+            int refMatType;
+            float refT = intersect(objIntersect + reflectDir * 0.01, reflectDir, false, refIntersect, refNorm, refColor, refMatType);
+            vec3 reflectionSampleColor = BgColor;
+            if (refT < uMaxDist) {
+                reflectionSampleColor = blinnPhongShader(refColor, refIntersect, refNorm, reflectDir, refMatType);
+            }
+            local_color += pow(0.7, float(i)) * reflectionSampleColor * fresnel;
+
+            // 3. Refraction (with total internal reflection fallback)
+            vec3 refractDir = refract(currentRayDir, faceNorm, eta);
+            if (length(refractDir) < 0.001) {
+              // Total internal reflection
+              currentRayDir = reflectDir;
+            } else {
+              currentRayDir = refractDir;
             }
           }
           currentRayOrigin = objIntersect + currentRayDir * 0.01;
@@ -315,11 +357,11 @@
       const quadVertices = new Float32Array([
         -1.0, -1.0,
         1.0, -1.0,
-        -1.0,  1.0,
+        -1.0, 1.0,
 
-        -1.0,  1.0,
+        -1.0, 1.0,
         1.0, -1.0,
-        1.0,  1.0
+        1.0, 1.0
       ]);
 
       const radian = Math.PI / 180;
@@ -330,18 +372,20 @@
       const quadRays = new Float32Array([
         -viewportW, -viewportH, -1.0,
         viewportW, -viewportH, -1.0,
-        -viewportW,  viewportH, -1.0,
+        -viewportW, viewportH, -1.0,
 
-        -viewportW,  viewportH, -1.0,
+        -viewportW, viewportH, -1.0,
         viewportW, -viewportH, -1.0,
-        viewportW,  viewportH, -1.0
+        viewportW, viewportH, -1.0
       ]);
 
       gl.uniform3fv(programUniforms.uEyePosition, camera.position);
       gl.uniform1f(programUniforms.uMaxDist, camera.far);
-      const { mat4 } = WebGLRenderer;
-      const rayMatrix = mat4.invert([], mat4.transpose([], mat4.invert([], camera.viewMatrix)));
-      gl.uniformMatrix4fv(programUniforms.uRayMatrix, false, rayMatrix);
+      const { mat3, mat4 } = WebGLRenderer;
+      // Extract rotation-only 3x3 from view matrix: R^T = R^{-1}
+      const viewMat3 = mat3.fromMat4([], camera.viewMatrix);
+      const rayMatrix = mat3.transpose([], viewMat3);
+      gl.uniformMatrix3fv(programUniforms.uRayMatrix, false, rayMatrix);
 
       const quadVerticesBuffer = gl.createBuffer();
       gl.bindBuffer(gl.ARRAY_BUFFER, quadVerticesBuffer);
@@ -365,4 +409,5 @@
     requestAnimationFrame(anim);
   </script>
 </body>
+
 </html>

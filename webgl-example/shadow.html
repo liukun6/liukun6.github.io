@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,17 +8,30 @@
 
   <link rel="stylesheet" type="text/css" href="./main.css">
 </head>
+
 <body>
   <main>
     <canvas id="container"></canvas>
 
     <div id="control">
-      <label>X:</label>
-      <input type="range" id="lightX" value=0 min=-3 max=3 step=0.1>
-      <label>Z:</label>
-      <input type="range" id="lightZ" value=0 min=-3 max=3 step=0.1>
-      <label>Y:</label>
-      <input type="range" id="lightY" value=5 min=3 max=7 step=0.1>
+      <div class="control-row">
+        <div class="item">
+          <input type="radio" checked id="hardShadow" name="shadowMode">
+          <label for="hardShadow">Hard Shadow</label>
+        </div>
+        <div class="item">
+          <input type="radio" id="pcfShadow" name="shadowMode">
+          <label for="pcfShadow">PCF</label>
+        </div>
+      </div>
+      <div class="control-row">
+        <label>X:</label>
+        <input type="range" id="lightX" value=0 min=-3 max=3 step=0.1>
+        <label>Z:</label>
+        <input type="range" id="lightZ" value=0 min=-3 max=3 step=0.1>
+        <label>Y:</label>
+        <input type="range" id="lightY" value=5 min=3 max=7 step=0.1>
+      </div>
     </div>
   </main>
 
@@ -49,7 +63,7 @@
     }
 
     void main() {
-      float depth = gl_FragCoord.z * 0.5 + 0.5;
+      float depth = gl_FragCoord.z;
 
       // o_FragColor = vec4(depth, depth, depth, 1.0);
       o_FragColor = packDepth(depth);
@@ -99,9 +113,12 @@
     const fs = `#version 300 es
       precision highp float;
 
-      #define EPS 1e-7
+      #define EPS 5e-3
 
-      uniform vec3 ambient;
+      // shadow mode: 0 = hard shadow, 1 = PCF
+      uniform lowp int u_shadowMode;
+
+      uniform vec3 u_ambientLight;
       uniform vec3 diffuse;
       uniform vec3 specular;
       uniform float specularExponent;
@@ -132,21 +149,22 @@
         return visibility;
       }
 
-      float PCF(sampler2D shadowMap, vec3 shadowCoord, float filterSize) {
-        // visibility = 0.0;
-        // vec2 texelSize = 1.0 / vec2(2048.0, 2048.0); // textureSize(shadowMap, 0);
-        // for(int x = -2; x <= 2; ++x)
-        // {
-        //   for(int y = -2; y <= 2; ++y)
-        //   {
-        //     vec2 offset = shadowCoord.xy + vec2(x, y) * texelSize;
-        //     vec4 pcfDepth = texture(shadowMap, offset);
-        //     float depth = unpackDepth(pcfDepth);
-        //     visibility += (shadowCoord.z > depth + EPS) ? 0.0 : 1.0;
-        //   }
-        // }
-        // visibility /= 25.0;
-        return 1.0;
+      float PCF(sampler2D shadowMap, vec3 shadowCoord) {
+        bool inRange = shadowCoord.x > 0.0 && shadowCoord.x < 1.0 && shadowCoord.y > 0.0 && shadowCoord.y < 1.0;
+        if (!inRange) return 1.0;
+
+        float visibility = 0.0;
+        vec2 texelSize = 1.0 / vec2(2048.0, 2048.0);
+        for (int x = -2; x <= 2; ++x) {
+          for (int y = -2; y <= 2; ++y) {
+            vec2 offset = shadowCoord.xy + vec2(x, y) * texelSize;
+            vec4 pcfDepth = texture(shadowMap, offset);
+            float depth = unpackDepth(pcfDepth);
+            visibility += (shadowCoord.z > depth + EPS) ? 0.0 : 1.0;
+          }
+        }
+        visibility /= 25.0;
+        return visibility;
       }
 
       void main() {
@@ -155,19 +173,21 @@
         vec3 v_eyeDirection_n = normalize(v_eyeDirection);
         vec3 halfwayVector = normalize(v_lightDirection_n + v_eyeDirection_n);
 
-        vec3 diffuse = diffuse * max(dot(v_lightDirection_n, v_normal_n), 0.0);
-        vec3 specular = specular * pow(max(dot(halfwayVector, v_normal_n), 0.0), specularExponent);
+        vec3 diffuseColor = diffuse * max(dot(v_lightDirection_n, v_normal_n), 0.0);
+        vec3 specularColor = specular * pow(max(dot(halfwayVector, v_normal_n), 0.0), specularExponent);
         if (dot(v_lightDirection_n, v_normal_n) < 0.0) {
-          specular = vec3(0.0, 0.0, 0.0);
+          specularColor = vec3(0.0, 0.0, 0.0);
         }
-        vec3 color = diffuse + specular;
+        vec3 color = diffuseColor + specularColor;
 
         vec3 shadowCoord = (v_PositionFromLight.xyz / v_PositionFromLight.w) * 0.5 + 0.5;
-        float visibility = useShadowMap(u_shadowMap, shadowCoord);
-        o_FragColor = vec4(color * visibility, 1.0);
-
-        // float lightDepth = shadowCoord.z * 0.5;
-        // float testD = depth * 0.5;
+        float visibility;
+        if (u_shadowMode == 1) {
+          visibility = PCF(u_shadowMap, shadowCoord);
+        } else {
+          visibility = useShadowMap(u_shadowMap, shadowCoord);
+        }
+        o_FragColor = vec4(u_ambientLight + color * visibility, 1.0);
       }
     `
 
@@ -189,7 +209,7 @@
     const programOptions = {
       attribLocations: {
         'a_position': 0,
-        'a_normal':   1,
+        'a_normal': 1,
       },
     };
     const lightProgramInfo = twgl.createProgramInfo(gl, ['shadow-vs', 'shadow-fs'], programOptions);
@@ -219,6 +239,8 @@
       });
     }
 
+    let currentShadowMode = 0; // 0 = hard shadow, 1 = PCF
+
     function render(mesh) {
       twgl.resizeCanvasToDisplaySize(gl.canvas);
       gl.enable(gl.DEPTH_TEST);
@@ -231,7 +253,7 @@
         indices: mesh.indicesPerMaterial.flat()
       }
       mesh.bufferInfo = twgl.createBufferInfoFromArrays(gl, geometry);
-      mesh.vao = twgl.createVAOFromBufferInfo(gl, shadowProgramInfo,  mesh.bufferInfo);
+      mesh.vao = twgl.createVAOFromBufferInfo(gl, shadowProgramInfo, mesh.bufferInfo);
       // shadow uniforms
 
       const modelMatrix = mat4.create()
@@ -249,14 +271,16 @@
       const framebufferInfo = twgl.createFramebufferInfo(gl, attachments, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
       // console.log(framebufferInfo);
 
-      // light pass
+      // light pass - clear to white so empty shadow map = depth 1.0
       gl.bindFramebuffer(gl.FRAMEBUFFER, framebufferInfo.framebuffer);
+      gl.clearColor(1, 1, 1, 1);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       gl.viewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
       drawScene(lightProgramInfo, [mesh]);
 
       // shadow pass
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.clearColor(0, 0, 0, 0);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
@@ -264,11 +288,12 @@
         u_modelMatrix: modelMatrix,
         u_viewMatrix: camera.viewMatrix,
         u_projectionMatrix: camera.projectionMatrix,
-        u_normalMatrix: mat4.transpose([], mat4.invert([], mat4.multiply([], modelMatrix, camera.viewMatrix))),
+        u_normalMatrix: mat4.transpose([], mat4.invert([], mat4.multiply([], camera.viewMatrix, modelMatrix))),
         // light
-        // u_ambientLight: 0.2,
+        u_ambientLight: [0.25, 0.25, 0.25],
         u_shadowMap: framebufferInfo.attachments[0],
-        u_lightPositionEye: vec3.transformMat4([], LightPosition, camera.viewMatrix)
+        u_lightPositionEye: vec3.transformMat4([], LightPosition, camera.viewMatrix),
+        u_shadowMode: currentShadowMode,
       });
       drawScene(shadowProgramInfo, [mesh]);
     }
@@ -276,7 +301,7 @@
 
     const LightPosition = [0, 6, 0];
     let APP_MODEL;
-    (function() {
+    (function () {
       OBJ.downloadModels([
         {
           obj: "./data/plane.obj",
@@ -293,13 +318,19 @@
       const controlEle = document.getElementById('control');
       controlEle.addEventListener('change', (e) => {
         const { value, id } = e.target;
-        const coordValue = parseFloat(value);
-        if (id === 'lightX') {
-          LightPosition[0] = coordValue;
-        } else if (id === 'lightZ') {
-          LightPosition[2] = coordValue;
-        } else if (id === 'lightY') {
-          LightPosition[1] = coordValue;
+        if (id === 'hardShadow') {
+          currentShadowMode = 0;
+        } else if (id === 'pcfShadow') {
+          currentShadowMode = 1;
+        } else {
+          const coordValue = parseFloat(value);
+          if (id === 'lightX') {
+            LightPosition[0] = coordValue;
+          } else if (id === 'lightZ') {
+            LightPosition[2] = coordValue;
+          } else if (id === 'lightY') {
+            LightPosition[1] = coordValue;
+          }
         }
 
         render(APP_MODEL);
@@ -307,4 +338,5 @@
     }
   </script>
 </body>
+
 </html>

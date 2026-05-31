@@ -2,60 +2,78 @@
  * Common utilities
  * @module glMatrix
  */
+
 // Configuration Constants
 var EPSILON = 0.000001;
-var ARRAY_TYPE = typeof Float32Array !== 'undefined' ? Float32Array : Array;
+var ARRAY_TYPE = typeof Float32Array !== "undefined" ? Float32Array : Array;
 var RANDOM = Math.random;
+var ANGLE_ORDER = "zyx";
+
+/**
+ * Symmetric round
+ * see https://www.npmjs.com/package/round-half-up-symmetric#user-content-detailed-background
+ *
+ * @param {Number} a value to round
+ */
+function round$3(a) {
+  if (a >= 0) return Math.round(a);
+  return a % 0.5 === 0 ? Math.floor(a) : Math.round(a);
+}
+
 /**
  * Sets the type of array used when creating new vectors and matrices
  *
  * @param {Float32ArrayConstructor | ArrayConstructor} type Array type, such as Float32Array or Array
  */
-
 function setMatrixArrayType(type) {
   ARRAY_TYPE = type;
 }
 var degree = Math.PI / 180;
+var radian = 180 / Math.PI;
+
 /**
  * Convert Degree To Radian
  *
  * @param {Number} a Angle in Degrees
  */
-
 function toRadian(a) {
   return a * degree;
 }
+
+/**
+ * Convert Radian To Degree
+ *
+ * @param {Number} a Angle in Radians
+ */
+function toDegree(a) {
+  return a * radian;
+}
+
 /**
  * Tests whether or not the arguments have approximately the same value, within an absolute
  * or relative tolerance of glMatrix.EPSILON (an absolute tolerance is used for values less
  * than or equal to 1.0, and a relative tolerance is used for larger values)
  *
- * @param {Number} a The first number to test.
- * @param {Number} b The second number to test.
+ * @param {Number} a          The first number to test.
+ * @param {Number} b          The second number to test.
+ * @param {Number} tolerance  Absolute or relative tolerance (default glMatrix.EPSILON)
  * @returns {Boolean} True if the numbers are approximately equal, false otherwise.
  */
-
 function equals$9(a, b) {
-  return Math.abs(a - b) <= EPSILON * Math.max(1.0, Math.abs(a), Math.abs(b));
+  var tolerance = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : EPSILON;
+  return Math.abs(a - b) <= tolerance * Math.max(1, Math.abs(a), Math.abs(b));
 }
-if (!Math.hypot) Math.hypot = function () {
-  var y = 0,
-      i = arguments.length;
-
-  while (i--) {
-    y += arguments[i] * arguments[i];
-  }
-
-  return Math.sqrt(y);
-};
 
 var common = /*#__PURE__*/Object.freeze({
   __proto__: null,
   EPSILON: EPSILON,
   get ARRAY_TYPE () { return ARRAY_TYPE; },
   RANDOM: RANDOM,
+  ANGLE_ORDER: ANGLE_ORDER,
+  round: round$3,
   setMatrixArrayType: setMatrixArrayType,
   toRadian: toRadian,
+  toDegree: toDegree,
   equals: equals$9
 });
 
@@ -69,26 +87,23 @@ var common = /*#__PURE__*/Object.freeze({
  *
  * @returns {mat2} a new 2x2 matrix
  */
-
-function create$9() {
+function create$a() {
   var out = new ARRAY_TYPE(4);
-
   if (ARRAY_TYPE != Float32Array) {
     out[1] = 0;
     out[2] = 0;
   }
-
   out[0] = 1;
   out[3] = 1;
   return out;
 }
+
 /**
  * Creates a new mat2 initialized with values from an existing matrix
  *
  * @param {ReadonlyMat2} a matrix to clone
  * @returns {mat2} a new 2x2 matrix
  */
-
 function clone$8(a) {
   var out = new ARRAY_TYPE(4);
   out[0] = a[0];
@@ -97,6 +112,7 @@ function clone$8(a) {
   out[3] = a[3];
   return out;
 }
+
 /**
  * Copy the values from one mat2 to another
  *
@@ -104,7 +120,6 @@ function clone$8(a) {
  * @param {ReadonlyMat2} a the source matrix
  * @returns {mat2} out
  */
-
 function copy$a(out, a) {
   out[0] = a[0];
   out[1] = a[1];
@@ -112,13 +127,13 @@ function copy$a(out, a) {
   out[3] = a[3];
   return out;
 }
+
 /**
  * Set a mat2 to the identity matrix
  *
  * @param {mat2} out the receiving matrix
  * @returns {mat2} out
  */
-
 function identity$6(out) {
   out[0] = 1;
   out[1] = 0;
@@ -126,6 +141,7 @@ function identity$6(out) {
   out[3] = 1;
   return out;
 }
+
 /**
  * Create a new mat2 with the given values
  *
@@ -135,7 +151,6 @@ function identity$6(out) {
  * @param {Number} m11 Component in column 1, row 1 position (index 3)
  * @returns {mat2} out A new 2x2 matrix
  */
-
 function fromValues$8(m00, m01, m10, m11) {
   var out = new ARRAY_TYPE(4);
   out[0] = m00;
@@ -144,6 +159,7 @@ function fromValues$8(m00, m01, m10, m11) {
   out[3] = m11;
   return out;
 }
+
 /**
  * Set the components of a mat2 to the given values
  *
@@ -154,7 +170,6 @@ function fromValues$8(m00, m01, m10, m11) {
  * @param {Number} m11 Component in column 1, row 1 position (index 3)
  * @returns {mat2} out
  */
-
 function set$8(out, m00, m01, m10, m11) {
   out[0] = m00;
   out[1] = m01;
@@ -162,6 +177,7 @@ function set$8(out, m00, m01, m10, m11) {
   out[3] = m11;
   return out;
 }
+
 /**
  * Transpose the values of a mat2
  *
@@ -169,7 +185,6 @@ function set$8(out, m00, m01, m10, m11) {
  * @param {ReadonlyMat2} a the source matrix
  * @returns {mat2} out
  */
-
 function transpose$3(out, a) {
   // If we are transposing ourselves we can skip a few steps but have to cache
   // some values
@@ -183,29 +198,27 @@ function transpose$3(out, a) {
     out[2] = a[1];
     out[3] = a[3];
   }
-
   return out;
 }
+
 /**
  * Inverts a mat2
  *
  * @param {mat2} out the receiving matrix
  * @param {ReadonlyMat2} a the source matrix
- * @returns {mat2} out
+ * @returns {mat2 | null} out, or null if source matrix is not invertible
  */
-
 function invert$5(out, a) {
   var a0 = a[0],
-      a1 = a[1],
-      a2 = a[2],
-      a3 = a[3]; // Calculate the determinant
+    a1 = a[1],
+    a2 = a[2],
+    a3 = a[3];
 
+  // Calculate the determinant
   var det = a0 * a3 - a2 * a1;
-
   if (!det) {
     return null;
   }
-
   det = 1.0 / det;
   out[0] = a3 * det;
   out[1] = -a1 * det;
@@ -213,6 +226,7 @@ function invert$5(out, a) {
   out[3] = a0 * det;
   return out;
 }
+
 /**
  * Calculates the adjugate of a mat2
  *
@@ -220,9 +234,8 @@ function invert$5(out, a) {
  * @param {ReadonlyMat2} a the source matrix
  * @returns {mat2} out
  */
-
 function adjoint$2(out, a) {
-  // Caching this value is nessecary if out == a
+  // Caching this value is necessary if out == a
   var a0 = a[0];
   out[0] = a[3];
   out[1] = -a[1];
@@ -230,16 +243,17 @@ function adjoint$2(out, a) {
   out[3] = a0;
   return out;
 }
+
 /**
  * Calculates the determinant of a mat2
  *
  * @param {ReadonlyMat2} a the source matrix
  * @returns {Number} determinant of a
  */
-
 function determinant$3(a) {
   return a[0] * a[3] - a[2] * a[1];
 }
+
 /**
  * Multiplies two mat2's
  *
@@ -248,22 +262,22 @@ function determinant$3(a) {
  * @param {ReadonlyMat2} b the second operand
  * @returns {mat2} out
  */
-
 function multiply$a(out, a, b) {
   var a0 = a[0],
-      a1 = a[1],
-      a2 = a[2],
-      a3 = a[3];
+    a1 = a[1],
+    a2 = a[2],
+    a3 = a[3];
   var b0 = b[0],
-      b1 = b[1],
-      b2 = b[2],
-      b3 = b[3];
+    b1 = b[1],
+    b2 = b[2],
+    b3 = b[3];
   out[0] = a0 * b0 + a2 * b1;
   out[1] = a1 * b0 + a3 * b1;
   out[2] = a0 * b2 + a2 * b3;
   out[3] = a1 * b2 + a3 * b3;
   return out;
 }
+
 /**
  * Rotates a mat2 by the given angle
  *
@@ -272,12 +286,11 @@ function multiply$a(out, a, b) {
  * @param {Number} rad the angle to rotate the matrix by
  * @returns {mat2} out
  */
-
 function rotate$4(out, a, rad) {
   var a0 = a[0],
-      a1 = a[1],
-      a2 = a[2],
-      a3 = a[3];
+    a1 = a[1],
+    a2 = a[2],
+    a3 = a[3];
   var s = Math.sin(rad);
   var c = Math.cos(rad);
   out[0] = a0 * c + a2 * s;
@@ -286,6 +299,7 @@ function rotate$4(out, a, rad) {
   out[3] = a1 * -s + a3 * c;
   return out;
 }
+
 /**
  * Scales the mat2 by the dimensions in the given vec2
  *
@@ -294,20 +308,20 @@ function rotate$4(out, a, rad) {
  * @param {ReadonlyVec2} v the vec2 to scale the matrix by
  * @returns {mat2} out
  **/
-
 function scale$9(out, a, v) {
   var a0 = a[0],
-      a1 = a[1],
-      a2 = a[2],
-      a3 = a[3];
+    a1 = a[1],
+    a2 = a[2],
+    a3 = a[3];
   var v0 = v[0],
-      v1 = v[1];
+    v1 = v[1];
   out[0] = a0 * v0;
   out[1] = a1 * v0;
   out[2] = a2 * v1;
   out[3] = a3 * v1;
   return out;
 }
+
 /**
  * Creates a matrix from a given angle
  * This is equivalent to (but much faster than):
@@ -319,7 +333,6 @@ function scale$9(out, a, v) {
  * @param {Number} rad the angle to rotate the matrix by
  * @returns {mat2} out
  */
-
 function fromRotation$4(out, rad) {
   var s = Math.sin(rad);
   var c = Math.cos(rad);
@@ -329,6 +342,7 @@ function fromRotation$4(out, rad) {
   out[3] = c;
   return out;
 }
+
 /**
  * Creates a matrix from a vector scaling
  * This is equivalent to (but much faster than):
@@ -340,7 +354,6 @@ function fromRotation$4(out, rad) {
  * @param {ReadonlyVec2} v Scaling vector
  * @returns {mat2} out
  */
-
 function fromScaling$3(out, v) {
   out[0] = v[0];
   out[1] = 0;
@@ -348,26 +361,27 @@ function fromScaling$3(out, v) {
   out[3] = v[1];
   return out;
 }
+
 /**
  * Returns a string representation of a mat2
  *
  * @param {ReadonlyMat2} a matrix to represent as a string
  * @returns {String} string representation of the matrix
  */
-
 function str$8(a) {
   return "mat2(" + a[0] + ", " + a[1] + ", " + a[2] + ", " + a[3] + ")";
 }
+
 /**
  * Returns Frobenius norm of a mat2
  *
  * @param {ReadonlyMat2} a the matrix to calculate Frobenius norm of
  * @returns {Number} Frobenius norm
  */
-
 function frob$3(a) {
-  return Math.hypot(a[0], a[1], a[2], a[3]);
+  return Math.sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2] + a[3] * a[3]);
 }
+
 /**
  * Returns L, D and U matrices (Lower triangular, Diagonal and Upper triangular) by factorizing the input matrix
  * @param {ReadonlyMat2} L the lower triangular matrix
@@ -383,6 +397,7 @@ function LDU(L, D, U, a) {
   U[3] = a[3] - L[2] * U[1];
   return [L, D, U];
 }
+
 /**
  * Adds two mat2's
  *
@@ -391,7 +406,6 @@ function LDU(L, D, U, a) {
  * @param {ReadonlyMat2} b the second operand
  * @returns {mat2} out
  */
-
 function add$9(out, a, b) {
   out[0] = a[0] + b[0];
   out[1] = a[1] + b[1];
@@ -399,6 +413,7 @@ function add$9(out, a, b) {
   out[3] = a[3] + b[3];
   return out;
 }
+
 /**
  * Subtracts matrix b from matrix a
  *
@@ -407,7 +422,6 @@ function add$9(out, a, b) {
  * @param {ReadonlyMat2} b the second operand
  * @returns {mat2} out
  */
-
 function subtract$7(out, a, b) {
   out[0] = a[0] - b[0];
   out[1] = a[1] - b[1];
@@ -415,6 +429,7 @@ function subtract$7(out, a, b) {
   out[3] = a[3] - b[3];
   return out;
 }
+
 /**
  * Returns whether or not the matrices have exactly the same elements in the same position (when compared with ===)
  *
@@ -422,10 +437,10 @@ function subtract$7(out, a, b) {
  * @param {ReadonlyMat2} b The second matrix.
  * @returns {Boolean} True if the matrices are equal, false otherwise.
  */
-
 function exactEquals$8(a, b) {
   return a[0] === b[0] && a[1] === b[1] && a[2] === b[2] && a[3] === b[3];
 }
+
 /**
  * Returns whether or not the matrices have approximately the same elements in the same position.
  *
@@ -433,18 +448,18 @@ function exactEquals$8(a, b) {
  * @param {ReadonlyMat2} b The second matrix.
  * @returns {Boolean} True if the matrices are equal, false otherwise.
  */
-
 function equals$8(a, b) {
   var a0 = a[0],
-      a1 = a[1],
-      a2 = a[2],
-      a3 = a[3];
+    a1 = a[1],
+    a2 = a[2],
+    a3 = a[3];
   var b0 = b[0],
-      b1 = b[1],
-      b2 = b[2],
-      b3 = b[3];
+    b1 = b[1],
+    b2 = b[2],
+    b3 = b[3];
   return Math.abs(a0 - b0) <= EPSILON * Math.max(1.0, Math.abs(a0), Math.abs(b0)) && Math.abs(a1 - b1) <= EPSILON * Math.max(1.0, Math.abs(a1), Math.abs(b1)) && Math.abs(a2 - b2) <= EPSILON * Math.max(1.0, Math.abs(a2), Math.abs(b2)) && Math.abs(a3 - b3) <= EPSILON * Math.max(1.0, Math.abs(a3), Math.abs(b3));
 }
+
 /**
  * Multiply each element of the matrix by a scalar.
  *
@@ -453,7 +468,6 @@ function equals$8(a, b) {
  * @param {Number} b amount to scale the matrix's elements by
  * @returns {mat2} out
  */
-
 function multiplyScalar$3(out, a, b) {
   out[0] = a[0] * b;
   out[1] = a[1] * b;
@@ -461,6 +475,7 @@ function multiplyScalar$3(out, a, b) {
   out[3] = a[3] * b;
   return out;
 }
+
 /**
  * Adds two mat2's after multiplying each element of the second operand by a scalar value.
  *
@@ -470,7 +485,6 @@ function multiplyScalar$3(out, a, b) {
  * @param {Number} scale the amount to scale b's elements by before adding
  * @returns {mat2} out
  */
-
 function multiplyScalarAndAdd$3(out, a, b, scale) {
   out[0] = a[0] + b[0] * scale;
   out[1] = a[1] + b[1] * scale;
@@ -478,22 +492,22 @@ function multiplyScalarAndAdd$3(out, a, b, scale) {
   out[3] = a[3] + b[3] * scale;
   return out;
 }
+
 /**
  * Alias for {@link mat2.multiply}
  * @function
  */
-
 var mul$8 = multiply$a;
+
 /**
  * Alias for {@link mat2.subtract}
  * @function
  */
-
 var sub$6 = subtract$7;
 
 var mat2 = /*#__PURE__*/Object.freeze({
   __proto__: null,
-  create: create$9,
+  create: create$a,
   clone: clone$8,
   copy: copy$a,
   identity: identity$6,
@@ -545,28 +559,25 @@ var mat2 = /*#__PURE__*/Object.freeze({
  *
  * @returns {mat2d} a new 2x3 matrix
  */
-
-function create$8() {
+function create$9() {
   var out = new ARRAY_TYPE(6);
-
   if (ARRAY_TYPE != Float32Array) {
     out[1] = 0;
     out[2] = 0;
     out[4] = 0;
     out[5] = 0;
   }
-
   out[0] = 1;
   out[3] = 1;
   return out;
 }
+
 /**
  * Creates a new mat2d initialized with values from an existing matrix
  *
  * @param {ReadonlyMat2d} a matrix to clone
  * @returns {mat2d} a new 2x3 matrix
  */
-
 function clone$7(a) {
   var out = new ARRAY_TYPE(6);
   out[0] = a[0];
@@ -577,6 +588,7 @@ function clone$7(a) {
   out[5] = a[5];
   return out;
 }
+
 /**
  * Copy the values from one mat2d to another
  *
@@ -584,7 +596,6 @@ function clone$7(a) {
  * @param {ReadonlyMat2d} a the source matrix
  * @returns {mat2d} out
  */
-
 function copy$9(out, a) {
   out[0] = a[0];
   out[1] = a[1];
@@ -594,13 +605,13 @@ function copy$9(out, a) {
   out[5] = a[5];
   return out;
 }
+
 /**
  * Set a mat2d to the identity matrix
  *
  * @param {mat2d} out the receiving matrix
  * @returns {mat2d} out
  */
-
 function identity$5(out) {
   out[0] = 1;
   out[1] = 0;
@@ -610,6 +621,7 @@ function identity$5(out) {
   out[5] = 0;
   return out;
 }
+
 /**
  * Create a new mat2d with the given values
  *
@@ -621,7 +633,6 @@ function identity$5(out) {
  * @param {Number} ty Component TY (index 5)
  * @returns {mat2d} A new mat2d
  */
-
 function fromValues$7(a, b, c, d, tx, ty) {
   var out = new ARRAY_TYPE(6);
   out[0] = a;
@@ -632,6 +643,7 @@ function fromValues$7(a, b, c, d, tx, ty) {
   out[5] = ty;
   return out;
 }
+
 /**
  * Set the components of a mat2d to the given values
  *
@@ -644,7 +656,6 @@ function fromValues$7(a, b, c, d, tx, ty) {
  * @param {Number} ty Component TY (index 5)
  * @returns {mat2d} out
  */
-
 function set$7(out, a, b, c, d, tx, ty) {
   out[0] = a;
   out[1] = b;
@@ -654,27 +665,25 @@ function set$7(out, a, b, c, d, tx, ty) {
   out[5] = ty;
   return out;
 }
+
 /**
  * Inverts a mat2d
  *
  * @param {mat2d} out the receiving matrix
  * @param {ReadonlyMat2d} a the source matrix
- * @returns {mat2d} out
+ * @returns {mat2d | null} out, or null if source matrix is not invertible
  */
-
 function invert$4(out, a) {
   var aa = a[0],
-      ab = a[1],
-      ac = a[2],
-      ad = a[3];
+    ab = a[1],
+    ac = a[2],
+    ad = a[3];
   var atx = a[4],
-      aty = a[5];
+    aty = a[5];
   var det = aa * ad - ab * ac;
-
   if (!det) {
     return null;
   }
-
   det = 1.0 / det;
   out[0] = ad * det;
   out[1] = -ab * det;
@@ -684,16 +693,17 @@ function invert$4(out, a) {
   out[5] = (ab * atx - aa * aty) * det;
   return out;
 }
+
 /**
  * Calculates the determinant of a mat2d
  *
  * @param {ReadonlyMat2d} a the source matrix
  * @returns {Number} determinant of a
  */
-
 function determinant$2(a) {
   return a[0] * a[3] - a[1] * a[2];
 }
+
 /**
  * Multiplies two mat2d's
  *
@@ -702,20 +712,19 @@ function determinant$2(a) {
  * @param {ReadonlyMat2d} b the second operand
  * @returns {mat2d} out
  */
-
 function multiply$9(out, a, b) {
   var a0 = a[0],
-      a1 = a[1],
-      a2 = a[2],
-      a3 = a[3],
-      a4 = a[4],
-      a5 = a[5];
+    a1 = a[1],
+    a2 = a[2],
+    a3 = a[3],
+    a4 = a[4],
+    a5 = a[5];
   var b0 = b[0],
-      b1 = b[1],
-      b2 = b[2],
-      b3 = b[3],
-      b4 = b[4],
-      b5 = b[5];
+    b1 = b[1],
+    b2 = b[2],
+    b3 = b[3],
+    b4 = b[4],
+    b5 = b[5];
   out[0] = a0 * b0 + a2 * b1;
   out[1] = a1 * b0 + a3 * b1;
   out[2] = a0 * b2 + a2 * b3;
@@ -724,6 +733,7 @@ function multiply$9(out, a, b) {
   out[5] = a1 * b4 + a3 * b5 + a5;
   return out;
 }
+
 /**
  * Rotates a mat2d by the given angle
  *
@@ -732,14 +742,13 @@ function multiply$9(out, a, b) {
  * @param {Number} rad the angle to rotate the matrix by
  * @returns {mat2d} out
  */
-
 function rotate$3(out, a, rad) {
   var a0 = a[0],
-      a1 = a[1],
-      a2 = a[2],
-      a3 = a[3],
-      a4 = a[4],
-      a5 = a[5];
+    a1 = a[1],
+    a2 = a[2],
+    a3 = a[3],
+    a4 = a[4],
+    a5 = a[5];
   var s = Math.sin(rad);
   var c = Math.cos(rad);
   out[0] = a0 * c + a2 * s;
@@ -750,6 +759,7 @@ function rotate$3(out, a, rad) {
   out[5] = a5;
   return out;
 }
+
 /**
  * Scales the mat2d by the dimensions in the given vec2
  *
@@ -758,16 +768,15 @@ function rotate$3(out, a, rad) {
  * @param {ReadonlyVec2} v the vec2 to scale the matrix by
  * @returns {mat2d} out
  **/
-
 function scale$8(out, a, v) {
   var a0 = a[0],
-      a1 = a[1],
-      a2 = a[2],
-      a3 = a[3],
-      a4 = a[4],
-      a5 = a[5];
+    a1 = a[1],
+    a2 = a[2],
+    a3 = a[3],
+    a4 = a[4],
+    a5 = a[5];
   var v0 = v[0],
-      v1 = v[1];
+    v1 = v[1];
   out[0] = a0 * v0;
   out[1] = a1 * v0;
   out[2] = a2 * v1;
@@ -776,6 +785,7 @@ function scale$8(out, a, v) {
   out[5] = a5;
   return out;
 }
+
 /**
  * Translates the mat2d by the dimensions in the given vec2
  *
@@ -784,16 +794,15 @@ function scale$8(out, a, v) {
  * @param {ReadonlyVec2} v the vec2 to translate the matrix by
  * @returns {mat2d} out
  **/
-
 function translate$4(out, a, v) {
   var a0 = a[0],
-      a1 = a[1],
-      a2 = a[2],
-      a3 = a[3],
-      a4 = a[4],
-      a5 = a[5];
+    a1 = a[1],
+    a2 = a[2],
+    a3 = a[3],
+    a4 = a[4],
+    a5 = a[5];
   var v0 = v[0],
-      v1 = v[1];
+    v1 = v[1];
   out[0] = a0;
   out[1] = a1;
   out[2] = a2;
@@ -802,6 +811,7 @@ function translate$4(out, a, v) {
   out[5] = a1 * v0 + a3 * v1 + a5;
   return out;
 }
+
 /**
  * Creates a matrix from a given angle
  * This is equivalent to (but much faster than):
@@ -813,10 +823,9 @@ function translate$4(out, a, v) {
  * @param {Number} rad the angle to rotate the matrix by
  * @returns {mat2d} out
  */
-
 function fromRotation$3(out, rad) {
   var s = Math.sin(rad),
-      c = Math.cos(rad);
+    c = Math.cos(rad);
   out[0] = c;
   out[1] = s;
   out[2] = -s;
@@ -825,6 +834,7 @@ function fromRotation$3(out, rad) {
   out[5] = 0;
   return out;
 }
+
 /**
  * Creates a matrix from a vector scaling
  * This is equivalent to (but much faster than):
@@ -836,7 +846,6 @@ function fromRotation$3(out, rad) {
  * @param {ReadonlyVec2} v Scaling vector
  * @returns {mat2d} out
  */
-
 function fromScaling$2(out, v) {
   out[0] = v[0];
   out[1] = 0;
@@ -846,6 +855,7 @@ function fromScaling$2(out, v) {
   out[5] = 0;
   return out;
 }
+
 /**
  * Creates a matrix from a vector translation
  * This is equivalent to (but much faster than):
@@ -857,7 +867,6 @@ function fromScaling$2(out, v) {
  * @param {ReadonlyVec2} v Translation vector
  * @returns {mat2d} out
  */
-
 function fromTranslation$3(out, v) {
   out[0] = 1;
   out[1] = 0;
@@ -867,26 +876,27 @@ function fromTranslation$3(out, v) {
   out[5] = v[1];
   return out;
 }
+
 /**
  * Returns a string representation of a mat2d
  *
  * @param {ReadonlyMat2d} a matrix to represent as a string
  * @returns {String} string representation of the matrix
  */
-
 function str$7(a) {
   return "mat2d(" + a[0] + ", " + a[1] + ", " + a[2] + ", " + a[3] + ", " + a[4] + ", " + a[5] + ")";
 }
+
 /**
  * Returns Frobenius norm of a mat2d
  *
  * @param {ReadonlyMat2d} a the matrix to calculate Frobenius norm of
  * @returns {Number} Frobenius norm
  */
-
 function frob$2(a) {
-  return Math.hypot(a[0], a[1], a[2], a[3], a[4], a[5], 1);
+  return Math.sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2] + a[3] * a[3] + a[4] * a[4] + a[5] * a[5] + 1);
 }
+
 /**
  * Adds two mat2d's
  *
@@ -895,7 +905,6 @@ function frob$2(a) {
  * @param {ReadonlyMat2d} b the second operand
  * @returns {mat2d} out
  */
-
 function add$8(out, a, b) {
   out[0] = a[0] + b[0];
   out[1] = a[1] + b[1];
@@ -905,6 +914,7 @@ function add$8(out, a, b) {
   out[5] = a[5] + b[5];
   return out;
 }
+
 /**
  * Subtracts matrix b from matrix a
  *
@@ -913,7 +923,6 @@ function add$8(out, a, b) {
  * @param {ReadonlyMat2d} b the second operand
  * @returns {mat2d} out
  */
-
 function subtract$6(out, a, b) {
   out[0] = a[0] - b[0];
   out[1] = a[1] - b[1];
@@ -923,6 +932,7 @@ function subtract$6(out, a, b) {
   out[5] = a[5] - b[5];
   return out;
 }
+
 /**
  * Multiply each element of the matrix by a scalar.
  *
@@ -931,7 +941,6 @@ function subtract$6(out, a, b) {
  * @param {Number} b amount to scale the matrix's elements by
  * @returns {mat2d} out
  */
-
 function multiplyScalar$2(out, a, b) {
   out[0] = a[0] * b;
   out[1] = a[1] * b;
@@ -941,6 +950,7 @@ function multiplyScalar$2(out, a, b) {
   out[5] = a[5] * b;
   return out;
 }
+
 /**
  * Adds two mat2d's after multiplying each element of the second operand by a scalar value.
  *
@@ -950,7 +960,6 @@ function multiplyScalar$2(out, a, b) {
  * @param {Number} scale the amount to scale b's elements by before adding
  * @returns {mat2d} out
  */
-
 function multiplyScalarAndAdd$2(out, a, b, scale) {
   out[0] = a[0] + b[0] * scale;
   out[1] = a[1] + b[1] * scale;
@@ -960,6 +969,7 @@ function multiplyScalarAndAdd$2(out, a, b, scale) {
   out[5] = a[5] + b[5] * scale;
   return out;
 }
+
 /**
  * Returns whether or not the matrices have exactly the same elements in the same position (when compared with ===)
  *
@@ -967,10 +977,10 @@ function multiplyScalarAndAdd$2(out, a, b, scale) {
  * @param {ReadonlyMat2d} b The second matrix.
  * @returns {Boolean} True if the matrices are equal, false otherwise.
  */
-
 function exactEquals$7(a, b) {
   return a[0] === b[0] && a[1] === b[1] && a[2] === b[2] && a[3] === b[3] && a[4] === b[4] && a[5] === b[5];
 }
+
 /**
  * Returns whether or not the matrices have approximately the same elements in the same position.
  *
@@ -978,38 +988,37 @@ function exactEquals$7(a, b) {
  * @param {ReadonlyMat2d} b The second matrix.
  * @returns {Boolean} True if the matrices are equal, false otherwise.
  */
-
 function equals$7(a, b) {
   var a0 = a[0],
-      a1 = a[1],
-      a2 = a[2],
-      a3 = a[3],
-      a4 = a[4],
-      a5 = a[5];
+    a1 = a[1],
+    a2 = a[2],
+    a3 = a[3],
+    a4 = a[4],
+    a5 = a[5];
   var b0 = b[0],
-      b1 = b[1],
-      b2 = b[2],
-      b3 = b[3],
-      b4 = b[4],
-      b5 = b[5];
+    b1 = b[1],
+    b2 = b[2],
+    b3 = b[3],
+    b4 = b[4],
+    b5 = b[5];
   return Math.abs(a0 - b0) <= EPSILON * Math.max(1.0, Math.abs(a0), Math.abs(b0)) && Math.abs(a1 - b1) <= EPSILON * Math.max(1.0, Math.abs(a1), Math.abs(b1)) && Math.abs(a2 - b2) <= EPSILON * Math.max(1.0, Math.abs(a2), Math.abs(b2)) && Math.abs(a3 - b3) <= EPSILON * Math.max(1.0, Math.abs(a3), Math.abs(b3)) && Math.abs(a4 - b4) <= EPSILON * Math.max(1.0, Math.abs(a4), Math.abs(b4)) && Math.abs(a5 - b5) <= EPSILON * Math.max(1.0, Math.abs(a5), Math.abs(b5));
 }
+
 /**
  * Alias for {@link mat2d.multiply}
  * @function
  */
-
 var mul$7 = multiply$9;
+
 /**
  * Alias for {@link mat2d.subtract}
  * @function
  */
-
 var sub$5 = subtract$6;
 
 var mat2d = /*#__PURE__*/Object.freeze({
   __proto__: null,
-  create: create$8,
+  create: create$9,
   clone: clone$7,
   copy: copy$9,
   identity: identity$5,
@@ -1046,10 +1055,8 @@ var mat2d = /*#__PURE__*/Object.freeze({
  *
  * @returns {mat3} a new 3x3 matrix
  */
-
-function create$7() {
+function create$8() {
   var out = new ARRAY_TYPE(9);
-
   if (ARRAY_TYPE != Float32Array) {
     out[1] = 0;
     out[2] = 0;
@@ -1058,12 +1065,12 @@ function create$7() {
     out[6] = 0;
     out[7] = 0;
   }
-
   out[0] = 1;
   out[4] = 1;
   out[8] = 1;
   return out;
 }
+
 /**
  * Copies the upper-left 3x3 values into the given mat3.
  *
@@ -1071,7 +1078,6 @@ function create$7() {
  * @param {ReadonlyMat4} a   the source 4x4 matrix
  * @returns {mat3} out
  */
-
 function fromMat4$1(out, a) {
   out[0] = a[0];
   out[1] = a[1];
@@ -1084,13 +1090,13 @@ function fromMat4$1(out, a) {
   out[8] = a[10];
   return out;
 }
+
 /**
  * Creates a new mat3 initialized with values from an existing matrix
  *
  * @param {ReadonlyMat3} a matrix to clone
  * @returns {mat3} a new 3x3 matrix
  */
-
 function clone$6(a) {
   var out = new ARRAY_TYPE(9);
   out[0] = a[0];
@@ -1104,6 +1110,7 @@ function clone$6(a) {
   out[8] = a[8];
   return out;
 }
+
 /**
  * Copy the values from one mat3 to another
  *
@@ -1111,7 +1118,6 @@ function clone$6(a) {
  * @param {ReadonlyMat3} a the source matrix
  * @returns {mat3} out
  */
-
 function copy$8(out, a) {
   out[0] = a[0];
   out[1] = a[1];
@@ -1124,6 +1130,7 @@ function copy$8(out, a) {
   out[8] = a[8];
   return out;
 }
+
 /**
  * Create a new mat3 with the given values
  *
@@ -1138,7 +1145,6 @@ function copy$8(out, a) {
  * @param {Number} m22 Component in column 2, row 2 position (index 8)
  * @returns {mat3} A new mat3
  */
-
 function fromValues$6(m00, m01, m02, m10, m11, m12, m20, m21, m22) {
   var out = new ARRAY_TYPE(9);
   out[0] = m00;
@@ -1152,6 +1158,7 @@ function fromValues$6(m00, m01, m02, m10, m11, m12, m20, m21, m22) {
   out[8] = m22;
   return out;
 }
+
 /**
  * Set the components of a mat3 to the given values
  *
@@ -1167,7 +1174,6 @@ function fromValues$6(m00, m01, m02, m10, m11, m12, m20, m21, m22) {
  * @param {Number} m22 Component in column 2, row 2 position (index 8)
  * @returns {mat3} out
  */
-
 function set$6(out, m00, m01, m02, m10, m11, m12, m20, m21, m22) {
   out[0] = m00;
   out[1] = m01;
@@ -1180,13 +1186,13 @@ function set$6(out, m00, m01, m02, m10, m11, m12, m20, m21, m22) {
   out[8] = m22;
   return out;
 }
+
 /**
  * Set a mat3 to the identity matrix
  *
  * @param {mat3} out the receiving matrix
  * @returns {mat3} out
  */
-
 function identity$4(out) {
   out[0] = 1;
   out[1] = 0;
@@ -1199,6 +1205,7 @@ function identity$4(out) {
   out[8] = 1;
   return out;
 }
+
 /**
  * Transpose the values of a mat3
  *
@@ -1206,13 +1213,12 @@ function identity$4(out) {
  * @param {ReadonlyMat3} a the source matrix
  * @returns {mat3} out
  */
-
 function transpose$2(out, a) {
   // If we are transposing ourselves we can skip a few steps but have to cache some values
   if (out === a) {
     var a01 = a[1],
-        a02 = a[2],
-        a12 = a[5];
+      a02 = a[2],
+      a12 = a[5];
     out[1] = a[3];
     out[2] = a[6];
     out[3] = a01;
@@ -1230,37 +1236,35 @@ function transpose$2(out, a) {
     out[7] = a[5];
     out[8] = a[8];
   }
-
   return out;
 }
+
 /**
  * Inverts a mat3
  *
  * @param {mat3} out the receiving matrix
  * @param {ReadonlyMat3} a the source matrix
- * @returns {mat3} out
+ * @returns {mat3 | null} out, or null if source matrix is not invertible
  */
-
 function invert$3(out, a) {
   var a00 = a[0],
-      a01 = a[1],
-      a02 = a[2];
+    a01 = a[1],
+    a02 = a[2];
   var a10 = a[3],
-      a11 = a[4],
-      a12 = a[5];
+    a11 = a[4],
+    a12 = a[5];
   var a20 = a[6],
-      a21 = a[7],
-      a22 = a[8];
+    a21 = a[7],
+    a22 = a[8];
   var b01 = a22 * a11 - a12 * a21;
   var b11 = -a22 * a10 + a12 * a20;
-  var b21 = a21 * a10 - a11 * a20; // Calculate the determinant
+  var b21 = a21 * a10 - a11 * a20;
 
+  // Calculate the determinant
   var det = a00 * b01 + a01 * b11 + a02 * b21;
-
   if (!det) {
     return null;
   }
-
   det = 1.0 / det;
   out[0] = b01 * det;
   out[1] = (-a22 * a01 + a02 * a21) * det;
@@ -1273,6 +1277,7 @@ function invert$3(out, a) {
   out[8] = (a11 * a00 - a01 * a10) * det;
   return out;
 }
+
 /**
  * Calculates the adjugate of a mat3
  *
@@ -1280,17 +1285,16 @@ function invert$3(out, a) {
  * @param {ReadonlyMat3} a the source matrix
  * @returns {mat3} out
  */
-
 function adjoint$1(out, a) {
   var a00 = a[0],
-      a01 = a[1],
-      a02 = a[2];
+    a01 = a[1],
+    a02 = a[2];
   var a10 = a[3],
-      a11 = a[4],
-      a12 = a[5];
+    a11 = a[4],
+    a12 = a[5];
   var a20 = a[6],
-      a21 = a[7],
-      a22 = a[8];
+    a21 = a[7],
+    a22 = a[8];
   out[0] = a11 * a22 - a12 * a21;
   out[1] = a02 * a21 - a01 * a22;
   out[2] = a01 * a12 - a02 * a11;
@@ -1302,25 +1306,26 @@ function adjoint$1(out, a) {
   out[8] = a00 * a11 - a01 * a10;
   return out;
 }
+
 /**
  * Calculates the determinant of a mat3
  *
  * @param {ReadonlyMat3} a the source matrix
  * @returns {Number} determinant of a
  */
-
 function determinant$1(a) {
   var a00 = a[0],
-      a01 = a[1],
-      a02 = a[2];
+    a01 = a[1],
+    a02 = a[2];
   var a10 = a[3],
-      a11 = a[4],
-      a12 = a[5];
+    a11 = a[4],
+    a12 = a[5];
   var a20 = a[6],
-      a21 = a[7],
-      a22 = a[8];
+    a21 = a[7],
+    a22 = a[8];
   return a00 * (a22 * a11 - a12 * a21) + a01 * (-a22 * a10 + a12 * a20) + a02 * (a21 * a10 - a11 * a20);
 }
+
 /**
  * Multiplies two mat3's
  *
@@ -1329,26 +1334,25 @@ function determinant$1(a) {
  * @param {ReadonlyMat3} b the second operand
  * @returns {mat3} out
  */
-
 function multiply$8(out, a, b) {
   var a00 = a[0],
-      a01 = a[1],
-      a02 = a[2];
+    a01 = a[1],
+    a02 = a[2];
   var a10 = a[3],
-      a11 = a[4],
-      a12 = a[5];
+    a11 = a[4],
+    a12 = a[5];
   var a20 = a[6],
-      a21 = a[7],
-      a22 = a[8];
+    a21 = a[7],
+    a22 = a[8];
   var b00 = b[0],
-      b01 = b[1],
-      b02 = b[2];
+    b01 = b[1],
+    b02 = b[2];
   var b10 = b[3],
-      b11 = b[4],
-      b12 = b[5];
+    b11 = b[4],
+    b12 = b[5];
   var b20 = b[6],
-      b21 = b[7],
-      b22 = b[8];
+    b21 = b[7],
+    b22 = b[8];
   out[0] = b00 * a00 + b01 * a10 + b02 * a20;
   out[1] = b00 * a01 + b01 * a11 + b02 * a21;
   out[2] = b00 * a02 + b01 * a12 + b02 * a22;
@@ -1360,6 +1364,7 @@ function multiply$8(out, a, b) {
   out[8] = b20 * a02 + b21 * a12 + b22 * a22;
   return out;
 }
+
 /**
  * Translate a mat3 by the given vector
  *
@@ -1368,19 +1373,18 @@ function multiply$8(out, a, b) {
  * @param {ReadonlyVec2} v vector to translate by
  * @returns {mat3} out
  */
-
 function translate$3(out, a, v) {
   var a00 = a[0],
-      a01 = a[1],
-      a02 = a[2],
-      a10 = a[3],
-      a11 = a[4],
-      a12 = a[5],
-      a20 = a[6],
-      a21 = a[7],
-      a22 = a[8],
-      x = v[0],
-      y = v[1];
+    a01 = a[1],
+    a02 = a[2],
+    a10 = a[3],
+    a11 = a[4],
+    a12 = a[5],
+    a20 = a[6],
+    a21 = a[7],
+    a22 = a[8],
+    x = v[0],
+    y = v[1];
   out[0] = a00;
   out[1] = a01;
   out[2] = a02;
@@ -1392,6 +1396,7 @@ function translate$3(out, a, v) {
   out[8] = x * a02 + y * a12 + a22;
   return out;
 }
+
 /**
  * Rotates a mat3 by the given angle
  *
@@ -1400,19 +1405,18 @@ function translate$3(out, a, v) {
  * @param {Number} rad the angle to rotate the matrix by
  * @returns {mat3} out
  */
-
 function rotate$2(out, a, rad) {
   var a00 = a[0],
-      a01 = a[1],
-      a02 = a[2],
-      a10 = a[3],
-      a11 = a[4],
-      a12 = a[5],
-      a20 = a[6],
-      a21 = a[7],
-      a22 = a[8],
-      s = Math.sin(rad),
-      c = Math.cos(rad);
+    a01 = a[1],
+    a02 = a[2],
+    a10 = a[3],
+    a11 = a[4],
+    a12 = a[5],
+    a20 = a[6],
+    a21 = a[7],
+    a22 = a[8],
+    s = Math.sin(rad),
+    c = Math.cos(rad);
   out[0] = c * a00 + s * a10;
   out[1] = c * a01 + s * a11;
   out[2] = c * a02 + s * a12;
@@ -1424,18 +1428,18 @@ function rotate$2(out, a, rad) {
   out[8] = a22;
   return out;
 }
+
 /**
  * Scales the mat3 by the dimensions in the given vec2
  *
  * @param {mat3} out the receiving matrix
- * @param {ReadonlyMat3} a the matrix to rotate
+ * @param {ReadonlyMat3} a the matrix to scale
  * @param {ReadonlyVec2} v the vec2 to scale the matrix by
  * @returns {mat3} out
  **/
-
 function scale$7(out, a, v) {
   var x = v[0],
-      y = v[1];
+    y = v[1];
   out[0] = x * a[0];
   out[1] = x * a[1];
   out[2] = x * a[2];
@@ -1447,6 +1451,7 @@ function scale$7(out, a, v) {
   out[8] = a[8];
   return out;
 }
+
 /**
  * Creates a matrix from a vector translation
  * This is equivalent to (but much faster than):
@@ -1458,7 +1463,6 @@ function scale$7(out, a, v) {
  * @param {ReadonlyVec2} v Translation vector
  * @returns {mat3} out
  */
-
 function fromTranslation$2(out, v) {
   out[0] = 1;
   out[1] = 0;
@@ -1471,6 +1475,7 @@ function fromTranslation$2(out, v) {
   out[8] = 1;
   return out;
 }
+
 /**
  * Creates a matrix from a given angle
  * This is equivalent to (but much faster than):
@@ -1482,10 +1487,9 @@ function fromTranslation$2(out, v) {
  * @param {Number} rad the angle to rotate the matrix by
  * @returns {mat3} out
  */
-
 function fromRotation$2(out, rad) {
   var s = Math.sin(rad),
-      c = Math.cos(rad);
+    c = Math.cos(rad);
   out[0] = c;
   out[1] = s;
   out[2] = 0;
@@ -1497,6 +1501,7 @@ function fromRotation$2(out, rad) {
   out[8] = 1;
   return out;
 }
+
 /**
  * Creates a matrix from a vector scaling
  * This is equivalent to (but much faster than):
@@ -1508,7 +1513,6 @@ function fromRotation$2(out, rad) {
  * @param {ReadonlyVec2} v Scaling vector
  * @returns {mat3} out
  */
-
 function fromScaling$1(out, v) {
   out[0] = v[0];
   out[1] = 0;
@@ -1521,6 +1525,7 @@ function fromScaling$1(out, v) {
   out[8] = 1;
   return out;
 }
+
 /**
  * Copies the values from a mat2d into a mat3
  *
@@ -1528,7 +1533,6 @@ function fromScaling$1(out, v) {
  * @param {ReadonlyMat2d} a the matrix to copy
  * @returns {mat3} out
  **/
-
 function fromMat2d(out, a) {
   out[0] = a[0];
   out[1] = a[1];
@@ -1541,6 +1545,7 @@ function fromMat2d(out, a) {
   out[8] = 1;
   return out;
 }
+
 /**
  * Calculates a 3x3 matrix from the given quaternion
  *
@@ -1549,12 +1554,11 @@ function fromMat2d(out, a) {
  *
  * @returns {mat3} out
  */
-
 function fromQuat$1(out, q) {
   var x = q[0],
-      y = q[1],
-      z = q[2],
-      w = q[3];
+    y = q[1],
+    z = q[2],
+    w = q[3];
   var x2 = x + x;
   var y2 = y + y;
   var z2 = z + z;
@@ -1578,6 +1582,7 @@ function fromQuat$1(out, q) {
   out[8] = 1 - xx - yy;
   return out;
 }
+
 /**
  * Calculates a 3x3 normal matrix (transpose inverse) from the 4x4 matrix
  *
@@ -1586,24 +1591,23 @@ function fromQuat$1(out, q) {
  *
  * @returns {mat3} out
  */
-
 function normalFromMat4(out, a) {
   var a00 = a[0],
-      a01 = a[1],
-      a02 = a[2],
-      a03 = a[3];
+    a01 = a[1],
+    a02 = a[2],
+    a03 = a[3];
   var a10 = a[4],
-      a11 = a[5],
-      a12 = a[6],
-      a13 = a[7];
+    a11 = a[5],
+    a12 = a[6],
+    a13 = a[7];
   var a20 = a[8],
-      a21 = a[9],
-      a22 = a[10],
-      a23 = a[11];
+    a21 = a[9],
+    a22 = a[10],
+    a23 = a[11];
   var a30 = a[12],
-      a31 = a[13],
-      a32 = a[14],
-      a33 = a[15];
+    a31 = a[13],
+    a32 = a[14],
+    a33 = a[15];
   var b00 = a00 * a11 - a01 * a10;
   var b01 = a00 * a12 - a02 * a10;
   var b02 = a00 * a13 - a03 * a10;
@@ -1615,14 +1619,13 @@ function normalFromMat4(out, a) {
   var b08 = a20 * a33 - a23 * a30;
   var b09 = a21 * a32 - a22 * a31;
   var b10 = a21 * a33 - a23 * a31;
-  var b11 = a22 * a33 - a23 * a32; // Calculate the determinant
+  var b11 = a22 * a33 - a23 * a32;
 
+  // Calculate the determinant
   var det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
-
   if (!det) {
     return null;
   }
-
   det = 1.0 / det;
   out[0] = (a11 * b11 - a12 * b10 + a13 * b09) * det;
   out[1] = (a12 * b08 - a10 * b11 - a13 * b07) * det;
@@ -1635,6 +1638,7 @@ function normalFromMat4(out, a) {
   out[8] = (a30 * b04 - a31 * b02 + a33 * b00) * det;
   return out;
 }
+
 /**
  * Generates a 2D projection matrix with the given bounds
  *
@@ -1643,7 +1647,6 @@ function normalFromMat4(out, a) {
  * @param {number} height Height of gl context
  * @returns {mat3} out
  */
-
 function projection(out, width, height) {
   out[0] = 2 / width;
   out[1] = 0;
@@ -1656,26 +1659,27 @@ function projection(out, width, height) {
   out[8] = 1;
   return out;
 }
+
 /**
  * Returns a string representation of a mat3
  *
  * @param {ReadonlyMat3} a matrix to represent as a string
  * @returns {String} string representation of the matrix
  */
-
 function str$6(a) {
   return "mat3(" + a[0] + ", " + a[1] + ", " + a[2] + ", " + a[3] + ", " + a[4] + ", " + a[5] + ", " + a[6] + ", " + a[7] + ", " + a[8] + ")";
 }
+
 /**
  * Returns Frobenius norm of a mat3
  *
  * @param {ReadonlyMat3} a the matrix to calculate Frobenius norm of
  * @returns {Number} Frobenius norm
  */
-
 function frob$1(a) {
-  return Math.hypot(a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7], a[8]);
+  return Math.sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2] + a[3] * a[3] + a[4] * a[4] + a[5] * a[5] + a[6] * a[6] + a[7] * a[7] + a[8] * a[8]);
 }
+
 /**
  * Adds two mat3's
  *
@@ -1684,7 +1688,6 @@ function frob$1(a) {
  * @param {ReadonlyMat3} b the second operand
  * @returns {mat3} out
  */
-
 function add$7(out, a, b) {
   out[0] = a[0] + b[0];
   out[1] = a[1] + b[1];
@@ -1697,6 +1700,7 @@ function add$7(out, a, b) {
   out[8] = a[8] + b[8];
   return out;
 }
+
 /**
  * Subtracts matrix b from matrix a
  *
@@ -1705,7 +1709,6 @@ function add$7(out, a, b) {
  * @param {ReadonlyMat3} b the second operand
  * @returns {mat3} out
  */
-
 function subtract$5(out, a, b) {
   out[0] = a[0] - b[0];
   out[1] = a[1] - b[1];
@@ -1718,6 +1721,7 @@ function subtract$5(out, a, b) {
   out[8] = a[8] - b[8];
   return out;
 }
+
 /**
  * Multiply each element of the matrix by a scalar.
  *
@@ -1726,7 +1730,6 @@ function subtract$5(out, a, b) {
  * @param {Number} b amount to scale the matrix's elements by
  * @returns {mat3} out
  */
-
 function multiplyScalar$1(out, a, b) {
   out[0] = a[0] * b;
   out[1] = a[1] * b;
@@ -1739,6 +1742,7 @@ function multiplyScalar$1(out, a, b) {
   out[8] = a[8] * b;
   return out;
 }
+
 /**
  * Adds two mat3's after multiplying each element of the second operand by a scalar value.
  *
@@ -1748,7 +1752,6 @@ function multiplyScalar$1(out, a, b) {
  * @param {Number} scale the amount to scale b's elements by before adding
  * @returns {mat3} out
  */
-
 function multiplyScalarAndAdd$1(out, a, b, scale) {
   out[0] = a[0] + b[0] * scale;
   out[1] = a[1] + b[1] * scale;
@@ -1761,6 +1764,7 @@ function multiplyScalarAndAdd$1(out, a, b, scale) {
   out[8] = a[8] + b[8] * scale;
   return out;
 }
+
 /**
  * Returns whether or not the matrices have exactly the same elements in the same position (when compared with ===)
  *
@@ -1768,10 +1772,10 @@ function multiplyScalarAndAdd$1(out, a, b, scale) {
  * @param {ReadonlyMat3} b The second matrix.
  * @returns {Boolean} True if the matrices are equal, false otherwise.
  */
-
 function exactEquals$6(a, b) {
   return a[0] === b[0] && a[1] === b[1] && a[2] === b[2] && a[3] === b[3] && a[4] === b[4] && a[5] === b[5] && a[6] === b[6] && a[7] === b[7] && a[8] === b[8];
 }
+
 /**
  * Returns whether or not the matrices have approximately the same elements in the same position.
  *
@@ -1779,44 +1783,43 @@ function exactEquals$6(a, b) {
  * @param {ReadonlyMat3} b The second matrix.
  * @returns {Boolean} True if the matrices are equal, false otherwise.
  */
-
 function equals$6(a, b) {
   var a0 = a[0],
-      a1 = a[1],
-      a2 = a[2],
-      a3 = a[3],
-      a4 = a[4],
-      a5 = a[5],
-      a6 = a[6],
-      a7 = a[7],
-      a8 = a[8];
+    a1 = a[1],
+    a2 = a[2],
+    a3 = a[3],
+    a4 = a[4],
+    a5 = a[5],
+    a6 = a[6],
+    a7 = a[7],
+    a8 = a[8];
   var b0 = b[0],
-      b1 = b[1],
-      b2 = b[2],
-      b3 = b[3],
-      b4 = b[4],
-      b5 = b[5],
-      b6 = b[6],
-      b7 = b[7],
-      b8 = b[8];
+    b1 = b[1],
+    b2 = b[2],
+    b3 = b[3],
+    b4 = b[4],
+    b5 = b[5],
+    b6 = b[6],
+    b7 = b[7],
+    b8 = b[8];
   return Math.abs(a0 - b0) <= EPSILON * Math.max(1.0, Math.abs(a0), Math.abs(b0)) && Math.abs(a1 - b1) <= EPSILON * Math.max(1.0, Math.abs(a1), Math.abs(b1)) && Math.abs(a2 - b2) <= EPSILON * Math.max(1.0, Math.abs(a2), Math.abs(b2)) && Math.abs(a3 - b3) <= EPSILON * Math.max(1.0, Math.abs(a3), Math.abs(b3)) && Math.abs(a4 - b4) <= EPSILON * Math.max(1.0, Math.abs(a4), Math.abs(b4)) && Math.abs(a5 - b5) <= EPSILON * Math.max(1.0, Math.abs(a5), Math.abs(b5)) && Math.abs(a6 - b6) <= EPSILON * Math.max(1.0, Math.abs(a6), Math.abs(b6)) && Math.abs(a7 - b7) <= EPSILON * Math.max(1.0, Math.abs(a7), Math.abs(b7)) && Math.abs(a8 - b8) <= EPSILON * Math.max(1.0, Math.abs(a8), Math.abs(b8));
 }
+
 /**
  * Alias for {@link mat3.multiply}
  * @function
  */
-
 var mul$6 = multiply$8;
+
 /**
  * Alias for {@link mat3.subtract}
  * @function
  */
-
 var sub$4 = subtract$5;
 
 var mat3 = /*#__PURE__*/Object.freeze({
   __proto__: null,
-  create: create$7,
+  create: create$8,
   fromMat4: fromMat4$1,
   clone: clone$6,
   copy: copy$8,
@@ -1860,10 +1863,8 @@ var mat3 = /*#__PURE__*/Object.freeze({
  *
  * @returns {mat4} a new 4x4 matrix
  */
-
-function create$6() {
+function create$7() {
   var out = new ARRAY_TYPE(16);
-
   if (ARRAY_TYPE != Float32Array) {
     out[1] = 0;
     out[2] = 0;
@@ -1878,20 +1879,19 @@ function create$6() {
     out[13] = 0;
     out[14] = 0;
   }
-
   out[0] = 1;
   out[5] = 1;
   out[10] = 1;
   out[15] = 1;
   return out;
 }
+
 /**
  * Creates a new mat4 initialized with values from an existing matrix
  *
  * @param {ReadonlyMat4} a matrix to clone
  * @returns {mat4} a new 4x4 matrix
  */
-
 function clone$5(a) {
   var out = new ARRAY_TYPE(16);
   out[0] = a[0];
@@ -1912,6 +1912,7 @@ function clone$5(a) {
   out[15] = a[15];
   return out;
 }
+
 /**
  * Copy the values from one mat4 to another
  *
@@ -1919,7 +1920,6 @@ function clone$5(a) {
  * @param {ReadonlyMat4} a the source matrix
  * @returns {mat4} out
  */
-
 function copy$7(out, a) {
   out[0] = a[0];
   out[1] = a[1];
@@ -1939,6 +1939,7 @@ function copy$7(out, a) {
   out[15] = a[15];
   return out;
 }
+
 /**
  * Create a new mat4 with the given values
  *
@@ -1960,7 +1961,6 @@ function copy$7(out, a) {
  * @param {Number} m33 Component in column 3, row 3 position (index 15)
  * @returns {mat4} A new mat4
  */
-
 function fromValues$5(m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23, m30, m31, m32, m33) {
   var out = new ARRAY_TYPE(16);
   out[0] = m00;
@@ -1981,6 +1981,7 @@ function fromValues$5(m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23
   out[15] = m33;
   return out;
 }
+
 /**
  * Set the components of a mat4 to the given values
  *
@@ -2003,7 +2004,6 @@ function fromValues$5(m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23
  * @param {Number} m33 Component in column 3, row 3 position (index 15)
  * @returns {mat4} out
  */
-
 function set$5(out, m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23, m30, m31, m32, m33) {
   out[0] = m00;
   out[1] = m01;
@@ -2023,13 +2023,13 @@ function set$5(out, m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23, 
   out[15] = m33;
   return out;
 }
+
 /**
  * Set a mat4 to the identity matrix
  *
  * @param {mat4} out the receiving matrix
  * @returns {mat4} out
  */
-
 function identity$3(out) {
   out[0] = 1;
   out[1] = 0;
@@ -2049,6 +2049,7 @@ function identity$3(out) {
   out[15] = 1;
   return out;
 }
+
 /**
  * Transpose the values of a mat4
  *
@@ -2056,15 +2057,14 @@ function identity$3(out) {
  * @param {ReadonlyMat4} a the source matrix
  * @returns {mat4} out
  */
-
 function transpose$1(out, a) {
   // If we are transposing ourselves we can skip a few steps but have to cache some values
   if (out === a) {
     var a01 = a[1],
-        a02 = a[2],
-        a03 = a[3];
+      a02 = a[2],
+      a03 = a[3];
     var a12 = a[6],
-        a13 = a[7];
+      a13 = a[7];
     var a23 = a[11];
     out[1] = a[4];
     out[2] = a[8];
@@ -2096,34 +2096,33 @@ function transpose$1(out, a) {
     out[14] = a[11];
     out[15] = a[15];
   }
-
   return out;
 }
+
 /**
  * Inverts a mat4
  *
  * @param {mat4} out the receiving matrix
  * @param {ReadonlyMat4} a the source matrix
- * @returns {mat4} out
+ * @returns {mat4 | null} out, or null if source matrix is not invertible
  */
-
 function invert$2(out, a) {
   var a00 = a[0],
-      a01 = a[1],
-      a02 = a[2],
-      a03 = a[3];
+    a01 = a[1],
+    a02 = a[2],
+    a03 = a[3];
   var a10 = a[4],
-      a11 = a[5],
-      a12 = a[6],
-      a13 = a[7];
+    a11 = a[5],
+    a12 = a[6],
+    a13 = a[7];
   var a20 = a[8],
-      a21 = a[9],
-      a22 = a[10],
-      a23 = a[11];
+    a21 = a[9],
+    a22 = a[10],
+    a23 = a[11];
   var a30 = a[12],
-      a31 = a[13],
-      a32 = a[14],
-      a33 = a[15];
+    a31 = a[13],
+    a32 = a[14],
+    a33 = a[15];
   var b00 = a00 * a11 - a01 * a10;
   var b01 = a00 * a12 - a02 * a10;
   var b02 = a00 * a13 - a03 * a10;
@@ -2135,14 +2134,13 @@ function invert$2(out, a) {
   var b08 = a20 * a33 - a23 * a30;
   var b09 = a21 * a32 - a22 * a31;
   var b10 = a21 * a33 - a23 * a31;
-  var b11 = a22 * a33 - a23 * a32; // Calculate the determinant
+  var b11 = a22 * a33 - a23 * a32;
 
+  // Calculate the determinant
   var det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
-
   if (!det) {
     return null;
   }
-
   det = 1.0 / det;
   out[0] = (a11 * b11 - a12 * b10 + a13 * b09) * det;
   out[1] = (a02 * b10 - a01 * b11 - a03 * b09) * det;
@@ -2162,6 +2160,7 @@ function invert$2(out, a) {
   out[15] = (a20 * b03 - a21 * b01 + a22 * b00) * det;
   return out;
 }
+
 /**
  * Calculates the adjugate of a mat4
  *
@@ -2169,66 +2168,23 @@ function invert$2(out, a) {
  * @param {ReadonlyMat4} a the source matrix
  * @returns {mat4} out
  */
-
 function adjoint(out, a) {
   var a00 = a[0],
-      a01 = a[1],
-      a02 = a[2],
-      a03 = a[3];
+    a01 = a[1],
+    a02 = a[2],
+    a03 = a[3];
   var a10 = a[4],
-      a11 = a[5],
-      a12 = a[6],
-      a13 = a[7];
+    a11 = a[5],
+    a12 = a[6],
+    a13 = a[7];
   var a20 = a[8],
-      a21 = a[9],
-      a22 = a[10],
-      a23 = a[11];
+    a21 = a[9],
+    a22 = a[10],
+    a23 = a[11];
   var a30 = a[12],
-      a31 = a[13],
-      a32 = a[14],
-      a33 = a[15];
-  out[0] = a11 * (a22 * a33 - a23 * a32) - a21 * (a12 * a33 - a13 * a32) + a31 * (a12 * a23 - a13 * a22);
-  out[1] = -(a01 * (a22 * a33 - a23 * a32) - a21 * (a02 * a33 - a03 * a32) + a31 * (a02 * a23 - a03 * a22));
-  out[2] = a01 * (a12 * a33 - a13 * a32) - a11 * (a02 * a33 - a03 * a32) + a31 * (a02 * a13 - a03 * a12);
-  out[3] = -(a01 * (a12 * a23 - a13 * a22) - a11 * (a02 * a23 - a03 * a22) + a21 * (a02 * a13 - a03 * a12));
-  out[4] = -(a10 * (a22 * a33 - a23 * a32) - a20 * (a12 * a33 - a13 * a32) + a30 * (a12 * a23 - a13 * a22));
-  out[5] = a00 * (a22 * a33 - a23 * a32) - a20 * (a02 * a33 - a03 * a32) + a30 * (a02 * a23 - a03 * a22);
-  out[6] = -(a00 * (a12 * a33 - a13 * a32) - a10 * (a02 * a33 - a03 * a32) + a30 * (a02 * a13 - a03 * a12));
-  out[7] = a00 * (a12 * a23 - a13 * a22) - a10 * (a02 * a23 - a03 * a22) + a20 * (a02 * a13 - a03 * a12);
-  out[8] = a10 * (a21 * a33 - a23 * a31) - a20 * (a11 * a33 - a13 * a31) + a30 * (a11 * a23 - a13 * a21);
-  out[9] = -(a00 * (a21 * a33 - a23 * a31) - a20 * (a01 * a33 - a03 * a31) + a30 * (a01 * a23 - a03 * a21));
-  out[10] = a00 * (a11 * a33 - a13 * a31) - a10 * (a01 * a33 - a03 * a31) + a30 * (a01 * a13 - a03 * a11);
-  out[11] = -(a00 * (a11 * a23 - a13 * a21) - a10 * (a01 * a23 - a03 * a21) + a20 * (a01 * a13 - a03 * a11));
-  out[12] = -(a10 * (a21 * a32 - a22 * a31) - a20 * (a11 * a32 - a12 * a31) + a30 * (a11 * a22 - a12 * a21));
-  out[13] = a00 * (a21 * a32 - a22 * a31) - a20 * (a01 * a32 - a02 * a31) + a30 * (a01 * a22 - a02 * a21);
-  out[14] = -(a00 * (a11 * a32 - a12 * a31) - a10 * (a01 * a32 - a02 * a31) + a30 * (a01 * a12 - a02 * a11));
-  out[15] = a00 * (a11 * a22 - a12 * a21) - a10 * (a01 * a22 - a02 * a21) + a20 * (a01 * a12 - a02 * a11);
-  return out;
-}
-/**
- * Calculates the determinant of a mat4
- *
- * @param {ReadonlyMat4} a the source matrix
- * @returns {Number} determinant of a
- */
-
-function determinant(a) {
-  var a00 = a[0],
-      a01 = a[1],
-      a02 = a[2],
-      a03 = a[3];
-  var a10 = a[4],
-      a11 = a[5],
-      a12 = a[6],
-      a13 = a[7];
-  var a20 = a[8],
-      a21 = a[9],
-      a22 = a[10],
-      a23 = a[11];
-  var a30 = a[12],
-      a31 = a[13],
-      a32 = a[14],
-      a33 = a[15];
+    a31 = a[13],
+    a32 = a[14],
+    a33 = a[15];
   var b00 = a00 * a11 - a01 * a10;
   var b01 = a00 * a12 - a02 * a10;
   var b02 = a00 * a13 - a03 * a10;
@@ -2240,10 +2196,64 @@ function determinant(a) {
   var b08 = a20 * a33 - a23 * a30;
   var b09 = a21 * a32 - a22 * a31;
   var b10 = a21 * a33 - a23 * a31;
-  var b11 = a22 * a33 - a23 * a32; // Calculate the determinant
-
-  return b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
+  var b11 = a22 * a33 - a23 * a32;
+  out[0] = a11 * b11 - a12 * b10 + a13 * b09;
+  out[1] = a02 * b10 - a01 * b11 - a03 * b09;
+  out[2] = a31 * b05 - a32 * b04 + a33 * b03;
+  out[3] = a22 * b04 - a21 * b05 - a23 * b03;
+  out[4] = a12 * b08 - a10 * b11 - a13 * b07;
+  out[5] = a00 * b11 - a02 * b08 + a03 * b07;
+  out[6] = a32 * b02 - a30 * b05 - a33 * b01;
+  out[7] = a20 * b05 - a22 * b02 + a23 * b01;
+  out[8] = a10 * b10 - a11 * b08 + a13 * b06;
+  out[9] = a01 * b08 - a00 * b10 - a03 * b06;
+  out[10] = a30 * b04 - a31 * b02 + a33 * b00;
+  out[11] = a21 * b02 - a20 * b04 - a23 * b00;
+  out[12] = a11 * b07 - a10 * b09 - a12 * b06;
+  out[13] = a00 * b09 - a01 * b07 + a02 * b06;
+  out[14] = a31 * b01 - a30 * b03 - a32 * b00;
+  out[15] = a20 * b03 - a21 * b01 + a22 * b00;
+  return out;
 }
+
+/**
+ * Calculates the determinant of a mat4
+ *
+ * @param {ReadonlyMat4} a the source matrix
+ * @returns {Number} determinant of a
+ */
+function determinant(a) {
+  var a00 = a[0],
+    a01 = a[1],
+    a02 = a[2],
+    a03 = a[3];
+  var a10 = a[4],
+    a11 = a[5],
+    a12 = a[6],
+    a13 = a[7];
+  var a20 = a[8],
+    a21 = a[9],
+    a22 = a[10],
+    a23 = a[11];
+  var a30 = a[12],
+    a31 = a[13],
+    a32 = a[14],
+    a33 = a[15];
+  var b0 = a00 * a11 - a01 * a10;
+  var b1 = a00 * a12 - a02 * a10;
+  var b2 = a01 * a12 - a02 * a11;
+  var b3 = a20 * a31 - a21 * a30;
+  var b4 = a20 * a32 - a22 * a30;
+  var b5 = a21 * a32 - a22 * a31;
+  var b6 = a00 * b5 - a01 * b4 + a02 * b3;
+  var b7 = a10 * b5 - a11 * b4 + a12 * b3;
+  var b8 = a20 * b2 - a21 * b1 + a22 * b0;
+  var b9 = a30 * b2 - a31 * b1 + a32 * b0;
+
+  // Calculate the determinant
+  return a13 * b6 - a03 * b7 + a33 * b8 - a23 * b9;
+}
+
 /**
  * Multiplies two mat4s
  *
@@ -2252,29 +2262,29 @@ function determinant(a) {
  * @param {ReadonlyMat4} b the second operand
  * @returns {mat4} out
  */
-
 function multiply$7(out, a, b) {
   var a00 = a[0],
-      a01 = a[1],
-      a02 = a[2],
-      a03 = a[3];
+    a01 = a[1],
+    a02 = a[2],
+    a03 = a[3];
   var a10 = a[4],
-      a11 = a[5],
-      a12 = a[6],
-      a13 = a[7];
+    a11 = a[5],
+    a12 = a[6],
+    a13 = a[7];
   var a20 = a[8],
-      a21 = a[9],
-      a22 = a[10],
-      a23 = a[11];
+    a21 = a[9],
+    a22 = a[10],
+    a23 = a[11];
   var a30 = a[12],
-      a31 = a[13],
-      a32 = a[14],
-      a33 = a[15]; // Cache only the current line of the second matrix
+    a31 = a[13],
+    a32 = a[14],
+    a33 = a[15];
 
+  // Cache only the current line of the second matrix
   var b0 = b[0],
-      b1 = b[1],
-      b2 = b[2],
-      b3 = b[3];
+    b1 = b[1],
+    b2 = b[2],
+    b3 = b[3];
   out[0] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
   out[1] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
   out[2] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
@@ -2305,6 +2315,7 @@ function multiply$7(out, a, b) {
   out[15] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
   return out;
 }
+
 /**
  * Translate a mat4 by the given vector
  *
@@ -2313,15 +2324,13 @@ function multiply$7(out, a, b) {
  * @param {ReadonlyVec3} v vector to translate by
  * @returns {mat4} out
  */
-
 function translate$2(out, a, v) {
   var x = v[0],
-      y = v[1],
-      z = v[2];
+    y = v[1],
+    z = v[2];
   var a00, a01, a02, a03;
   var a10, a11, a12, a13;
   var a20, a21, a22, a23;
-
   if (a === out) {
     out[12] = a[0] * x + a[4] * y + a[8] * z + a[12];
     out[13] = a[1] * x + a[5] * y + a[9] * z + a[13];
@@ -2357,9 +2366,9 @@ function translate$2(out, a, v) {
     out[14] = a02 * x + a12 * y + a22 * z + a[14];
     out[15] = a03 * x + a13 * y + a23 * z + a[15];
   }
-
   return out;
 }
+
 /**
  * Scales the mat4 by the dimensions in the given vec3 not using vectorization
  *
@@ -2368,11 +2377,10 @@ function translate$2(out, a, v) {
  * @param {ReadonlyVec3} v the vec3 to scale the matrix by
  * @returns {mat4} out
  **/
-
 function scale$6(out, a, v) {
   var x = v[0],
-      y = v[1],
-      z = v[2];
+    y = v[1],
+    z = v[2];
   out[0] = a[0] * x;
   out[1] = a[1] * x;
   out[2] = a[2] * x;
@@ -2391,6 +2399,7 @@ function scale$6(out, a, v) {
   out[15] = a[15];
   return out;
 }
+
 /**
  * Rotates a mat4 by the given angle around the given axis
  *
@@ -2400,12 +2409,11 @@ function scale$6(out, a, v) {
  * @param {ReadonlyVec3} axis the axis to rotate around
  * @returns {mat4} out
  */
-
 function rotate$1(out, a, rad, axis) {
   var x = axis[0],
-      y = axis[1],
-      z = axis[2];
-  var len = Math.hypot(x, y, z);
+    y = axis[1],
+    z = axis[2];
+  var len = Math.sqrt(x * x + y * y + z * z);
   var s, c, t;
   var a00, a01, a02, a03;
   var a10, a11, a12, a13;
@@ -2413,11 +2421,9 @@ function rotate$1(out, a, rad, axis) {
   var b00, b01, b02;
   var b10, b11, b12;
   var b20, b21, b22;
-
   if (len < EPSILON) {
     return null;
   }
-
   len = 1 / len;
   x *= len;
   y *= len;
@@ -2436,8 +2442,9 @@ function rotate$1(out, a, rad, axis) {
   a20 = a[8];
   a21 = a[9];
   a22 = a[10];
-  a23 = a[11]; // Construct the elements of the rotation matrix
+  a23 = a[11];
 
+  // Construct the elements of the rotation matrix
   b00 = x * x * t + c;
   b01 = y * x * t + z * s;
   b02 = z * x * t - y * s;
@@ -2446,8 +2453,9 @@ function rotate$1(out, a, rad, axis) {
   b12 = z * y * t + x * s;
   b20 = x * z * t + y * s;
   b21 = y * z * t - x * s;
-  b22 = z * z * t + c; // Perform rotation-specific matrix multiplication
+  b22 = z * z * t + c;
 
+  // Perform rotation-specific matrix multiplication
   out[0] = a00 * b00 + a10 * b01 + a20 * b02;
   out[1] = a01 * b00 + a11 * b01 + a21 * b02;
   out[2] = a02 * b00 + a12 * b01 + a22 * b02;
@@ -2460,7 +2468,6 @@ function rotate$1(out, a, rad, axis) {
   out[9] = a01 * b20 + a11 * b21 + a21 * b22;
   out[10] = a02 * b20 + a12 * b21 + a22 * b22;
   out[11] = a03 * b20 + a13 * b21 + a23 * b22;
-
   if (a !== out) {
     // If the source and destination differ, copy the unchanged last row
     out[12] = a[12];
@@ -2468,9 +2475,9 @@ function rotate$1(out, a, rad, axis) {
     out[14] = a[14];
     out[15] = a[15];
   }
-
   return out;
 }
+
 /**
  * Rotates a matrix by the given angle around the X axis
  *
@@ -2479,7 +2486,6 @@ function rotate$1(out, a, rad, axis) {
  * @param {Number} rad the angle to rotate the matrix by
  * @returns {mat4} out
  */
-
 function rotateX$4(out, a, rad) {
   var s = Math.sin(rad);
   var c = Math.cos(rad);
@@ -2491,7 +2497,6 @@ function rotateX$4(out, a, rad) {
   var a21 = a[9];
   var a22 = a[10];
   var a23 = a[11];
-
   if (a !== out) {
     // If the source and destination differ, copy the unchanged rows
     out[0] = a[0];
@@ -2502,9 +2507,9 @@ function rotateX$4(out, a, rad) {
     out[13] = a[13];
     out[14] = a[14];
     out[15] = a[15];
-  } // Perform axis-specific matrix multiplication
+  }
 
-
+  // Perform axis-specific matrix multiplication
   out[4] = a10 * c + a20 * s;
   out[5] = a11 * c + a21 * s;
   out[6] = a12 * c + a22 * s;
@@ -2515,6 +2520,7 @@ function rotateX$4(out, a, rad) {
   out[11] = a23 * c - a13 * s;
   return out;
 }
+
 /**
  * Rotates a matrix by the given angle around the Y axis
  *
@@ -2523,7 +2529,6 @@ function rotateX$4(out, a, rad) {
  * @param {Number} rad the angle to rotate the matrix by
  * @returns {mat4} out
  */
-
 function rotateY$4(out, a, rad) {
   var s = Math.sin(rad);
   var c = Math.cos(rad);
@@ -2535,7 +2540,6 @@ function rotateY$4(out, a, rad) {
   var a21 = a[9];
   var a22 = a[10];
   var a23 = a[11];
-
   if (a !== out) {
     // If the source and destination differ, copy the unchanged rows
     out[4] = a[4];
@@ -2546,9 +2550,9 @@ function rotateY$4(out, a, rad) {
     out[13] = a[13];
     out[14] = a[14];
     out[15] = a[15];
-  } // Perform axis-specific matrix multiplication
+  }
 
-
+  // Perform axis-specific matrix multiplication
   out[0] = a00 * c - a20 * s;
   out[1] = a01 * c - a21 * s;
   out[2] = a02 * c - a22 * s;
@@ -2559,6 +2563,7 @@ function rotateY$4(out, a, rad) {
   out[11] = a03 * s + a23 * c;
   return out;
 }
+
 /**
  * Rotates a matrix by the given angle around the Z axis
  *
@@ -2567,7 +2572,6 @@ function rotateY$4(out, a, rad) {
  * @param {Number} rad the angle to rotate the matrix by
  * @returns {mat4} out
  */
-
 function rotateZ$4(out, a, rad) {
   var s = Math.sin(rad);
   var c = Math.cos(rad);
@@ -2579,7 +2583,6 @@ function rotateZ$4(out, a, rad) {
   var a11 = a[5];
   var a12 = a[6];
   var a13 = a[7];
-
   if (a !== out) {
     // If the source and destination differ, copy the unchanged last row
     out[8] = a[8];
@@ -2590,9 +2593,9 @@ function rotateZ$4(out, a, rad) {
     out[13] = a[13];
     out[14] = a[14];
     out[15] = a[15];
-  } // Perform axis-specific matrix multiplication
+  }
 
-
+  // Perform axis-specific matrix multiplication
   out[0] = a00 * c + a10 * s;
   out[1] = a01 * c + a11 * s;
   out[2] = a02 * c + a12 * s;
@@ -2603,6 +2606,7 @@ function rotateZ$4(out, a, rad) {
   out[7] = a13 * c - a03 * s;
   return out;
 }
+
 /**
  * Creates a matrix from a vector translation
  * This is equivalent to (but much faster than):
@@ -2614,7 +2618,6 @@ function rotateZ$4(out, a, rad) {
  * @param {ReadonlyVec3} v Translation vector
  * @returns {mat4} out
  */
-
 function fromTranslation$1(out, v) {
   out[0] = 1;
   out[1] = 0;
@@ -2634,6 +2637,7 @@ function fromTranslation$1(out, v) {
   out[15] = 1;
   return out;
 }
+
 /**
  * Creates a matrix from a vector scaling
  * This is equivalent to (but much faster than):
@@ -2645,7 +2649,6 @@ function fromTranslation$1(out, v) {
  * @param {ReadonlyVec3} v Scaling vector
  * @returns {mat4} out
  */
-
 function fromScaling(out, v) {
   out[0] = v[0];
   out[1] = 0;
@@ -2665,6 +2668,7 @@ function fromScaling(out, v) {
   out[15] = 1;
   return out;
 }
+
 /**
  * Creates a matrix from a given angle around a given axis
  * This is equivalent to (but much faster than):
@@ -2677,26 +2681,24 @@ function fromScaling(out, v) {
  * @param {ReadonlyVec3} axis the axis to rotate around
  * @returns {mat4} out
  */
-
 function fromRotation$1(out, rad, axis) {
   var x = axis[0],
-      y = axis[1],
-      z = axis[2];
-  var len = Math.hypot(x, y, z);
+    y = axis[1],
+    z = axis[2];
+  var len = Math.sqrt(x * x + y * y + z * z);
   var s, c, t;
-
   if (len < EPSILON) {
     return null;
   }
-
   len = 1 / len;
   x *= len;
   y *= len;
   z *= len;
   s = Math.sin(rad);
   c = Math.cos(rad);
-  t = 1 - c; // Perform rotation-specific matrix multiplication
+  t = 1 - c;
 
+  // Perform rotation-specific matrix multiplication
   out[0] = x * x * t + c;
   out[1] = y * x * t + z * s;
   out[2] = z * x * t - y * s;
@@ -2715,6 +2717,7 @@ function fromRotation$1(out, rad, axis) {
   out[15] = 1;
   return out;
 }
+
 /**
  * Creates a matrix from the given angle around the X axis
  * This is equivalent to (but much faster than):
@@ -2726,11 +2729,11 @@ function fromRotation$1(out, rad, axis) {
  * @param {Number} rad the angle to rotate the matrix by
  * @returns {mat4} out
  */
-
 function fromXRotation(out, rad) {
   var s = Math.sin(rad);
-  var c = Math.cos(rad); // Perform axis-specific matrix multiplication
+  var c = Math.cos(rad);
 
+  // Perform axis-specific matrix multiplication
   out[0] = 1;
   out[1] = 0;
   out[2] = 0;
@@ -2749,6 +2752,7 @@ function fromXRotation(out, rad) {
   out[15] = 1;
   return out;
 }
+
 /**
  * Creates a matrix from the given angle around the Y axis
  * This is equivalent to (but much faster than):
@@ -2760,11 +2764,11 @@ function fromXRotation(out, rad) {
  * @param {Number} rad the angle to rotate the matrix by
  * @returns {mat4} out
  */
-
 function fromYRotation(out, rad) {
   var s = Math.sin(rad);
-  var c = Math.cos(rad); // Perform axis-specific matrix multiplication
+  var c = Math.cos(rad);
 
+  // Perform axis-specific matrix multiplication
   out[0] = c;
   out[1] = 0;
   out[2] = -s;
@@ -2783,6 +2787,7 @@ function fromYRotation(out, rad) {
   out[15] = 1;
   return out;
 }
+
 /**
  * Creates a matrix from the given angle around the Z axis
  * This is equivalent to (but much faster than):
@@ -2794,11 +2799,11 @@ function fromYRotation(out, rad) {
  * @param {Number} rad the angle to rotate the matrix by
  * @returns {mat4} out
  */
-
 function fromZRotation(out, rad) {
   var s = Math.sin(rad);
-  var c = Math.cos(rad); // Perform axis-specific matrix multiplication
+  var c = Math.cos(rad);
 
+  // Perform axis-specific matrix multiplication
   out[0] = c;
   out[1] = s;
   out[2] = 0;
@@ -2817,28 +2822,28 @@ function fromZRotation(out, rad) {
   out[15] = 1;
   return out;
 }
+
 /**
  * Creates a matrix from a quaternion rotation and vector translation
  * This is equivalent to (but much faster than):
  *
  *     mat4.identity(dest);
- *     mat4.translate(dest, vec);
+ *     mat4.translate(dest, dest, vec);
  *     let quatMat = mat4.create();
- *     quat4.toMat4(quat, quatMat);
- *     mat4.multiply(dest, quatMat);
+ *     mat4.fromQuat(quatMat, quat);
+ *     mat4.multiply(dest, dest, quatMat);
  *
  * @param {mat4} out mat4 receiving operation result
- * @param {quat4} q Rotation quaternion
+ * @param {quat} q Rotation quaternion
  * @param {ReadonlyVec3} v Translation vector
  * @returns {mat4} out
  */
-
 function fromRotationTranslation$1(out, q, v) {
   // Quaternion math
   var x = q[0],
-      y = q[1],
-      z = q[2],
-      w = q[3];
+    y = q[1],
+    z = q[2],
+    w = q[3];
   var x2 = x + x;
   var y2 = y + y;
   var z2 = z + z;
@@ -2869,6 +2874,7 @@ function fromRotationTranslation$1(out, q, v) {
   out[15] = 1;
   return out;
 }
+
 /**
  * Creates a new mat4 from a dual quat.
  *
@@ -2876,19 +2882,18 @@ function fromRotationTranslation$1(out, q, v) {
  * @param {ReadonlyQuat2} a Dual Quaternion
  * @returns {mat4} mat4 receiving operation result
  */
-
 function fromQuat2(out, a) {
   var translation = new ARRAY_TYPE(3);
   var bx = -a[0],
-      by = -a[1],
-      bz = -a[2],
-      bw = a[3],
-      ax = a[4],
-      ay = a[5],
-      az = a[6],
-      aw = a[7];
-  var magnitude = bx * bx + by * by + bz * bz + bw * bw; //Only scale if it makes sense
-
+    by = -a[1],
+    bz = -a[2],
+    bw = a[3],
+    ax = a[4],
+    ay = a[5],
+    az = a[6],
+    aw = a[7];
+  var magnitude = bx * bx + by * by + bz * bz + bw * bw;
+  //Only scale if it makes sense
   if (magnitude > 0) {
     translation[0] = (ax * bw + aw * bx + ay * bz - az * by) * 2 / magnitude;
     translation[1] = (ay * bw + aw * by + az * bx - ax * bz) * 2 / magnitude;
@@ -2898,10 +2903,10 @@ function fromQuat2(out, a) {
     translation[1] = (ay * bw + aw * by + az * bx - ax * bz) * 2;
     translation[2] = (az * bw + aw * bz + ax * by - ay * bx) * 2;
   }
-
   fromRotationTranslation$1(out, a, translation);
   return out;
 }
+
 /**
  * Returns the translation vector component of a transformation
  *  matrix. If a matrix is built with fromRotationTranslation,
@@ -2911,24 +2916,23 @@ function fromQuat2(out, a) {
  * @param  {ReadonlyMat4} mat Matrix to be decomposed (input)
  * @return {vec3} out
  */
-
 function getTranslation$2(out, mat) {
   out[0] = mat[12];
   out[1] = mat[13];
   out[2] = mat[14];
   return out;
 }
+
 /**
  * Returns the scaling factor component of a transformation
  *  matrix. If a matrix is built with fromRotationTranslationScale
- *  with a normalized Quaternion paramter, the returned vector will be
+ *  with a normalized Quaternion parameter, the returned vector will be
  *  the same as the scaling vector
  *  originally supplied.
  * @param  {vec3} out Vector to receive scaling factor component
  * @param  {ReadonlyMat4} mat Matrix to be decomposed (input)
  * @return {vec3} out
  */
-
 function getScaling(out, mat) {
   var m11 = mat[0];
   var m12 = mat[1];
@@ -2939,11 +2943,12 @@ function getScaling(out, mat) {
   var m31 = mat[8];
   var m32 = mat[9];
   var m33 = mat[10];
-  out[0] = Math.hypot(m11, m12, m13);
-  out[1] = Math.hypot(m21, m22, m23);
-  out[2] = Math.hypot(m31, m32, m33);
+  out[0] = Math.sqrt(m11 * m11 + m12 * m12 + m13 * m13);
+  out[1] = Math.sqrt(m21 * m21 + m22 * m22 + m23 * m23);
+  out[2] = Math.sqrt(m31 * m31 + m32 * m32 + m33 * m33);
   return out;
 }
+
 /**
  * Returns a quaternion representing the rotational component
  *  of a transformation matrix. If a matrix is built with
@@ -2953,7 +2958,6 @@ function getScaling(out, mat) {
  * @param {ReadonlyMat4} mat Matrix to be decomposed (input)
  * @return {quat} out
  */
-
 function getRotation(out, mat) {
   var scaling = new ARRAY_TYPE(3);
   getScaling(scaling, mat);
@@ -2971,7 +2975,6 @@ function getRotation(out, mat) {
   var sm33 = mat[10] * is3;
   var trace = sm11 + sm22 + sm33;
   var S = 0;
-
   if (trace > 0) {
     S = Math.sqrt(trace + 1.0) * 2;
     out[3] = 0.25 * S;
@@ -2997,33 +3000,99 @@ function getRotation(out, mat) {
     out[1] = (sm23 + sm32) / S;
     out[2] = 0.25 * S;
   }
-
   return out;
 }
+
+/**
+ * Decomposes a transformation matrix into its rotation, translation
+ * and scale components. Returns only the rotation component
+ * @param  {quat} out_r Quaternion to receive the rotation component
+ * @param  {vec3} out_t Vector to receive the translation vector
+ * @param  {vec3} out_s Vector to receive the scaling factor
+ * @param  {ReadonlyMat4} mat Matrix to be decomposed (input)
+ * @returns {quat} out_r
+ */
+function decompose(out_r, out_t, out_s, mat) {
+  out_t[0] = mat[12];
+  out_t[1] = mat[13];
+  out_t[2] = mat[14];
+  var m11 = mat[0];
+  var m12 = mat[1];
+  var m13 = mat[2];
+  var m21 = mat[4];
+  var m22 = mat[5];
+  var m23 = mat[6];
+  var m31 = mat[8];
+  var m32 = mat[9];
+  var m33 = mat[10];
+  out_s[0] = Math.sqrt(m11 * m11 + m12 * m12 + m13 * m13);
+  out_s[1] = Math.sqrt(m21 * m21 + m22 * m22 + m23 * m23);
+  out_s[2] = Math.sqrt(m31 * m31 + m32 * m32 + m33 * m33);
+  var is1 = 1 / out_s[0];
+  var is2 = 1 / out_s[1];
+  var is3 = 1 / out_s[2];
+  var sm11 = m11 * is1;
+  var sm12 = m12 * is2;
+  var sm13 = m13 * is3;
+  var sm21 = m21 * is1;
+  var sm22 = m22 * is2;
+  var sm23 = m23 * is3;
+  var sm31 = m31 * is1;
+  var sm32 = m32 * is2;
+  var sm33 = m33 * is3;
+  var trace = sm11 + sm22 + sm33;
+  var S = 0;
+  if (trace > 0) {
+    S = Math.sqrt(trace + 1.0) * 2;
+    out_r[3] = 0.25 * S;
+    out_r[0] = (sm23 - sm32) / S;
+    out_r[1] = (sm31 - sm13) / S;
+    out_r[2] = (sm12 - sm21) / S;
+  } else if (sm11 > sm22 && sm11 > sm33) {
+    S = Math.sqrt(1.0 + sm11 - sm22 - sm33) * 2;
+    out_r[3] = (sm23 - sm32) / S;
+    out_r[0] = 0.25 * S;
+    out_r[1] = (sm12 + sm21) / S;
+    out_r[2] = (sm31 + sm13) / S;
+  } else if (sm22 > sm33) {
+    S = Math.sqrt(1.0 + sm22 - sm11 - sm33) * 2;
+    out_r[3] = (sm31 - sm13) / S;
+    out_r[0] = (sm12 + sm21) / S;
+    out_r[1] = 0.25 * S;
+    out_r[2] = (sm23 + sm32) / S;
+  } else {
+    S = Math.sqrt(1.0 + sm33 - sm11 - sm22) * 2;
+    out_r[3] = (sm12 - sm21) / S;
+    out_r[0] = (sm31 + sm13) / S;
+    out_r[1] = (sm23 + sm32) / S;
+    out_r[2] = 0.25 * S;
+  }
+  return out_r;
+}
+
 /**
  * Creates a matrix from a quaternion rotation, vector translation and vector scale
  * This is equivalent to (but much faster than):
  *
  *     mat4.identity(dest);
- *     mat4.translate(dest, vec);
+ *     mat4.translate(dest, dest, vec);
  *     let quatMat = mat4.create();
- *     quat4.toMat4(quat, quatMat);
- *     mat4.multiply(dest, quatMat);
- *     mat4.scale(dest, scale)
+ *     mat4.fromQuat(quatMat, quat);
+ *     mat4.multiply(dest, dest, quatMat);
+ *     mat4.scale(dest, dest, scale)
  *
  * @param {mat4} out mat4 receiving operation result
- * @param {quat4} q Rotation quaternion
+ * @param {quat} q Rotation quaternion
  * @param {ReadonlyVec3} v Translation vector
  * @param {ReadonlyVec3} s Scaling vector
  * @returns {mat4} out
  */
-
 function fromRotationTranslationScale(out, q, v, s) {
   // Quaternion math
   var x = q[0],
-      y = q[1],
-      z = q[2],
-      w = q[3];
+    y = q[1],
+    z = q[2],
+    w = q[3];
   var x2 = x + x;
   var y2 = y + y;
   var z2 = z + z;
@@ -3057,33 +3126,33 @@ function fromRotationTranslationScale(out, q, v, s) {
   out[15] = 1;
   return out;
 }
+
 /**
  * Creates a matrix from a quaternion rotation, vector translation and vector scale, rotating and scaling around the given origin
  * This is equivalent to (but much faster than):
  *
  *     mat4.identity(dest);
- *     mat4.translate(dest, vec);
- *     mat4.translate(dest, origin);
+ *     mat4.translate(dest, dest, vec);
+ *     mat4.translate(dest, dest, origin);
  *     let quatMat = mat4.create();
- *     quat4.toMat4(quat, quatMat);
- *     mat4.multiply(dest, quatMat);
- *     mat4.scale(dest, scale)
- *     mat4.translate(dest, negativeOrigin);
+ *     mat4.fromQuat(quatMat, quat);
+ *     mat4.multiply(dest, dest, quatMat);
+ *     mat4.scale(dest, dest, scale)
+ *     mat4.translate(dest, dest, negativeOrigin);
  *
  * @param {mat4} out mat4 receiving operation result
- * @param {quat4} q Rotation quaternion
+ * @param {quat} q Rotation quaternion
  * @param {ReadonlyVec3} v Translation vector
  * @param {ReadonlyVec3} s Scaling vector
  * @param {ReadonlyVec3} o The origin vector around which to scale and rotate
  * @returns {mat4} out
  */
-
 function fromRotationTranslationScaleOrigin(out, q, v, s, o) {
   // Quaternion math
   var x = q[0],
-      y = q[1],
-      z = q[2],
-      w = q[3];
+    y = q[1],
+    z = q[2],
+    w = q[3];
   var x2 = x + x;
   var y2 = y + y;
   var z2 = z + z;
@@ -3129,6 +3198,7 @@ function fromRotationTranslationScaleOrigin(out, q, v, s, o) {
   out[15] = 1;
   return out;
 }
+
 /**
  * Calculates a 4x4 matrix from the given quaternion
  *
@@ -3137,12 +3207,11 @@ function fromRotationTranslationScaleOrigin(out, q, v, s, o) {
  *
  * @returns {mat4} out
  */
-
 function fromQuat(out, q) {
   var x = q[0],
-      y = q[1],
-      z = q[2],
-      w = q[3];
+    y = q[1],
+    z = q[2],
+    w = q[3];
   var x2 = x + x;
   var y2 = y + y;
   var z2 = z + z;
@@ -3173,6 +3242,7 @@ function fromQuat(out, q) {
   out[15] = 1;
   return out;
 }
+
 /**
  * Generates a frustum matrix with the given bounds
  *
@@ -3185,7 +3255,6 @@ function fromQuat(out, q) {
  * @param {Number} far Far bound of the frustum
  * @returns {mat4} out
  */
-
 function frustum$1(out, left, right, bottom, top, near, far) {
   var rl = 1 / (right - left);
   var tb = 1 / (top - bottom);
@@ -3208,8 +3277,11 @@ function frustum$1(out, left, right, bottom, top, near, far) {
   out[15] = 0;
   return out;
 }
+
 /**
  * Generates a perspective projection matrix with the given bounds.
+ * The near/far clip planes correspond to a normalized device coordinate Z range of [-1, 1],
+ * which matches WebGL/OpenGL's clip volume.
  * Passing null/undefined/no value for far will generate infinite projection matrix.
  *
  * @param {mat4} out mat4 frustum matrix will be written into
@@ -3219,10 +3291,8 @@ function frustum$1(out, left, right, bottom, top, near, far) {
  * @param {number} far Far bound of the frustum, can be null or Infinity
  * @returns {mat4} out
  */
-
-function perspective$1(out, fovy, aspect, near, far) {
-  var f = 1.0 / Math.tan(fovy / 2),
-      nf;
+function perspectiveNO(out, fovy, aspect, near, far) {
+  var f = 1.0 / Math.tan(fovy / 2);
   out[0] = f / aspect;
   out[1] = 0;
   out[2] = 0;
@@ -3237,18 +3307,63 @@ function perspective$1(out, fovy, aspect, near, far) {
   out[12] = 0;
   out[13] = 0;
   out[15] = 0;
-
   if (far != null && far !== Infinity) {
-    nf = 1 / (near - far);
+    var nf = 1 / (near - far);
     out[10] = (far + near) * nf;
     out[14] = 2 * far * near * nf;
   } else {
     out[10] = -1;
     out[14] = -2 * near;
   }
-
   return out;
 }
+
+/**
+ * Alias for {@link mat4.perspectiveNO}
+ * @function
+ */
+var perspective$1 = perspectiveNO;
+
+/**
+ * Generates a perspective projection matrix suitable for WebGPU with the given bounds.
+ * The near/far clip planes correspond to a normalized device coordinate Z range of [0, 1],
+ * which matches WebGPU/Vulkan/DirectX/Metal's clip volume.
+ * Passing null/undefined/no value for far will generate infinite projection matrix.
+ *
+ * @param {mat4} out mat4 frustum matrix will be written into
+ * @param {number} fovy Vertical field of view in radians
+ * @param {number} aspect Aspect ratio. typically viewport width/height
+ * @param {number} near Near bound of the frustum
+ * @param {number} far Far bound of the frustum, can be null or Infinity
+ * @returns {mat4} out
+ */
+function perspectiveZO(out, fovy, aspect, near, far) {
+  var f = 1.0 / Math.tan(fovy / 2);
+  out[0] = f / aspect;
+  out[1] = 0;
+  out[2] = 0;
+  out[3] = 0;
+  out[4] = 0;
+  out[5] = f;
+  out[6] = 0;
+  out[7] = 0;
+  out[8] = 0;
+  out[9] = 0;
+  out[11] = -1;
+  out[12] = 0;
+  out[13] = 0;
+  out[15] = 0;
+  if (far != null && far !== Infinity) {
+    var nf = 1 / (near - far);
+    out[10] = far * nf;
+    out[14] = far * near * nf;
+  } else {
+    out[10] = -1;
+    out[14] = -near;
+  }
+  return out;
+}
+
 /**
  * Generates a perspective projection matrix with the given field of view.
  * This is primarily useful for generating projection matrices to be used
@@ -3260,7 +3375,6 @@ function perspective$1(out, fovy, aspect, near, far) {
  * @param {number} far Far bound of the frustum
  * @returns {mat4} out
  */
-
 function perspectiveFromFieldOfView(out, fov, near, far) {
   var upTan = Math.tan(fov.upDegrees * Math.PI / 180.0);
   var downTan = Math.tan(fov.downDegrees * Math.PI / 180.0);
@@ -3286,8 +3400,11 @@ function perspectiveFromFieldOfView(out, fov, near, far) {
   out[15] = 0.0;
   return out;
 }
+
 /**
- * Generates a orthogonal projection matrix with the given bounds
+ * Generates a orthogonal projection matrix with the given bounds.
+ * The near/far clip planes correspond to a normalized device coordinate Z range of [-1, 1],
+ * which matches WebGL/OpenGL's clip volume.
  *
  * @param {mat4} out mat4 frustum matrix will be written into
  * @param {number} left Left bound of the frustum
@@ -3298,8 +3415,7 @@ function perspectiveFromFieldOfView(out, fov, near, far) {
  * @param {number} far Far bound of the frustum
  * @returns {mat4} out
  */
-
-function ortho$1(out, left, right, bottom, top, near, far) {
+function orthoNO(out, left, right, bottom, top, near, far) {
   var lr = 1 / (left - right);
   var bt = 1 / (bottom - top);
   var nf = 1 / (near - far);
@@ -3321,6 +3437,50 @@ function ortho$1(out, left, right, bottom, top, near, far) {
   out[15] = 1;
   return out;
 }
+
+/**
+ * Alias for {@link mat4.orthoNO}
+ * @function
+ */
+var ortho$1 = orthoNO;
+
+/**
+ * Generates a orthogonal projection matrix with the given bounds.
+ * The near/far clip planes correspond to a normalized device coordinate Z range of [0, 1],
+ * which matches WebGPU/Vulkan/DirectX/Metal's clip volume.
+ *
+ * @param {mat4} out mat4 frustum matrix will be written into
+ * @param {number} left Left bound of the frustum
+ * @param {number} right Right bound of the frustum
+ * @param {number} bottom Bottom bound of the frustum
+ * @param {number} top Top bound of the frustum
+ * @param {number} near Near bound of the frustum
+ * @param {number} far Far bound of the frustum
+ * @returns {mat4} out
+ */
+function orthoZO(out, left, right, bottom, top, near, far) {
+  var lr = 1 / (left - right);
+  var bt = 1 / (bottom - top);
+  var nf = 1 / (near - far);
+  out[0] = -2 * lr;
+  out[1] = 0;
+  out[2] = 0;
+  out[3] = 0;
+  out[4] = 0;
+  out[5] = -2 * bt;
+  out[6] = 0;
+  out[7] = 0;
+  out[8] = 0;
+  out[9] = 0;
+  out[10] = nf;
+  out[11] = 0;
+  out[12] = (left + right) * lr;
+  out[13] = (top + bottom) * bt;
+  out[14] = near * nf;
+  out[15] = 1;
+  return out;
+}
+
 /**
  * Generates a look-at matrix with the given eye position, focal point, and up axis.
  * If you want a matrix that actually makes an object look at another object, you should use targetTo instead.
@@ -3331,7 +3491,6 @@ function ortho$1(out, left, right, bottom, top, near, far) {
  * @param {ReadonlyVec3} up vec3 pointing up
  * @returns {mat4} out
  */
-
 function lookAt$1(out, eye, center, up) {
   var x0, x1, x2, y0, y1, y2, z0, z1, z2, len;
   var eyex = eye[0];
@@ -3343,23 +3502,20 @@ function lookAt$1(out, eye, center, up) {
   var centerx = center[0];
   var centery = center[1];
   var centerz = center[2];
-
   if (Math.abs(eyex - centerx) < EPSILON && Math.abs(eyey - centery) < EPSILON && Math.abs(eyez - centerz) < EPSILON) {
     return identity$3(out);
   }
-
   z0 = eyex - centerx;
   z1 = eyey - centery;
   z2 = eyez - centerz;
-  len = 1 / Math.hypot(z0, z1, z2);
+  len = 1 / Math.sqrt(z0 * z0 + z1 * z1 + z2 * z2);
   z0 *= len;
   z1 *= len;
   z2 *= len;
   x0 = upy * z2 - upz * z1;
   x1 = upz * z0 - upx * z2;
   x2 = upx * z1 - upy * z0;
-  len = Math.hypot(x0, x1, x2);
-
+  len = Math.sqrt(x0 * x0 + x1 * x1 + x2 * x2);
   if (!len) {
     x0 = 0;
     x1 = 0;
@@ -3370,12 +3526,10 @@ function lookAt$1(out, eye, center, up) {
     x1 *= len;
     x2 *= len;
   }
-
   y0 = z1 * x2 - z2 * x1;
   y1 = z2 * x0 - z0 * x2;
   y2 = z0 * x1 - z1 * x0;
-  len = Math.hypot(y0, y1, y2);
-
+  len = Math.sqrt(y0 * y0 + y1 * y1 + y2 * y2);
   if (!len) {
     y0 = 0;
     y1 = 0;
@@ -3386,7 +3540,6 @@ function lookAt$1(out, eye, center, up) {
     y1 *= len;
     y2 *= len;
   }
-
   out[0] = x0;
   out[1] = y0;
   out[2] = z0;
@@ -3405,47 +3558,43 @@ function lookAt$1(out, eye, center, up) {
   out[15] = 1;
   return out;
 }
+
 /**
  * Generates a matrix that makes something look at something else.
  *
  * @param {mat4} out mat4 frustum matrix will be written into
  * @param {ReadonlyVec3} eye Position of the viewer
- * @param {ReadonlyVec3} center Point the viewer is looking at
+ * @param {ReadonlyVec3} target Point the viewer is looking at
  * @param {ReadonlyVec3} up vec3 pointing up
  * @returns {mat4} out
  */
-
 function targetTo(out, eye, target, up) {
   var eyex = eye[0],
-      eyey = eye[1],
-      eyez = eye[2],
-      upx = up[0],
-      upy = up[1],
-      upz = up[2];
+    eyey = eye[1],
+    eyez = eye[2],
+    upx = up[0],
+    upy = up[1],
+    upz = up[2];
   var z0 = eyex - target[0],
-      z1 = eyey - target[1],
-      z2 = eyez - target[2];
+    z1 = eyey - target[1],
+    z2 = eyez - target[2];
   var len = z0 * z0 + z1 * z1 + z2 * z2;
-
   if (len > 0) {
     len = 1 / Math.sqrt(len);
     z0 *= len;
     z1 *= len;
     z2 *= len;
   }
-
   var x0 = upy * z2 - upz * z1,
-      x1 = upz * z0 - upx * z2,
-      x2 = upx * z1 - upy * z0;
+    x1 = upz * z0 - upx * z2,
+    x2 = upx * z1 - upy * z0;
   len = x0 * x0 + x1 * x1 + x2 * x2;
-
   if (len > 0) {
     len = 1 / Math.sqrt(len);
     x0 *= len;
     x1 *= len;
     x2 *= len;
   }
-
   out[0] = x0;
   out[1] = x1;
   out[2] = x2;
@@ -3464,26 +3613,27 @@ function targetTo(out, eye, target, up) {
   out[15] = 1;
   return out;
 }
+
 /**
  * Returns a string representation of a mat4
  *
  * @param {ReadonlyMat4} a matrix to represent as a string
  * @returns {String} string representation of the matrix
  */
-
 function str$5(a) {
   return "mat4(" + a[0] + ", " + a[1] + ", " + a[2] + ", " + a[3] + ", " + a[4] + ", " + a[5] + ", " + a[6] + ", " + a[7] + ", " + a[8] + ", " + a[9] + ", " + a[10] + ", " + a[11] + ", " + a[12] + ", " + a[13] + ", " + a[14] + ", " + a[15] + ")";
 }
+
 /**
  * Returns Frobenius norm of a mat4
  *
  * @param {ReadonlyMat4} a the matrix to calculate Frobenius norm of
  * @returns {Number} Frobenius norm
  */
-
 function frob(a) {
-  return Math.hypot(a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7], a[8], a[9], a[10], a[11], a[12], a[13], a[14], a[15]);
+  return Math.sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2] + a[3] * a[3] + a[4] * a[4] + a[5] * a[5] + a[6] * a[6] + a[7] * a[7] + a[8] * a[8] + a[9] * a[9] + a[10] * a[10] + a[11] * a[11] + a[12] * a[12] + a[13] * a[13] + a[14] * a[14] + a[15] * a[15]);
 }
+
 /**
  * Adds two mat4's
  *
@@ -3492,7 +3642,6 @@ function frob(a) {
  * @param {ReadonlyMat4} b the second operand
  * @returns {mat4} out
  */
-
 function add$6(out, a, b) {
   out[0] = a[0] + b[0];
   out[1] = a[1] + b[1];
@@ -3512,6 +3661,7 @@ function add$6(out, a, b) {
   out[15] = a[15] + b[15];
   return out;
 }
+
 /**
  * Subtracts matrix b from matrix a
  *
@@ -3520,7 +3670,6 @@ function add$6(out, a, b) {
  * @param {ReadonlyMat4} b the second operand
  * @returns {mat4} out
  */
-
 function subtract$4(out, a, b) {
   out[0] = a[0] - b[0];
   out[1] = a[1] - b[1];
@@ -3540,6 +3689,7 @@ function subtract$4(out, a, b) {
   out[15] = a[15] - b[15];
   return out;
 }
+
 /**
  * Multiply each element of the matrix by a scalar.
  *
@@ -3548,7 +3698,6 @@ function subtract$4(out, a, b) {
  * @param {Number} b amount to scale the matrix's elements by
  * @returns {mat4} out
  */
-
 function multiplyScalar(out, a, b) {
   out[0] = a[0] * b;
   out[1] = a[1] * b;
@@ -3568,6 +3717,7 @@ function multiplyScalar(out, a, b) {
   out[15] = a[15] * b;
   return out;
 }
+
 /**
  * Adds two mat4's after multiplying each element of the second operand by a scalar value.
  *
@@ -3577,7 +3727,6 @@ function multiplyScalar(out, a, b) {
  * @param {Number} scale the amount to scale b's elements by before adding
  * @returns {mat4} out
  */
-
 function multiplyScalarAndAdd(out, a, b, scale) {
   out[0] = a[0] + b[0] * scale;
   out[1] = a[1] + b[1] * scale;
@@ -3597,6 +3746,7 @@ function multiplyScalarAndAdd(out, a, b, scale) {
   out[15] = a[15] + b[15] * scale;
   return out;
 }
+
 /**
  * Returns whether or not the matrices have exactly the same elements in the same position (when compared with ===)
  *
@@ -3604,10 +3754,10 @@ function multiplyScalarAndAdd(out, a, b, scale) {
  * @param {ReadonlyMat4} b The second matrix.
  * @returns {Boolean} True if the matrices are equal, false otherwise.
  */
-
 function exactEquals$5(a, b) {
   return a[0] === b[0] && a[1] === b[1] && a[2] === b[2] && a[3] === b[3] && a[4] === b[4] && a[5] === b[5] && a[6] === b[6] && a[7] === b[7] && a[8] === b[8] && a[9] === b[9] && a[10] === b[10] && a[11] === b[11] && a[12] === b[12] && a[13] === b[13] && a[14] === b[14] && a[15] === b[15];
 }
+
 /**
  * Returns whether or not the matrices have approximately the same elements in the same position.
  *
@@ -3615,58 +3765,57 @@ function exactEquals$5(a, b) {
  * @param {ReadonlyMat4} b The second matrix.
  * @returns {Boolean} True if the matrices are equal, false otherwise.
  */
-
 function equals$5(a, b) {
   var a0 = a[0],
-      a1 = a[1],
-      a2 = a[2],
-      a3 = a[3];
+    a1 = a[1],
+    a2 = a[2],
+    a3 = a[3];
   var a4 = a[4],
-      a5 = a[5],
-      a6 = a[6],
-      a7 = a[7];
+    a5 = a[5],
+    a6 = a[6],
+    a7 = a[7];
   var a8 = a[8],
-      a9 = a[9],
-      a10 = a[10],
-      a11 = a[11];
+    a9 = a[9],
+    a10 = a[10],
+    a11 = a[11];
   var a12 = a[12],
-      a13 = a[13],
-      a14 = a[14],
-      a15 = a[15];
+    a13 = a[13],
+    a14 = a[14],
+    a15 = a[15];
   var b0 = b[0],
-      b1 = b[1],
-      b2 = b[2],
-      b3 = b[3];
+    b1 = b[1],
+    b2 = b[2],
+    b3 = b[3];
   var b4 = b[4],
-      b5 = b[5],
-      b6 = b[6],
-      b7 = b[7];
+    b5 = b[5],
+    b6 = b[6],
+    b7 = b[7];
   var b8 = b[8],
-      b9 = b[9],
-      b10 = b[10],
-      b11 = b[11];
+    b9 = b[9],
+    b10 = b[10],
+    b11 = b[11];
   var b12 = b[12],
-      b13 = b[13],
-      b14 = b[14],
-      b15 = b[15];
+    b13 = b[13],
+    b14 = b[14],
+    b15 = b[15];
   return Math.abs(a0 - b0) <= EPSILON * Math.max(1.0, Math.abs(a0), Math.abs(b0)) && Math.abs(a1 - b1) <= EPSILON * Math.max(1.0, Math.abs(a1), Math.abs(b1)) && Math.abs(a2 - b2) <= EPSILON * Math.max(1.0, Math.abs(a2), Math.abs(b2)) && Math.abs(a3 - b3) <= EPSILON * Math.max(1.0, Math.abs(a3), Math.abs(b3)) && Math.abs(a4 - b4) <= EPSILON * Math.max(1.0, Math.abs(a4), Math.abs(b4)) && Math.abs(a5 - b5) <= EPSILON * Math.max(1.0, Math.abs(a5), Math.abs(b5)) && Math.abs(a6 - b6) <= EPSILON * Math.max(1.0, Math.abs(a6), Math.abs(b6)) && Math.abs(a7 - b7) <= EPSILON * Math.max(1.0, Math.abs(a7), Math.abs(b7)) && Math.abs(a8 - b8) <= EPSILON * Math.max(1.0, Math.abs(a8), Math.abs(b8)) && Math.abs(a9 - b9) <= EPSILON * Math.max(1.0, Math.abs(a9), Math.abs(b9)) && Math.abs(a10 - b10) <= EPSILON * Math.max(1.0, Math.abs(a10), Math.abs(b10)) && Math.abs(a11 - b11) <= EPSILON * Math.max(1.0, Math.abs(a11), Math.abs(b11)) && Math.abs(a12 - b12) <= EPSILON * Math.max(1.0, Math.abs(a12), Math.abs(b12)) && Math.abs(a13 - b13) <= EPSILON * Math.max(1.0, Math.abs(a13), Math.abs(b13)) && Math.abs(a14 - b14) <= EPSILON * Math.max(1.0, Math.abs(a14), Math.abs(b14)) && Math.abs(a15 - b15) <= EPSILON * Math.max(1.0, Math.abs(a15), Math.abs(b15));
 }
+
 /**
  * Alias for {@link mat4.multiply}
  * @function
  */
-
 var mul$5 = multiply$7;
+
 /**
  * Alias for {@link mat4.subtract}
  * @function
  */
-
 var sub$3 = subtract$4;
 
 var mat4 = /*#__PURE__*/Object.freeze({
   __proto__: null,
-  create: create$6,
+  create: create$7,
   clone: clone$5,
   copy: copy$7,
   fromValues: fromValues$5,
@@ -3694,13 +3843,18 @@ var mat4 = /*#__PURE__*/Object.freeze({
   getTranslation: getTranslation$2,
   getScaling: getScaling,
   getRotation: getRotation,
+  decompose: decompose,
   fromRotationTranslationScale: fromRotationTranslationScale,
   fromRotationTranslationScaleOrigin: fromRotationTranslationScaleOrigin,
   fromQuat: fromQuat,
   frustum: frustum$1,
+  perspectiveNO: perspectiveNO,
   perspective: perspective$1,
+  perspectiveZO: perspectiveZO,
   perspectiveFromFieldOfView: perspectiveFromFieldOfView,
+  orthoNO: orthoNO,
   ortho: ortho$1,
+  orthoZO: orthoZO,
   lookAt: lookAt$1,
   targetTo: targetTo,
   str: str$5,
@@ -3725,25 +3879,22 @@ var mat4 = /*#__PURE__*/Object.freeze({
  *
  * @returns {vec3} a new 3D vector
  */
-
-function create$5() {
+function create$6() {
   var out = new ARRAY_TYPE(3);
-
   if (ARRAY_TYPE != Float32Array) {
     out[0] = 0;
     out[1] = 0;
     out[2] = 0;
   }
-
   return out;
 }
+
 /**
  * Creates a new vec3 initialized with values from an existing vector
  *
  * @param {ReadonlyVec3} a vector to clone
  * @returns {vec3} a new 3D vector
  */
-
 function clone$4(a) {
   var out = new ARRAY_TYPE(3);
   out[0] = a[0];
@@ -3751,19 +3902,20 @@ function clone$4(a) {
   out[2] = a[2];
   return out;
 }
+
 /**
  * Calculates the length of a vec3
  *
  * @param {ReadonlyVec3} a vector to calculate length of
  * @returns {Number} length of a
  */
-
 function length$6(a) {
   var x = a[0];
   var y = a[1];
   var z = a[2];
-  return Math.hypot(x, y, z);
+  return Math.sqrt(x * x + y * y + z * z);
 }
+
 /**
  * Creates a new vec3 initialized with the given values
  *
@@ -3772,7 +3924,6 @@ function length$6(a) {
  * @param {Number} z Z component
  * @returns {vec3} a new 3D vector
  */
-
 function fromValues$4(x, y, z) {
   var out = new ARRAY_TYPE(3);
   out[0] = x;
@@ -3780,6 +3931,7 @@ function fromValues$4(x, y, z) {
   out[2] = z;
   return out;
 }
+
 /**
  * Copy the values from one vec3 to another
  *
@@ -3787,13 +3939,13 @@ function fromValues$4(x, y, z) {
  * @param {ReadonlyVec3} a the source vector
  * @returns {vec3} out
  */
-
 function copy$6(out, a) {
   out[0] = a[0];
   out[1] = a[1];
   out[2] = a[2];
   return out;
 }
+
 /**
  * Set the components of a vec3 to the given values
  *
@@ -3803,13 +3955,13 @@ function copy$6(out, a) {
  * @param {Number} z Z component
  * @returns {vec3} out
  */
-
 function set$4(out, x, y, z) {
   out[0] = x;
   out[1] = y;
   out[2] = z;
   return out;
 }
+
 /**
  * Adds two vec3's
  *
@@ -3818,13 +3970,13 @@ function set$4(out, x, y, z) {
  * @param {ReadonlyVec3} b the second operand
  * @returns {vec3} out
  */
-
 function add$5(out, a, b) {
   out[0] = a[0] + b[0];
   out[1] = a[1] + b[1];
   out[2] = a[2] + b[2];
   return out;
 }
+
 /**
  * Subtracts vector b from vector a
  *
@@ -3833,13 +3985,13 @@ function add$5(out, a, b) {
  * @param {ReadonlyVec3} b the second operand
  * @returns {vec3} out
  */
-
 function subtract$3(out, a, b) {
   out[0] = a[0] - b[0];
   out[1] = a[1] - b[1];
   out[2] = a[2] - b[2];
   return out;
 }
+
 /**
  * Multiplies two vec3's
  *
@@ -3848,13 +4000,13 @@ function subtract$3(out, a, b) {
  * @param {ReadonlyVec3} b the second operand
  * @returns {vec3} out
  */
-
 function multiply$6(out, a, b) {
   out[0] = a[0] * b[0];
   out[1] = a[1] * b[1];
   out[2] = a[2] * b[2];
   return out;
 }
+
 /**
  * Divides two vec3's
  *
@@ -3863,13 +4015,13 @@ function multiply$6(out, a, b) {
  * @param {ReadonlyVec3} b the second operand
  * @returns {vec3} out
  */
-
 function divide$3(out, a, b) {
   out[0] = a[0] / b[0];
   out[1] = a[1] / b[1];
   out[2] = a[2] / b[2];
   return out;
 }
+
 /**
  * Math.ceil the components of a vec3
  *
@@ -3877,13 +4029,13 @@ function divide$3(out, a, b) {
  * @param {ReadonlyVec3} a vector to ceil
  * @returns {vec3} out
  */
-
 function ceil$2(out, a) {
   out[0] = Math.ceil(a[0]);
   out[1] = Math.ceil(a[1]);
   out[2] = Math.ceil(a[2]);
   return out;
 }
+
 /**
  * Math.floor the components of a vec3
  *
@@ -3891,13 +4043,13 @@ function ceil$2(out, a) {
  * @param {ReadonlyVec3} a vector to floor
  * @returns {vec3} out
  */
-
 function floor$2(out, a) {
   out[0] = Math.floor(a[0]);
   out[1] = Math.floor(a[1]);
   out[2] = Math.floor(a[2]);
   return out;
 }
+
 /**
  * Returns the minimum of two vec3's
  *
@@ -3906,13 +4058,13 @@ function floor$2(out, a) {
  * @param {ReadonlyVec3} b the second operand
  * @returns {vec3} out
  */
-
 function min$3(out, a, b) {
   out[0] = Math.min(a[0], b[0]);
   out[1] = Math.min(a[1], b[1]);
   out[2] = Math.min(a[2], b[2]);
   return out;
 }
+
 /**
  * Returns the maximum of two vec3's
  *
@@ -3921,27 +4073,27 @@ function min$3(out, a, b) {
  * @param {ReadonlyVec3} b the second operand
  * @returns {vec3} out
  */
-
 function max$3(out, a, b) {
   out[0] = Math.max(a[0], b[0]);
   out[1] = Math.max(a[1], b[1]);
   out[2] = Math.max(a[2], b[2]);
   return out;
 }
+
 /**
- * Math.round the components of a vec3
+ * symmetric round the components of a vec3
  *
  * @param {vec3} out the receiving vector
  * @param {ReadonlyVec3} a vector to round
  * @returns {vec3} out
  */
-
 function round$2(out, a) {
-  out[0] = Math.round(a[0]);
-  out[1] = Math.round(a[1]);
-  out[2] = Math.round(a[2]);
+  out[0] = round$3(a[0]);
+  out[1] = round$3(a[1]);
+  out[2] = round$3(a[2]);
   return out;
 }
+
 /**
  * Scales a vec3 by a scalar number
  *
@@ -3950,13 +4102,13 @@ function round$2(out, a) {
  * @param {Number} b amount to scale the vector by
  * @returns {vec3} out
  */
-
 function scale$5(out, a, b) {
   out[0] = a[0] * b;
   out[1] = a[1] * b;
   out[2] = a[2] * b;
   return out;
 }
+
 /**
  * Adds two vec3's after scaling the second operand by a scalar value
  *
@@ -3966,13 +4118,13 @@ function scale$5(out, a, b) {
  * @param {Number} scale the amount to scale b by before adding
  * @returns {vec3} out
  */
-
 function scaleAndAdd$2(out, a, b, scale) {
   out[0] = a[0] + b[0] * scale;
   out[1] = a[1] + b[1] * scale;
   out[2] = a[2] + b[2] * scale;
   return out;
 }
+
 /**
  * Calculates the euclidian distance between two vec3's
  *
@@ -3980,13 +4132,13 @@ function scaleAndAdd$2(out, a, b, scale) {
  * @param {ReadonlyVec3} b the second operand
  * @returns {Number} distance between a and b
  */
-
 function distance$3(a, b) {
   var x = b[0] - a[0];
   var y = b[1] - a[1];
   var z = b[2] - a[2];
-  return Math.hypot(x, y, z);
+  return Math.sqrt(x * x + y * y + z * z);
 }
+
 /**
  * Calculates the squared euclidian distance between two vec3's
  *
@@ -3994,26 +4146,26 @@ function distance$3(a, b) {
  * @param {ReadonlyVec3} b the second operand
  * @returns {Number} squared distance between a and b
  */
-
 function squaredDistance$2(a, b) {
   var x = b[0] - a[0];
   var y = b[1] - a[1];
   var z = b[2] - a[2];
   return x * x + y * y + z * z;
 }
+
 /**
  * Calculates the squared length of a vec3
  *
  * @param {ReadonlyVec3} a vector to calculate squared length of
  * @returns {Number} squared length of a
  */
-
 function squaredLength$4(a) {
   var x = a[0];
   var y = a[1];
   var z = a[2];
   return x * x + y * y + z * z;
 }
+
 /**
  * Negates the components of a vec3
  *
@@ -4021,13 +4173,13 @@ function squaredLength$4(a) {
  * @param {ReadonlyVec3} a vector to negate
  * @returns {vec3} out
  */
-
 function negate$4(out, a) {
   out[0] = -a[0];
   out[1] = -a[1];
   out[2] = -a[2];
   return out;
 }
+
 /**
  * Returns the inverse of the components of a vec3
  *
@@ -4035,13 +4187,13 @@ function negate$4(out, a) {
  * @param {ReadonlyVec3} a vector to invert
  * @returns {vec3} out
  */
-
 function inverse$3(out, a) {
   out[0] = 1.0 / a[0];
   out[1] = 1.0 / a[1];
   out[2] = 1.0 / a[2];
   return out;
 }
+
 /**
  * Normalize a vec3
  *
@@ -4049,23 +4201,21 @@ function inverse$3(out, a) {
  * @param {ReadonlyVec3} a vector to normalize
  * @returns {vec3} out
  */
-
 function normalize$5(out, a) {
   var x = a[0];
   var y = a[1];
   var z = a[2];
   var len = x * x + y * y + z * z;
-
   if (len > 0) {
     //TODO: evaluate use of glm_invsqrt here?
     len = 1 / Math.sqrt(len);
   }
-
   out[0] = a[0] * len;
   out[1] = a[1] * len;
   out[2] = a[2] * len;
   return out;
 }
+
 /**
  * Calculates the dot product of two vec3's
  *
@@ -4073,10 +4223,10 @@ function normalize$5(out, a) {
  * @param {ReadonlyVec3} b the second operand
  * @returns {Number} dot product of a and b
  */
-
 function dot$5(a, b) {
   return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
+
 /**
  * Computes the cross product of two vec3's
  *
@@ -4085,19 +4235,19 @@ function dot$5(a, b) {
  * @param {ReadonlyVec3} b the second operand
  * @returns {vec3} out
  */
-
 function cross$3(out, a, b) {
   var ax = a[0],
-      ay = a[1],
-      az = a[2];
+    ay = a[1],
+    az = a[2];
   var bx = b[0],
-      by = b[1],
-      bz = b[2];
+    by = b[1],
+    bz = b[2];
   out[0] = ay * bz - az * by;
   out[1] = az * bx - ax * bz;
   out[2] = ax * by - ay * bx;
   return out;
 }
+
 /**
  * Performs a linear interpolation between two vec3's
  *
@@ -4107,7 +4257,6 @@ function cross$3(out, a, b) {
  * @param {Number} t interpolation amount, in the range [0-1], between the two inputs
  * @returns {vec3} out
  */
-
 function lerp$5(out, a, b, t) {
   var ax = a[0];
   var ay = a[1];
@@ -4117,6 +4266,27 @@ function lerp$5(out, a, b, t) {
   out[2] = az + t * (b[2] - az);
   return out;
 }
+
+/**
+ * Performs a spherical linear interpolation between two vec3's
+ *
+ * @param {vec3} out the receiving vector
+ * @param {ReadonlyVec3} a the first operand
+ * @param {ReadonlyVec3} b the second operand
+ * @param {Number} t interpolation amount, in the range [0-1], between the two inputs
+ * @returns {vec3} out
+ */
+function slerp$1(out, a, b, t) {
+  var angle = Math.acos(Math.min(Math.max(dot$5(a, b), -1), 1));
+  var sinTotal = Math.sin(angle);
+  var ratioA = Math.sin((1 - t) * angle) / sinTotal;
+  var ratioB = Math.sin(t * angle) / sinTotal;
+  out[0] = ratioA * a[0] + ratioB * b[0];
+  out[1] = ratioA * a[1] + ratioB * b[1];
+  out[2] = ratioA * a[2] + ratioB * b[2];
+  return out;
+}
+
 /**
  * Performs a hermite interpolation with two control points
  *
@@ -4128,7 +4298,6 @@ function lerp$5(out, a, b, t) {
  * @param {Number} t interpolation amount, in the range [0-1], between the two inputs
  * @returns {vec3} out
  */
-
 function hermite(out, a, b, c, d, t) {
   var factorTimes2 = t * t;
   var factor1 = factorTimes2 * (2 * t - 3) + 1;
@@ -4140,6 +4309,7 @@ function hermite(out, a, b, c, d, t) {
   out[2] = a[2] * factor1 + b[2] * factor2 + c[2] * factor3 + d[2] * factor4;
   return out;
 }
+
 /**
  * Performs a bezier interpolation with two control points
  *
@@ -4151,7 +4321,6 @@ function hermite(out, a, b, c, d, t) {
  * @param {Number} t interpolation amount, in the range [0-1], between the two inputs
  * @returns {vec3} out
  */
-
 function bezier(out, a, b, c, d, t) {
   var inverseFactor = 1 - t;
   var inverseFactorTimesTwo = inverseFactor * inverseFactor;
@@ -4165,16 +4334,16 @@ function bezier(out, a, b, c, d, t) {
   out[2] = a[2] * factor1 + b[2] * factor2 + c[2] * factor3 + d[2] * factor4;
   return out;
 }
+
 /**
  * Generates a random vector with the given scale
  *
  * @param {vec3} out the receiving vector
- * @param {Number} [scale] Length of the resulting vector. If ommitted, a unit vector will be returned
+ * @param {Number} [scale] Length of the resulting vector. If omitted, a unit vector will be returned
  * @returns {vec3} out
  */
-
 function random$3(out, scale) {
-  scale = scale || 1.0;
+  scale = scale === undefined ? 1.0 : scale;
   var r = RANDOM() * 2.0 * Math.PI;
   var z = RANDOM() * 2.0 - 1.0;
   var zScale = Math.sqrt(1.0 - z * z) * scale;
@@ -4183,6 +4352,7 @@ function random$3(out, scale) {
   out[2] = z * scale;
   return out;
 }
+
 /**
  * Transforms the vec3 with a mat4.
  * 4th vector component is implicitly '1'
@@ -4192,11 +4362,10 @@ function random$3(out, scale) {
  * @param {ReadonlyMat4} m matrix to transform with
  * @returns {vec3} out
  */
-
 function transformMat4$2(out, a, m) {
   var x = a[0],
-      y = a[1],
-      z = a[2];
+    y = a[1],
+    z = a[2];
   var w = m[3] * x + m[7] * y + m[11] * z + m[15];
   w = w || 1.0;
   out[0] = (m[0] * x + m[4] * y + m[8] * z + m[12]) / w;
@@ -4204,6 +4373,7 @@ function transformMat4$2(out, a, m) {
   out[2] = (m[2] * x + m[6] * y + m[10] * z + m[14]) / w;
   return out;
 }
+
 /**
  * Transforms the vec3 with a mat3.
  *
@@ -4212,59 +4382,54 @@ function transformMat4$2(out, a, m) {
  * @param {ReadonlyMat3} m the 3x3 matrix to transform with
  * @returns {vec3} out
  */
-
 function transformMat3$1(out, a, m) {
   var x = a[0],
-      y = a[1],
-      z = a[2];
+    y = a[1],
+    z = a[2];
   out[0] = x * m[0] + y * m[3] + z * m[6];
   out[1] = x * m[1] + y * m[4] + z * m[7];
   out[2] = x * m[2] + y * m[5] + z * m[8];
   return out;
 }
+
 /**
  * Transforms the vec3 with a quat
  * Can also be used for dual quaternions. (Multiply it with the real part)
  *
  * @param {vec3} out the receiving vector
  * @param {ReadonlyVec3} a the vector to transform
- * @param {ReadonlyQuat} q quaternion to transform with
+ * @param {ReadonlyQuat} q normalized quaternion to transform with
  * @returns {vec3} out
  */
-
 function transformQuat$1(out, a, q) {
-  // benchmarks: https://jsperf.com/quaternion-transform-vec3-implementations-fixed
+  // Fast Vector Rotation using Quaternions by Robert Eisele
+  // https://raw.org/proof/vector-rotation-using-quaternions/
+
   var qx = q[0],
-      qy = q[1],
-      qz = q[2],
-      qw = q[3];
-  var x = a[0],
-      y = a[1],
-      z = a[2]; // var qvec = [qx, qy, qz];
-  // var uv = vec3.cross([], qvec, a);
+    qy = q[1],
+    qz = q[2],
+    qw = q[3];
+  var vx = a[0],
+    vy = a[1],
+    vz = a[2];
 
-  var uvx = qy * z - qz * y,
-      uvy = qz * x - qx * z,
-      uvz = qx * y - qy * x; // var uuv = vec3.cross([], qvec, uv);
+  // t = q x v
+  var tx = qy * vz - qz * vy;
+  var ty = qz * vx - qx * vz;
+  var tz = qx * vy - qy * vx;
 
-  var uuvx = qy * uvz - qz * uvy,
-      uuvy = qz * uvx - qx * uvz,
-      uuvz = qx * uvy - qy * uvx; // vec3.scale(uv, uv, 2 * w);
+  // t = 2t
+  tx = tx + tx;
+  ty = ty + ty;
+  tz = tz + tz;
 
-  var w2 = qw * 2;
-  uvx *= w2;
-  uvy *= w2;
-  uvz *= w2; // vec3.scale(uuv, uuv, 2);
-
-  uuvx *= 2;
-  uuvy *= 2;
-  uuvz *= 2; // return vec3.add(out, a, vec3.add(out, uv, uuv));
-
-  out[0] = x + uvx + uuvx;
-  out[1] = y + uvy + uuvy;
-  out[2] = z + uvz + uuvz;
+  // v + w t + q x t
+  out[0] = vx + qw * tx + qy * tz - qz * ty;
+  out[1] = vy + qw * ty + qz * tx - qx * tz;
+  out[2] = vz + qw * tz + qx * ty - qy * tx;
   return out;
 }
+
 /**
  * Rotate a 3D vector around the x-axis
  * @param {vec3} out The receiving vec3
@@ -4273,24 +4438,26 @@ function transformQuat$1(out, a, q) {
  * @param {Number} rad The angle of rotation in radians
  * @returns {vec3} out
  */
-
 function rotateX$3(out, a, b, rad) {
   var p = [],
-      r = []; //Translate point to the origin
-
+    r = [];
+  //Translate point to the origin
   p[0] = a[0] - b[0];
   p[1] = a[1] - b[1];
-  p[2] = a[2] - b[2]; //perform rotation
+  p[2] = a[2] - b[2];
 
+  //perform rotation
   r[0] = p[0];
   r[1] = p[1] * Math.cos(rad) - p[2] * Math.sin(rad);
-  r[2] = p[1] * Math.sin(rad) + p[2] * Math.cos(rad); //translate to correct position
+  r[2] = p[1] * Math.sin(rad) + p[2] * Math.cos(rad);
 
+  //translate to correct position
   out[0] = r[0] + b[0];
   out[1] = r[1] + b[1];
   out[2] = r[2] + b[2];
   return out;
 }
+
 /**
  * Rotate a 3D vector around the y-axis
  * @param {vec3} out The receiving vec3
@@ -4299,24 +4466,26 @@ function rotateX$3(out, a, b, rad) {
  * @param {Number} rad The angle of rotation in radians
  * @returns {vec3} out
  */
-
 function rotateY$3(out, a, b, rad) {
   var p = [],
-      r = []; //Translate point to the origin
-
+    r = [];
+  //Translate point to the origin
   p[0] = a[0] - b[0];
   p[1] = a[1] - b[1];
-  p[2] = a[2] - b[2]; //perform rotation
+  p[2] = a[2] - b[2];
 
+  //perform rotation
   r[0] = p[2] * Math.sin(rad) + p[0] * Math.cos(rad);
   r[1] = p[1];
-  r[2] = p[2] * Math.cos(rad) - p[0] * Math.sin(rad); //translate to correct position
+  r[2] = p[2] * Math.cos(rad) - p[0] * Math.sin(rad);
 
+  //translate to correct position
   out[0] = r[0] + b[0];
   out[1] = r[1] + b[1];
   out[2] = r[2] + b[2];
   return out;
 }
+
 /**
  * Rotate a 3D vector around the z-axis
  * @param {vec3} out The receiving vec3
@@ -4325,67 +4494,67 @@ function rotateY$3(out, a, b, rad) {
  * @param {Number} rad The angle of rotation in radians
  * @returns {vec3} out
  */
-
 function rotateZ$3(out, a, b, rad) {
   var p = [],
-      r = []; //Translate point to the origin
-
+    r = [];
+  //Translate point to the origin
   p[0] = a[0] - b[0];
   p[1] = a[1] - b[1];
-  p[2] = a[2] - b[2]; //perform rotation
+  p[2] = a[2] - b[2];
 
+  //perform rotation
   r[0] = p[0] * Math.cos(rad) - p[1] * Math.sin(rad);
   r[1] = p[0] * Math.sin(rad) + p[1] * Math.cos(rad);
-  r[2] = p[2]; //translate to correct position
+  r[2] = p[2];
 
+  //translate to correct position
   out[0] = r[0] + b[0];
   out[1] = r[1] + b[1];
   out[2] = r[2] + b[2];
   return out;
 }
+
 /**
  * Get the angle between two 3D vectors
  * @param {ReadonlyVec3} a The first operand
  * @param {ReadonlyVec3} b The second operand
  * @returns {Number} The angle in radians
  */
-
 function angle$1(a, b) {
   var ax = a[0],
-      ay = a[1],
-      az = a[2],
-      bx = b[0],
-      by = b[1],
-      bz = b[2],
-      mag1 = Math.sqrt(ax * ax + ay * ay + az * az),
-      mag2 = Math.sqrt(bx * bx + by * by + bz * bz),
-      mag = mag1 * mag2,
-      cosine = mag && dot$5(a, b) / mag;
+    ay = a[1],
+    az = a[2],
+    bx = b[0],
+    by = b[1],
+    bz = b[2],
+    mag = Math.sqrt((ax * ax + ay * ay + az * az) * (bx * bx + by * by + bz * bz)),
+    cosine = mag && dot$5(a, b) / mag;
   return Math.acos(Math.min(Math.max(cosine, -1), 1));
 }
+
 /**
  * Set the components of a vec3 to zero
  *
  * @param {vec3} out the receiving vector
  * @returns {vec3} out
  */
-
 function zero$2(out) {
   out[0] = 0.0;
   out[1] = 0.0;
   out[2] = 0.0;
   return out;
 }
+
 /**
  * Returns a string representation of a vector
  *
  * @param {ReadonlyVec3} a vector to represent as a string
  * @returns {String} string representation of the vector
  */
-
 function str$4(a) {
   return "vec3(" + a[0] + ", " + a[1] + ", " + a[2] + ")";
 }
+
 /**
  * Returns whether or not the vectors have exactly the same elements in the same position (when compared with ===)
  *
@@ -4393,10 +4562,10 @@ function str$4(a) {
  * @param {ReadonlyVec3} b The second vector.
  * @returns {Boolean} True if the vectors are equal, false otherwise.
  */
-
 function exactEquals$4(a, b) {
   return a[0] === b[0] && a[1] === b[1] && a[2] === b[2];
 }
+
 /**
  * Returns whether or not the vectors have approximately the same elements in the same position.
  *
@@ -4404,58 +4573,58 @@ function exactEquals$4(a, b) {
  * @param {ReadonlyVec3} b The second vector.
  * @returns {Boolean} True if the vectors are equal, false otherwise.
  */
-
 function equals$4(a, b) {
   var a0 = a[0],
-      a1 = a[1],
-      a2 = a[2];
+    a1 = a[1],
+    a2 = a[2];
   var b0 = b[0],
-      b1 = b[1],
-      b2 = b[2];
+    b1 = b[1],
+    b2 = b[2];
   return Math.abs(a0 - b0) <= EPSILON * Math.max(1.0, Math.abs(a0), Math.abs(b0)) && Math.abs(a1 - b1) <= EPSILON * Math.max(1.0, Math.abs(a1), Math.abs(b1)) && Math.abs(a2 - b2) <= EPSILON * Math.max(1.0, Math.abs(a2), Math.abs(b2));
 }
+
 /**
  * Alias for {@link vec3.subtract}
  * @function
  */
-
 var sub$2 = subtract$3;
+
 /**
  * Alias for {@link vec3.multiply}
  * @function
  */
-
 var mul$4 = multiply$6;
+
 /**
  * Alias for {@link vec3.divide}
  * @function
  */
-
 var div$2 = divide$3;
+
 /**
  * Alias for {@link vec3.distance}
  * @function
  */
-
 var dist$2 = distance$3;
+
 /**
  * Alias for {@link vec3.squaredDistance}
  * @function
  */
-
 var sqrDist$2 = squaredDistance$2;
+
 /**
  * Alias for {@link vec3.length}
  * @function
  */
-
 var len$4 = length$6;
+
 /**
  * Alias for {@link vec3.squaredLength}
  * @function
  */
-
 var sqrLen$4 = squaredLength$4;
+
 /**
  * Perform some operation over an array of vec3s.
  *
@@ -4468,26 +4637,21 @@ var sqrLen$4 = squaredLength$4;
  * @returns {Array} a
  * @function
  */
-
 var forEach$3 = function () {
-  var vec = create$5();
+  var vec = create$6();
   return function (a, stride, offset, count, fn, arg) {
     var i, l;
-
     if (!stride) {
       stride = 3;
     }
-
     if (!offset) {
       offset = 0;
     }
-
     if (count) {
       l = Math.min(count * stride + offset, a.length);
     } else {
       l = a.length;
     }
-
     for (i = offset; i < l; i += stride) {
       vec[0] = a[i];
       vec[1] = a[i + 1];
@@ -4497,14 +4661,13 @@ var forEach$3 = function () {
       a[i + 1] = vec[1];
       a[i + 2] = vec[2];
     }
-
     return a;
   };
 }();
 
 var vec3 = /*#__PURE__*/Object.freeze({
   __proto__: null,
-  create: create$5,
+  create: create$6,
   clone: clone$4,
   length: length$6,
   fromValues: fromValues$4,
@@ -4530,6 +4693,7 @@ var vec3 = /*#__PURE__*/Object.freeze({
   dot: dot$5,
   cross: cross$3,
   lerp: lerp$5,
+  slerp: slerp$1,
   hermite: hermite,
   bezier: bezier,
   random: random$3,
@@ -4564,26 +4728,23 @@ var vec3 = /*#__PURE__*/Object.freeze({
  *
  * @returns {vec4} a new 4D vector
  */
-
-function create$4() {
+function create$5() {
   var out = new ARRAY_TYPE(4);
-
   if (ARRAY_TYPE != Float32Array) {
     out[0] = 0;
     out[1] = 0;
     out[2] = 0;
     out[3] = 0;
   }
-
   return out;
 }
+
 /**
  * Creates a new vec4 initialized with values from an existing vector
  *
  * @param {ReadonlyVec4} a vector to clone
  * @returns {vec4} a new 4D vector
  */
-
 function clone$3(a) {
   var out = new ARRAY_TYPE(4);
   out[0] = a[0];
@@ -4592,6 +4753,7 @@ function clone$3(a) {
   out[3] = a[3];
   return out;
 }
+
 /**
  * Creates a new vec4 initialized with the given values
  *
@@ -4601,7 +4763,6 @@ function clone$3(a) {
  * @param {Number} w W component
  * @returns {vec4} a new 4D vector
  */
-
 function fromValues$3(x, y, z, w) {
   var out = new ARRAY_TYPE(4);
   out[0] = x;
@@ -4610,6 +4771,7 @@ function fromValues$3(x, y, z, w) {
   out[3] = w;
   return out;
 }
+
 /**
  * Copy the values from one vec4 to another
  *
@@ -4617,7 +4779,6 @@ function fromValues$3(x, y, z, w) {
  * @param {ReadonlyVec4} a the source vector
  * @returns {vec4} out
  */
-
 function copy$5(out, a) {
   out[0] = a[0];
   out[1] = a[1];
@@ -4625,6 +4786,7 @@ function copy$5(out, a) {
   out[3] = a[3];
   return out;
 }
+
 /**
  * Set the components of a vec4 to the given values
  *
@@ -4635,7 +4797,6 @@ function copy$5(out, a) {
  * @param {Number} w W component
  * @returns {vec4} out
  */
-
 function set$3(out, x, y, z, w) {
   out[0] = x;
   out[1] = y;
@@ -4643,6 +4804,7 @@ function set$3(out, x, y, z, w) {
   out[3] = w;
   return out;
 }
+
 /**
  * Adds two vec4's
  *
@@ -4651,7 +4813,6 @@ function set$3(out, x, y, z, w) {
  * @param {ReadonlyVec4} b the second operand
  * @returns {vec4} out
  */
-
 function add$4(out, a, b) {
   out[0] = a[0] + b[0];
   out[1] = a[1] + b[1];
@@ -4659,6 +4820,7 @@ function add$4(out, a, b) {
   out[3] = a[3] + b[3];
   return out;
 }
+
 /**
  * Subtracts vector b from vector a
  *
@@ -4667,7 +4829,6 @@ function add$4(out, a, b) {
  * @param {ReadonlyVec4} b the second operand
  * @returns {vec4} out
  */
-
 function subtract$2(out, a, b) {
   out[0] = a[0] - b[0];
   out[1] = a[1] - b[1];
@@ -4675,6 +4836,7 @@ function subtract$2(out, a, b) {
   out[3] = a[3] - b[3];
   return out;
 }
+
 /**
  * Multiplies two vec4's
  *
@@ -4683,7 +4845,6 @@ function subtract$2(out, a, b) {
  * @param {ReadonlyVec4} b the second operand
  * @returns {vec4} out
  */
-
 function multiply$5(out, a, b) {
   out[0] = a[0] * b[0];
   out[1] = a[1] * b[1];
@@ -4691,6 +4852,7 @@ function multiply$5(out, a, b) {
   out[3] = a[3] * b[3];
   return out;
 }
+
 /**
  * Divides two vec4's
  *
@@ -4699,7 +4861,6 @@ function multiply$5(out, a, b) {
  * @param {ReadonlyVec4} b the second operand
  * @returns {vec4} out
  */
-
 function divide$2(out, a, b) {
   out[0] = a[0] / b[0];
   out[1] = a[1] / b[1];
@@ -4707,6 +4868,7 @@ function divide$2(out, a, b) {
   out[3] = a[3] / b[3];
   return out;
 }
+
 /**
  * Math.ceil the components of a vec4
  *
@@ -4714,7 +4876,6 @@ function divide$2(out, a, b) {
  * @param {ReadonlyVec4} a vector to ceil
  * @returns {vec4} out
  */
-
 function ceil$1(out, a) {
   out[0] = Math.ceil(a[0]);
   out[1] = Math.ceil(a[1]);
@@ -4722,6 +4883,7 @@ function ceil$1(out, a) {
   out[3] = Math.ceil(a[3]);
   return out;
 }
+
 /**
  * Math.floor the components of a vec4
  *
@@ -4729,7 +4891,6 @@ function ceil$1(out, a) {
  * @param {ReadonlyVec4} a vector to floor
  * @returns {vec4} out
  */
-
 function floor$1(out, a) {
   out[0] = Math.floor(a[0]);
   out[1] = Math.floor(a[1]);
@@ -4737,6 +4898,7 @@ function floor$1(out, a) {
   out[3] = Math.floor(a[3]);
   return out;
 }
+
 /**
  * Returns the minimum of two vec4's
  *
@@ -4745,7 +4907,6 @@ function floor$1(out, a) {
  * @param {ReadonlyVec4} b the second operand
  * @returns {vec4} out
  */
-
 function min$2(out, a, b) {
   out[0] = Math.min(a[0], b[0]);
   out[1] = Math.min(a[1], b[1]);
@@ -4753,6 +4914,7 @@ function min$2(out, a, b) {
   out[3] = Math.min(a[3], b[3]);
   return out;
 }
+
 /**
  * Returns the maximum of two vec4's
  *
@@ -4761,7 +4923,6 @@ function min$2(out, a, b) {
  * @param {ReadonlyVec4} b the second operand
  * @returns {vec4} out
  */
-
 function max$2(out, a, b) {
   out[0] = Math.max(a[0], b[0]);
   out[1] = Math.max(a[1], b[1]);
@@ -4769,21 +4930,22 @@ function max$2(out, a, b) {
   out[3] = Math.max(a[3], b[3]);
   return out;
 }
+
 /**
- * Math.round the components of a vec4
+ * symmetric round the components of a vec4
  *
  * @param {vec4} out the receiving vector
  * @param {ReadonlyVec4} a vector to round
  * @returns {vec4} out
  */
-
 function round$1(out, a) {
-  out[0] = Math.round(a[0]);
-  out[1] = Math.round(a[1]);
-  out[2] = Math.round(a[2]);
-  out[3] = Math.round(a[3]);
+  out[0] = round$3(a[0]);
+  out[1] = round$3(a[1]);
+  out[2] = round$3(a[2]);
+  out[3] = round$3(a[3]);
   return out;
 }
+
 /**
  * Scales a vec4 by a scalar number
  *
@@ -4792,7 +4954,6 @@ function round$1(out, a) {
  * @param {Number} b amount to scale the vector by
  * @returns {vec4} out
  */
-
 function scale$4(out, a, b) {
   out[0] = a[0] * b;
   out[1] = a[1] * b;
@@ -4800,6 +4961,7 @@ function scale$4(out, a, b) {
   out[3] = a[3] * b;
   return out;
 }
+
 /**
  * Adds two vec4's after scaling the second operand by a scalar value
  *
@@ -4809,7 +4971,6 @@ function scale$4(out, a, b) {
  * @param {Number} scale the amount to scale b by before adding
  * @returns {vec4} out
  */
-
 function scaleAndAdd$1(out, a, b, scale) {
   out[0] = a[0] + b[0] * scale;
   out[1] = a[1] + b[1] * scale;
@@ -4817,6 +4978,7 @@ function scaleAndAdd$1(out, a, b, scale) {
   out[3] = a[3] + b[3] * scale;
   return out;
 }
+
 /**
  * Calculates the euclidian distance between two vec4's
  *
@@ -4824,14 +4986,14 @@ function scaleAndAdd$1(out, a, b, scale) {
  * @param {ReadonlyVec4} b the second operand
  * @returns {Number} distance between a and b
  */
-
 function distance$2(a, b) {
   var x = b[0] - a[0];
   var y = b[1] - a[1];
   var z = b[2] - a[2];
   var w = b[3] - a[3];
-  return Math.hypot(x, y, z, w);
+  return Math.sqrt(x * x + y * y + z * z + w * w);
 }
+
 /**
  * Calculates the squared euclidian distance between two vec4's
  *
@@ -4839,7 +5001,6 @@ function distance$2(a, b) {
  * @param {ReadonlyVec4} b the second operand
  * @returns {Number} squared distance between a and b
  */
-
 function squaredDistance$1(a, b) {
   var x = b[0] - a[0];
   var y = b[1] - a[1];
@@ -4847,27 +5008,27 @@ function squaredDistance$1(a, b) {
   var w = b[3] - a[3];
   return x * x + y * y + z * z + w * w;
 }
+
 /**
  * Calculates the length of a vec4
  *
  * @param {ReadonlyVec4} a vector to calculate length of
  * @returns {Number} length of a
  */
-
 function length$5(a) {
   var x = a[0];
   var y = a[1];
   var z = a[2];
   var w = a[3];
-  return Math.hypot(x, y, z, w);
+  return Math.sqrt(x * x + y * y + z * z + w * w);
 }
+
 /**
  * Calculates the squared length of a vec4
  *
  * @param {ReadonlyVec4} a vector to calculate squared length of
  * @returns {Number} squared length of a
  */
-
 function squaredLength$3(a) {
   var x = a[0];
   var y = a[1];
@@ -4875,6 +5036,7 @@ function squaredLength$3(a) {
   var w = a[3];
   return x * x + y * y + z * z + w * w;
 }
+
 /**
  * Negates the components of a vec4
  *
@@ -4882,7 +5044,6 @@ function squaredLength$3(a) {
  * @param {ReadonlyVec4} a vector to negate
  * @returns {vec4} out
  */
-
 function negate$3(out, a) {
   out[0] = -a[0];
   out[1] = -a[1];
@@ -4890,6 +5051,7 @@ function negate$3(out, a) {
   out[3] = -a[3];
   return out;
 }
+
 /**
  * Returns the inverse of the components of a vec4
  *
@@ -4897,7 +5059,6 @@ function negate$3(out, a) {
  * @param {ReadonlyVec4} a vector to invert
  * @returns {vec4} out
  */
-
 function inverse$2(out, a) {
   out[0] = 1.0 / a[0];
   out[1] = 1.0 / a[1];
@@ -4905,6 +5066,7 @@ function inverse$2(out, a) {
   out[3] = 1.0 / a[3];
   return out;
 }
+
 /**
  * Normalize a vec4
  *
@@ -4912,24 +5074,22 @@ function inverse$2(out, a) {
  * @param {ReadonlyVec4} a vector to normalize
  * @returns {vec4} out
  */
-
 function normalize$4(out, a) {
   var x = a[0];
   var y = a[1];
   var z = a[2];
   var w = a[3];
   var len = x * x + y * y + z * z + w * w;
-
   if (len > 0) {
     len = 1 / Math.sqrt(len);
   }
-
   out[0] = x * len;
   out[1] = y * len;
   out[2] = z * len;
   out[3] = w * len;
   return out;
 }
+
 /**
  * Calculates the dot product of two vec4's
  *
@@ -4937,27 +5097,26 @@ function normalize$4(out, a) {
  * @param {ReadonlyVec4} b the second operand
  * @returns {Number} dot product of a and b
  */
-
 function dot$4(a, b) {
   return a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3];
 }
+
 /**
  * Returns the cross-product of three vectors in a 4-dimensional space
  *
- * @param {ReadonlyVec4} result the receiving vector
- * @param {ReadonlyVec4} U the first vector
- * @param {ReadonlyVec4} V the second vector
- * @param {ReadonlyVec4} W the third vector
+ * @param {ReadonlyVec4} out the receiving vector
+ * @param {ReadonlyVec4} u the first vector
+ * @param {ReadonlyVec4} v the second vector
+ * @param {ReadonlyVec4} w the third vector
  * @returns {vec4} result
  */
-
 function cross$2(out, u, v, w) {
   var A = v[0] * w[1] - v[1] * w[0],
-      B = v[0] * w[2] - v[2] * w[0],
-      C = v[0] * w[3] - v[3] * w[0],
-      D = v[1] * w[2] - v[2] * w[1],
-      E = v[1] * w[3] - v[3] * w[1],
-      F = v[2] * w[3] - v[3] * w[2];
+    B = v[0] * w[2] - v[2] * w[0],
+    C = v[0] * w[3] - v[3] * w[0],
+    D = v[1] * w[2] - v[2] * w[1],
+    E = v[1] * w[3] - v[3] * w[1],
+    F = v[2] * w[3] - v[3] * w[2];
   var G = u[0];
   var H = u[1];
   var I = u[2];
@@ -4968,6 +5127,7 @@ function cross$2(out, u, v, w) {
   out[3] = -(G * D) + H * B - I * A;
   return out;
 }
+
 /**
  * Performs a linear interpolation between two vec4's
  *
@@ -4977,7 +5137,6 @@ function cross$2(out, u, v, w) {
  * @param {Number} t interpolation amount, in the range [0-1], between the two inputs
  * @returns {vec4} out
  */
-
 function lerp$4(out, a, b, t) {
   var ax = a[0];
   var ay = a[1];
@@ -4989,34 +5148,31 @@ function lerp$4(out, a, b, t) {
   out[3] = aw + t * (b[3] - aw);
   return out;
 }
+
 /**
  * Generates a random vector with the given scale
  *
  * @param {vec4} out the receiving vector
- * @param {Number} [scale] Length of the resulting vector. If ommitted, a unit vector will be returned
+ * @param {Number} [scale] Length of the resulting vector. If omitted, a unit vector will be returned
  * @returns {vec4} out
  */
-
 function random$2(out, scale) {
-  scale = scale || 1.0; // Marsaglia, George. Choosing a Point from the Surface of a
+  scale = scale === undefined ? 1.0 : scale;
+
+  // Marsaglia, George. Choosing a Point from the Surface of a
   // Sphere. Ann. Math. Statist. 43 (1972), no. 2, 645--646.
   // http://projecteuclid.org/euclid.aoms/1177692644;
-
   var v1, v2, v3, v4;
   var s1, s2;
-
-  do {
-    v1 = RANDOM() * 2 - 1;
-    v2 = RANDOM() * 2 - 1;
-    s1 = v1 * v1 + v2 * v2;
-  } while (s1 >= 1);
-
-  do {
-    v3 = RANDOM() * 2 - 1;
-    v4 = RANDOM() * 2 - 1;
-    s2 = v3 * v3 + v4 * v4;
-  } while (s2 >= 1);
-
+  var rand;
+  rand = RANDOM();
+  v1 = rand * 2 - 1;
+  v2 = (4 * RANDOM() - 2) * Math.sqrt(rand * -rand + rand);
+  s1 = v1 * v1 + v2 * v2;
+  rand = RANDOM();
+  v3 = rand * 2 - 1;
+  v4 = (4 * RANDOM() - 2) * Math.sqrt(rand * -rand + rand);
+  s2 = v3 * v3 + v4 * v4;
   var d = Math.sqrt((1 - s1) / s2);
   out[0] = scale * v1;
   out[1] = scale * v2;
@@ -5024,6 +5180,7 @@ function random$2(out, scale) {
   out[3] = scale * v4 * d;
   return out;
 }
+
 /**
  * Transforms the vec4 with a mat4.
  *
@@ -5032,54 +5189,62 @@ function random$2(out, scale) {
  * @param {ReadonlyMat4} m matrix to transform with
  * @returns {vec4} out
  */
-
 function transformMat4$1(out, a, m) {
   var x = a[0],
-      y = a[1],
-      z = a[2],
-      w = a[3];
+    y = a[1],
+    z = a[2],
+    w = a[3];
   out[0] = m[0] * x + m[4] * y + m[8] * z + m[12] * w;
   out[1] = m[1] * x + m[5] * y + m[9] * z + m[13] * w;
   out[2] = m[2] * x + m[6] * y + m[10] * z + m[14] * w;
   out[3] = m[3] * x + m[7] * y + m[11] * z + m[15] * w;
   return out;
 }
+
 /**
  * Transforms the vec4 with a quat
  *
  * @param {vec4} out the receiving vector
  * @param {ReadonlyVec4} a the vector to transform
- * @param {ReadonlyQuat} q quaternion to transform with
+ * @param {ReadonlyQuat} q normalized quaternion to transform with
  * @returns {vec4} out
  */
-
 function transformQuat(out, a, q) {
-  var x = a[0],
-      y = a[1],
-      z = a[2];
+  // Fast Vector Rotation using Quaternions by Robert Eisele
+  // https://raw.org/proof/vector-rotation-using-quaternions/
+
   var qx = q[0],
-      qy = q[1],
-      qz = q[2],
-      qw = q[3]; // calculate quat * vec
+    qy = q[1],
+    qz = q[2],
+    qw = q[3];
+  var vx = a[0],
+    vy = a[1],
+    vz = a[2];
 
-  var ix = qw * x + qy * z - qz * y;
-  var iy = qw * y + qz * x - qx * z;
-  var iz = qw * z + qx * y - qy * x;
-  var iw = -qx * x - qy * y - qz * z; // calculate result * inverse quat
+  // t = q x v
+  var tx = qy * vz - qz * vy;
+  var ty = qz * vx - qx * vz;
+  var tz = qx * vy - qy * vx;
 
-  out[0] = ix * qw + iw * -qx + iy * -qz - iz * -qy;
-  out[1] = iy * qw + iw * -qy + iz * -qx - ix * -qz;
-  out[2] = iz * qw + iw * -qz + ix * -qy - iy * -qx;
+  // t = 2t
+  tx = tx + tx;
+  ty = ty + ty;
+  tz = tz + tz;
+
+  // v + w t + q x t
+  out[0] = vx + qw * tx + qy * tz - qz * ty;
+  out[1] = vy + qw * ty + qz * tx - qx * tz;
+  out[2] = vz + qw * tz + qx * ty - qy * tx;
   out[3] = a[3];
   return out;
 }
+
 /**
  * Set the components of a vec4 to zero
  *
  * @param {vec4} out the receiving vector
  * @returns {vec4} out
  */
-
 function zero$1(out) {
   out[0] = 0.0;
   out[1] = 0.0;
@@ -5087,16 +5252,17 @@ function zero$1(out) {
   out[3] = 0.0;
   return out;
 }
+
 /**
  * Returns a string representation of a vector
  *
  * @param {ReadonlyVec4} a vector to represent as a string
  * @returns {String} string representation of the vector
  */
-
 function str$3(a) {
   return "vec4(" + a[0] + ", " + a[1] + ", " + a[2] + ", " + a[3] + ")";
 }
+
 /**
  * Returns whether or not the vectors have exactly the same elements in the same position (when compared with ===)
  *
@@ -5104,10 +5270,10 @@ function str$3(a) {
  * @param {ReadonlyVec4} b The second vector.
  * @returns {Boolean} True if the vectors are equal, false otherwise.
  */
-
 function exactEquals$3(a, b) {
   return a[0] === b[0] && a[1] === b[1] && a[2] === b[2] && a[3] === b[3];
 }
+
 /**
  * Returns whether or not the vectors have approximately the same elements in the same position.
  *
@@ -5115,60 +5281,60 @@ function exactEquals$3(a, b) {
  * @param {ReadonlyVec4} b The second vector.
  * @returns {Boolean} True if the vectors are equal, false otherwise.
  */
-
 function equals$3(a, b) {
   var a0 = a[0],
-      a1 = a[1],
-      a2 = a[2],
-      a3 = a[3];
+    a1 = a[1],
+    a2 = a[2],
+    a3 = a[3];
   var b0 = b[0],
-      b1 = b[1],
-      b2 = b[2],
-      b3 = b[3];
+    b1 = b[1],
+    b2 = b[2],
+    b3 = b[3];
   return Math.abs(a0 - b0) <= EPSILON * Math.max(1.0, Math.abs(a0), Math.abs(b0)) && Math.abs(a1 - b1) <= EPSILON * Math.max(1.0, Math.abs(a1), Math.abs(b1)) && Math.abs(a2 - b2) <= EPSILON * Math.max(1.0, Math.abs(a2), Math.abs(b2)) && Math.abs(a3 - b3) <= EPSILON * Math.max(1.0, Math.abs(a3), Math.abs(b3));
 }
+
 /**
  * Alias for {@link vec4.subtract}
  * @function
  */
-
 var sub$1 = subtract$2;
+
 /**
  * Alias for {@link vec4.multiply}
  * @function
  */
-
 var mul$3 = multiply$5;
+
 /**
  * Alias for {@link vec4.divide}
  * @function
  */
-
 var div$1 = divide$2;
+
 /**
  * Alias for {@link vec4.distance}
  * @function
  */
-
 var dist$1 = distance$2;
+
 /**
  * Alias for {@link vec4.squaredDistance}
  * @function
  */
-
 var sqrDist$1 = squaredDistance$1;
+
 /**
  * Alias for {@link vec4.length}
  * @function
  */
-
 var len$3 = length$5;
+
 /**
  * Alias for {@link vec4.squaredLength}
  * @function
  */
-
 var sqrLen$3 = squaredLength$3;
+
 /**
  * Perform some operation over an array of vec4s.
  *
@@ -5181,26 +5347,21 @@ var sqrLen$3 = squaredLength$3;
  * @returns {Array} a
  * @function
  */
-
 var forEach$2 = function () {
-  var vec = create$4();
+  var vec = create$5();
   return function (a, stride, offset, count, fn, arg) {
     var i, l;
-
     if (!stride) {
       stride = 4;
     }
-
     if (!offset) {
       offset = 0;
     }
-
     if (count) {
       l = Math.min(count * stride + offset, a.length);
     } else {
       l = a.length;
     }
-
     for (i = offset; i < l; i += stride) {
       vec[0] = a[i];
       vec[1] = a[i + 1];
@@ -5212,14 +5373,13 @@ var forEach$2 = function () {
       a[i + 2] = vec[2];
       a[i + 3] = vec[3];
     }
-
     return a;
   };
 }();
 
 var vec4 = /*#__PURE__*/Object.freeze({
   __proto__: null,
-  create: create$4,
+  create: create$5,
   clone: clone$3,
   fromValues: fromValues$3,
   copy: copy$5,
@@ -5263,7 +5423,7 @@ var vec4 = /*#__PURE__*/Object.freeze({
 });
 
 /**
- * Quaternion
+ * Quaternion in the format XYZW
  * @module quat
  */
 
@@ -5272,26 +5432,23 @@ var vec4 = /*#__PURE__*/Object.freeze({
  *
  * @returns {quat} a new quaternion
  */
-
-function create$3() {
+function create$4() {
   var out = new ARRAY_TYPE(4);
-
   if (ARRAY_TYPE != Float32Array) {
     out[0] = 0;
     out[1] = 0;
     out[2] = 0;
   }
-
   out[3] = 1;
   return out;
 }
+
 /**
  * Set a quat to the identity quaternion
  *
  * @param {quat} out the receiving quaternion
  * @returns {quat} out
  */
-
 function identity$2(out) {
   out[0] = 0;
   out[1] = 0;
@@ -5299,6 +5456,7 @@ function identity$2(out) {
   out[3] = 1;
   return out;
 }
+
 /**
  * Sets a quat from the given angle and rotation axis,
  * then returns it.
@@ -5308,7 +5466,6 @@ function identity$2(out) {
  * @param {Number} rad the angle in radians
  * @returns {quat} out
  **/
-
 function setAxisAngle(out, axis, rad) {
   rad = rad * 0.5;
   var s = Math.sin(rad);
@@ -5318,6 +5475,7 @@ function setAxisAngle(out, axis, rad) {
   out[3] = Math.cos(rad);
   return out;
 }
+
 /**
  * Gets the rotation axis and angle for a given
  *  quaternion. If a quaternion is created with
@@ -5331,11 +5489,9 @@ function setAxisAngle(out, axis, rad) {
  * @param  {ReadonlyQuat} q     Quaternion to be decomposed
  * @return {Number}     Angle, in radians, of the rotation
  */
-
 function getAxisAngle(out_axis, q) {
   var rad = Math.acos(q[3]) * 2.0;
   var s = Math.sin(rad / 2.0);
-
   if (s > EPSILON) {
     out_axis[0] = q[0] / s;
     out_axis[1] = q[1] / s;
@@ -5346,9 +5502,9 @@ function getAxisAngle(out_axis, q) {
     out_axis[1] = 0;
     out_axis[2] = 0;
   }
-
   return rad;
 }
+
 /**
  * Gets the angular distance between two unit quaternions
  *
@@ -5356,11 +5512,11 @@ function getAxisAngle(out_axis, q) {
  * @param  {ReadonlyQuat} b     Destination unit quaternion
  * @return {Number}     Angle, in radians, between the two quaternions
  */
-
 function getAngle(a, b) {
   var dotproduct = dot$3(a, b);
   return Math.acos(2 * dotproduct * dotproduct - 1);
 }
+
 /**
  * Multiplies two quat's
  *
@@ -5369,22 +5525,22 @@ function getAngle(a, b) {
  * @param {ReadonlyQuat} b the second operand
  * @returns {quat} out
  */
-
 function multiply$4(out, a, b) {
   var ax = a[0],
-      ay = a[1],
-      az = a[2],
-      aw = a[3];
+    ay = a[1],
+    az = a[2],
+    aw = a[3];
   var bx = b[0],
-      by = b[1],
-      bz = b[2],
-      bw = b[3];
+    by = b[1],
+    bz = b[2],
+    bw = b[3];
   out[0] = ax * bw + aw * bx + ay * bz - az * by;
   out[1] = ay * bw + aw * by + az * bx - ax * bz;
   out[2] = az * bw + aw * bz + ax * by - ay * bx;
   out[3] = aw * bw - ax * bx - ay * by - az * bz;
   return out;
 }
+
 /**
  * Rotates a quaternion by the given angle about the X axis
  *
@@ -5393,21 +5549,21 @@ function multiply$4(out, a, b) {
  * @param {number} rad angle (in radians) to rotate
  * @returns {quat} out
  */
-
 function rotateX$2(out, a, rad) {
   rad *= 0.5;
   var ax = a[0],
-      ay = a[1],
-      az = a[2],
-      aw = a[3];
+    ay = a[1],
+    az = a[2],
+    aw = a[3];
   var bx = Math.sin(rad),
-      bw = Math.cos(rad);
+    bw = Math.cos(rad);
   out[0] = ax * bw + aw * bx;
   out[1] = ay * bw + az * bx;
   out[2] = az * bw - ay * bx;
   out[3] = aw * bw - ax * bx;
   return out;
 }
+
 /**
  * Rotates a quaternion by the given angle about the Y axis
  *
@@ -5416,21 +5572,21 @@ function rotateX$2(out, a, rad) {
  * @param {number} rad angle (in radians) to rotate
  * @returns {quat} out
  */
-
 function rotateY$2(out, a, rad) {
   rad *= 0.5;
   var ax = a[0],
-      ay = a[1],
-      az = a[2],
-      aw = a[3];
+    ay = a[1],
+    az = a[2],
+    aw = a[3];
   var by = Math.sin(rad),
-      bw = Math.cos(rad);
+    bw = Math.cos(rad);
   out[0] = ax * bw - az * by;
   out[1] = ay * bw + aw * by;
   out[2] = az * bw + ax * by;
   out[3] = aw * bw - ay * by;
   return out;
 }
+
 /**
  * Rotates a quaternion by the given angle about the Z axis
  *
@@ -5439,21 +5595,21 @@ function rotateY$2(out, a, rad) {
  * @param {number} rad angle (in radians) to rotate
  * @returns {quat} out
  */
-
 function rotateZ$2(out, a, rad) {
   rad *= 0.5;
   var ax = a[0],
-      ay = a[1],
-      az = a[2],
-      aw = a[3];
+    ay = a[1],
+    az = a[2],
+    aw = a[3];
   var bz = Math.sin(rad),
-      bw = Math.cos(rad);
+    bw = Math.cos(rad);
   out[0] = ax * bw + ay * bz;
   out[1] = ay * bw - ax * bz;
   out[2] = az * bw + aw * bz;
   out[3] = aw * bw - az * bz;
   return out;
 }
+
 /**
  * Calculates the W component of a quat from the X, Y, and Z components.
  * Assumes that quaternion is 1 unit in length.
@@ -5463,17 +5619,17 @@ function rotateZ$2(out, a, rad) {
  * @param {ReadonlyQuat} a quat to calculate W component of
  * @returns {quat} out
  */
-
 function calculateW(out, a) {
   var x = a[0],
-      y = a[1],
-      z = a[2];
+    y = a[1],
+    z = a[2];
   out[0] = x;
   out[1] = y;
   out[2] = z;
   out[3] = Math.sqrt(Math.abs(1.0 - x * x - y * y - z * z));
   return out;
 }
+
 /**
  * Calculate the exponential of a unit quaternion.
  *
@@ -5481,12 +5637,11 @@ function calculateW(out, a) {
  * @param {ReadonlyQuat} a quat to calculate the exponential of
  * @returns {quat} out
  */
-
 function exp(out, a) {
   var x = a[0],
-      y = a[1],
-      z = a[2],
-      w = a[3];
+    y = a[1],
+    z = a[2],
+    w = a[3];
   var r = Math.sqrt(x * x + y * y + z * z);
   var et = Math.exp(w);
   var s = r > 0 ? et * Math.sin(r) / r : 0;
@@ -5496,6 +5651,7 @@ function exp(out, a) {
   out[3] = et * Math.cos(r);
   return out;
 }
+
 /**
  * Calculate the natural logarithm of a unit quaternion.
  *
@@ -5503,12 +5659,11 @@ function exp(out, a) {
  * @param {ReadonlyQuat} a quat to calculate the exponential of
  * @returns {quat} out
  */
-
 function ln(out, a) {
   var x = a[0],
-      y = a[1],
-      z = a[2],
-      w = a[3];
+    y = a[1],
+    z = a[2],
+    w = a[3];
   var r = Math.sqrt(x * x + y * y + z * z);
   var t = r > 0 ? Math.atan2(r, w) / r : 0;
   out[0] = x * t;
@@ -5517,6 +5672,7 @@ function ln(out, a) {
   out[3] = 0.5 * Math.log(x * x + y * y + z * z + w * w);
   return out;
 }
+
 /**
  * Calculate the scalar power of a unit quaternion.
  *
@@ -5525,13 +5681,13 @@ function ln(out, a) {
  * @param {Number} b amount to scale the quaternion by
  * @returns {quat} out
  */
-
 function pow(out, a, b) {
   ln(out, a);
   scale$3(out, out, b);
   exp(out, out);
   return out;
 }
+
 /**
  * Performs a spherical linear interpolation between two quat
  *
@@ -5541,31 +5697,30 @@ function pow(out, a, b) {
  * @param {Number} t interpolation amount, in the range [0-1], between the two inputs
  * @returns {quat} out
  */
-
 function slerp(out, a, b, t) {
   // benchmarks:
   //    http://jsperf.com/quaternion-slerp-implementations
   var ax = a[0],
-      ay = a[1],
-      az = a[2],
-      aw = a[3];
+    ay = a[1],
+    az = a[2],
+    aw = a[3];
   var bx = b[0],
-      by = b[1],
-      bz = b[2],
-      bw = b[3];
-  var omega, cosom, sinom, scale0, scale1; // calc cosine
+    by = b[1],
+    bz = b[2],
+    bw = b[3];
+  var omega, cosom, sinom, scale0, scale1;
 
-  cosom = ax * bx + ay * by + az * bz + aw * bw; // adjust signs (if necessary)
-
+  // calc cosine
+  cosom = ax * bx + ay * by + az * bz + aw * bw;
+  // adjust signs (if necessary)
   if (cosom < 0.0) {
     cosom = -cosom;
     bx = -bx;
     by = -by;
     bz = -bz;
     bw = -bw;
-  } // calculate coefficients
-
-
+  }
+  // calculate coefficients
   if (1.0 - cosom > EPSILON) {
     // standard case (slerp)
     omega = Math.acos(cosom);
@@ -5577,22 +5732,21 @@ function slerp(out, a, b, t) {
     //  ... so we can do a linear interpolation
     scale0 = 1.0 - t;
     scale1 = t;
-  } // calculate final values
-
-
+  }
+  // calculate final values
   out[0] = scale0 * ax + scale1 * bx;
   out[1] = scale0 * ay + scale1 * by;
   out[2] = scale0 * az + scale1 * bz;
   out[3] = scale0 * aw + scale1 * bw;
   return out;
 }
+
 /**
  * Generates a random unit quaternion
  *
  * @param {quat} out the receiving quaternion
  * @returns {quat} out
  */
-
 function random$1(out) {
   // Implementation of http://planning.cs.uiuc.edu/node198.html
   // TODO: Calling random 3 times is probably not the fastest solution
@@ -5607,6 +5761,7 @@ function random$1(out) {
   out[3] = sqrtU1 * Math.cos(2.0 * Math.PI * u3);
   return out;
 }
+
 /**
  * Calculates the inverse of a quat
  *
@@ -5614,14 +5769,15 @@ function random$1(out) {
  * @param {ReadonlyQuat} a quat to calculate inverse of
  * @returns {quat} out
  */
-
 function invert$1(out, a) {
   var a0 = a[0],
-      a1 = a[1],
-      a2 = a[2],
-      a3 = a[3];
+    a1 = a[1],
+    a2 = a[2],
+    a3 = a[3];
   var dot = a0 * a0 + a1 * a1 + a2 * a2 + a3 * a3;
-  var invDot = dot ? 1.0 / dot : 0; // TODO: Would be faster to return [0,0,0,0] immediately if dot == 0
+  var invDot = dot ? 1.0 / dot : 0;
+
+  // TODO: Would be faster to return [0,0,0,0] immediately if dot == 0
 
   out[0] = -a0 * invDot;
   out[1] = -a1 * invDot;
@@ -5629,6 +5785,7 @@ function invert$1(out, a) {
   out[3] = a3 * invDot;
   return out;
 }
+
 /**
  * Calculates the conjugate of a quat
  * If the quaternion is normalized, this function is faster than quat.inverse and produces the same result.
@@ -5637,7 +5794,6 @@ function invert$1(out, a) {
  * @param {ReadonlyQuat} a quat to calculate conjugate of
  * @returns {quat} out
  */
-
 function conjugate$1(out, a) {
   out[0] = -a[0];
   out[1] = -a[1];
@@ -5645,6 +5801,7 @@ function conjugate$1(out, a) {
   out[3] = a[3];
   return out;
 }
+
 /**
  * Creates a quaternion from the given 3x3 rotation matrix.
  *
@@ -5656,20 +5813,16 @@ function conjugate$1(out, a) {
  * @returns {quat} out
  * @function
  */
-
 function fromMat3(out, m) {
   // Algorithm in Ken Shoemake's article in 1987 SIGGRAPH course notes
   // article "Quaternion Calculus and Fast Animation".
   var fTrace = m[0] + m[4] + m[8];
   var fRoot;
-
   if (fTrace > 0.0) {
     // |w| > 1/2, may as well choose w > 1/2
     fRoot = Math.sqrt(fTrace + 1.0); // 2w
-
     out[3] = 0.5 * fRoot;
     fRoot = 0.5 / fRoot; // 1/(4w)
-
     out[0] = (m[5] - m[7]) * fRoot;
     out[1] = (m[6] - m[2]) * fRoot;
     out[2] = (m[1] - m[3]) * fRoot;
@@ -5687,47 +5840,85 @@ function fromMat3(out, m) {
     out[j] = (m[j * 3 + i] + m[i * 3 + j]) * fRoot;
     out[k] = (m[k * 3 + i] + m[i * 3 + k]) * fRoot;
   }
-
   return out;
 }
+
 /**
- * Creates a quaternion from the given euler angle x, y, z.
+ * Creates a quaternion from the given euler angle x, y, z using the provided intrinsic order for the conversion.
  *
  * @param {quat} out the receiving quaternion
- * @param {x} Angle to rotate around X axis in degrees.
- * @param {y} Angle to rotate around Y axis in degrees.
- * @param {z} Angle to rotate around Z axis in degrees.
+ * @param {Number} x Angle to rotate around X axis in degrees.
+ * @param {Number} y Angle to rotate around Y axis in degrees.
+ * @param {Number} z Angle to rotate around Z axis in degrees.
+ * @param {'xyz'|'xzy'|'yxz'|'yzx'|'zxy'|'zyx'} order Intrinsic order for conversion, default is zyx.
  * @returns {quat} out
  * @function
  */
-
 function fromEuler(out, x, y, z) {
-  var halfToRad = 0.5 * Math.PI / 180.0;
+  var order = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : ANGLE_ORDER;
+  var halfToRad = Math.PI / 360;
   x *= halfToRad;
-  y *= halfToRad;
   z *= halfToRad;
+  y *= halfToRad;
   var sx = Math.sin(x);
   var cx = Math.cos(x);
   var sy = Math.sin(y);
   var cy = Math.cos(y);
   var sz = Math.sin(z);
   var cz = Math.cos(z);
-  out[0] = sx * cy * cz - cx * sy * sz;
-  out[1] = cx * sy * cz + sx * cy * sz;
-  out[2] = cx * cy * sz - sx * sy * cz;
-  out[3] = cx * cy * cz + sx * sy * sz;
+  switch (order) {
+    case "xyz":
+      out[0] = sx * cy * cz + cx * sy * sz;
+      out[1] = cx * sy * cz - sx * cy * sz;
+      out[2] = cx * cy * sz + sx * sy * cz;
+      out[3] = cx * cy * cz - sx * sy * sz;
+      break;
+    case "xzy":
+      out[0] = sx * cy * cz - cx * sy * sz;
+      out[1] = cx * sy * cz - sx * cy * sz;
+      out[2] = cx * cy * sz + sx * sy * cz;
+      out[3] = cx * cy * cz + sx * sy * sz;
+      break;
+    case "yxz":
+      out[0] = sx * cy * cz + cx * sy * sz;
+      out[1] = cx * sy * cz - sx * cy * sz;
+      out[2] = cx * cy * sz - sx * sy * cz;
+      out[3] = cx * cy * cz + sx * sy * sz;
+      break;
+    case "yzx":
+      out[0] = sx * cy * cz + cx * sy * sz;
+      out[1] = cx * sy * cz + sx * cy * sz;
+      out[2] = cx * cy * sz - sx * sy * cz;
+      out[3] = cx * cy * cz - sx * sy * sz;
+      break;
+    case "zxy":
+      out[0] = sx * cy * cz - cx * sy * sz;
+      out[1] = cx * sy * cz + sx * cy * sz;
+      out[2] = cx * cy * sz + sx * sy * cz;
+      out[3] = cx * cy * cz - sx * sy * sz;
+      break;
+    case "zyx":
+      out[0] = sx * cy * cz - cx * sy * sz;
+      out[1] = cx * sy * cz + sx * cy * sz;
+      out[2] = cx * cy * sz - sx * sy * cz;
+      out[3] = cx * cy * cz + sx * sy * sz;
+      break;
+    default:
+      throw new Error('Unknown angle order ' + order);
+  }
   return out;
 }
+
 /**
- * Returns a string representation of a quatenion
+ * Returns a string representation of a quaternion
  *
  * @param {ReadonlyQuat} a vector to represent as a string
  * @returns {String} string representation of the vector
  */
-
 function str$2(a) {
   return "quat(" + a[0] + ", " + a[1] + ", " + a[2] + ", " + a[3] + ")";
 }
+
 /**
  * Creates a new quat initialized with values from an existing quaternion
  *
@@ -5735,8 +5926,8 @@ function str$2(a) {
  * @returns {quat} a new quaternion
  * @function
  */
-
 var clone$2 = clone$3;
+
 /**
  * Creates a new quat initialized with the given values
  *
@@ -5747,8 +5938,8 @@ var clone$2 = clone$3;
  * @returns {quat} a new quaternion
  * @function
  */
-
 var fromValues$2 = fromValues$3;
+
 /**
  * Copy the values from one quat to another
  *
@@ -5757,8 +5948,8 @@ var fromValues$2 = fromValues$3;
  * @returns {quat} out
  * @function
  */
-
 var copy$4 = copy$5;
+
 /**
  * Set the components of a quat to the given values
  *
@@ -5770,8 +5961,8 @@ var copy$4 = copy$5;
  * @returns {quat} out
  * @function
  */
-
 var set$2 = set$3;
+
 /**
  * Adds two quat's
  *
@@ -5781,14 +5972,14 @@ var set$2 = set$3;
  * @returns {quat} out
  * @function
  */
-
 var add$3 = add$4;
+
 /**
  * Alias for {@link quat.multiply}
  * @function
  */
-
 var mul$2 = multiply$4;
+
 /**
  * Scales a quat by a scalar number
  *
@@ -5798,8 +5989,8 @@ var mul$2 = multiply$4;
  * @returns {quat} out
  * @function
  */
-
 var scale$3 = scale$4;
+
 /**
  * Calculates the dot product of two quat's
  *
@@ -5808,8 +5999,8 @@ var scale$3 = scale$4;
  * @returns {Number} dot product of a and b
  * @function
  */
-
 var dot$3 = dot$4;
+
 /**
  * Performs a linear interpolation between two quat's
  *
@@ -5820,22 +6011,22 @@ var dot$3 = dot$4;
  * @returns {quat} out
  * @function
  */
-
 var lerp$3 = lerp$4;
+
 /**
  * Calculates the length of a quat
  *
  * @param {ReadonlyQuat} a vector to calculate length of
  * @returns {Number} length of a
  */
-
 var length$4 = length$5;
+
 /**
  * Alias for {@link quat.length}
  * @function
  */
-
 var len$2 = length$4;
+
 /**
  * Calculates the squared length of a quat
  *
@@ -5843,14 +6034,14 @@ var len$2 = length$4;
  * @returns {Number} squared length of a
  * @function
  */
-
 var squaredLength$2 = squaredLength$3;
+
 /**
  * Alias for {@link quat.squaredLength}
  * @function
  */
-
 var sqrLen$2 = squaredLength$2;
+
 /**
  * Normalize a quat
  *
@@ -5859,8 +6050,8 @@ var sqrLen$2 = squaredLength$2;
  * @returns {quat} out
  * @function
  */
-
 var normalize$3 = normalize$4;
+
 /**
  * Returns whether or not the quaternions have exactly the same elements in the same position (when compared with ===)
  *
@@ -5868,17 +6059,21 @@ var normalize$3 = normalize$4;
  * @param {ReadonlyQuat} b The second quaternion.
  * @returns {Boolean} True if the vectors are equal, false otherwise.
  */
-
 var exactEquals$2 = exactEquals$3;
-/**
- * Returns whether or not the quaternions have approximately the same elements in the same position.
- *
- * @param {ReadonlyQuat} a The first vector.
- * @param {ReadonlyQuat} b The second vector.
- * @returns {Boolean} True if the vectors are equal, false otherwise.
- */
 
-var equals$2 = equals$3;
+/**
+ * Returns whether or not the quaternions point approximately to the same direction.
+ *
+ * Both quaternions are assumed to be unit length.
+ *
+ * @param {ReadonlyQuat} a The first unit quaternion.
+ * @param {ReadonlyQuat} b The second unit quaternion.
+ * @returns {Boolean} True if the quaternions are equal, false otherwise.
+ */
+function equals$2(a, b) {
+  return Math.abs(dot$4(a, b)) >= 1 - EPSILON;
+}
+
 /**
  * Sets a quaternion to represent the shortest rotation from one
  * vector to another.
@@ -5890,14 +6085,12 @@ var equals$2 = equals$3;
  * @param {ReadonlyVec3} b the destination vector
  * @returns {quat} out
  */
-
 var rotationTo = function () {
-  var tmpvec3 = create$5();
+  var tmpvec3 = create$6();
   var xUnitVec3 = fromValues$4(1, 0, 0);
   var yUnitVec3 = fromValues$4(0, 1, 0);
   return function (out, a, b) {
     var dot = dot$5(a, b);
-
     if (dot < -0.999999) {
       cross$3(tmpvec3, xUnitVec3, a);
       if (len$4(tmpvec3) < 0.000001) cross$3(tmpvec3, yUnitVec3, a);
@@ -5920,6 +6113,7 @@ var rotationTo = function () {
     }
   };
 }();
+
 /**
  * Performs a spherical linear interpolation with two control points
  *
@@ -5931,10 +6125,9 @@ var rotationTo = function () {
  * @param {Number} t interpolation amount, in the range [0-1], between the two inputs
  * @returns {quat} out
  */
-
 var sqlerp = function () {
-  var temp1 = create$3();
-  var temp2 = create$3();
+  var temp1 = create$4();
+  var temp2 = create$4();
   return function (out, a, b, c, d, t) {
     slerp(temp1, a, d, t);
     slerp(temp2, b, c, t);
@@ -5942,6 +6135,7 @@ var sqlerp = function () {
     return out;
   };
 }();
+
 /**
  * Sets the specified quaternion with values corresponding to the given
  * axes. Each axis is a vec3 and is expected to be unit length and
@@ -5952,9 +6146,8 @@ var sqlerp = function () {
  * @param {ReadonlyVec3} up    the vector representing the local "up" direction
  * @returns {quat} out
  */
-
 var setAxes = function () {
-  var matr = create$7();
+  var matr = create$8();
   return function (out, view, right, up) {
     matr[0] = right[0];
     matr[3] = right[1];
@@ -5971,7 +6164,7 @@ var setAxes = function () {
 
 var quat = /*#__PURE__*/Object.freeze({
   __proto__: null,
-  create: create$3,
+  create: create$4,
   identity: identity$2,
   setAxisAngle: setAxisAngle,
   getAxisAngle: getAxisAngle,
@@ -6025,10 +6218,8 @@ var quat = /*#__PURE__*/Object.freeze({
  *
  * @returns {quat2} a new dual quaternion [real -> rotation, dual -> translation]
  */
-
-function create$2() {
+function create$3() {
   var dq = new ARRAY_TYPE(8);
-
   if (ARRAY_TYPE != Float32Array) {
     dq[0] = 0;
     dq[1] = 0;
@@ -6038,10 +6229,10 @@ function create$2() {
     dq[6] = 0;
     dq[7] = 0;
   }
-
   dq[3] = 1;
   return dq;
 }
+
 /**
  * Creates a new quat initialized with values from an existing quaternion
  *
@@ -6049,7 +6240,6 @@ function create$2() {
  * @returns {quat2} new dual quaternion
  * @function
  */
-
 function clone$1(a) {
   var dq = new ARRAY_TYPE(8);
   dq[0] = a[0];
@@ -6062,6 +6252,7 @@ function clone$1(a) {
   dq[7] = a[7];
   return dq;
 }
+
 /**
  * Creates a new dual quat initialized with the given values
  *
@@ -6076,7 +6267,6 @@ function clone$1(a) {
  * @returns {quat2} new dual quaternion
  * @function
  */
-
 function fromValues$1(x1, y1, z1, w1, x2, y2, z2, w2) {
   var dq = new ARRAY_TYPE(8);
   dq[0] = x1;
@@ -6089,6 +6279,7 @@ function fromValues$1(x1, y1, z1, w1, x2, y2, z2, w2) {
   dq[7] = w2;
   return dq;
 }
+
 /**
  * Creates a new dual quat from the given values (quat and translation)
  *
@@ -6102,7 +6293,6 @@ function fromValues$1(x1, y1, z1, w1, x2, y2, z2, w2) {
  * @returns {quat2} new dual quaternion
  * @function
  */
-
 function fromRotationTranslationValues(x1, y1, z1, w1, x2, y2, z2) {
   var dq = new ARRAY_TYPE(8);
   dq[0] = x1;
@@ -6110,32 +6300,32 @@ function fromRotationTranslationValues(x1, y1, z1, w1, x2, y2, z2) {
   dq[2] = z1;
   dq[3] = w1;
   var ax = x2 * 0.5,
-      ay = y2 * 0.5,
-      az = z2 * 0.5;
+    ay = y2 * 0.5,
+    az = z2 * 0.5;
   dq[4] = ax * w1 + ay * z1 - az * y1;
   dq[5] = ay * w1 + az * x1 - ax * z1;
   dq[6] = az * w1 + ax * y1 - ay * x1;
   dq[7] = -ax * x1 - ay * y1 - az * z1;
   return dq;
 }
+
 /**
  * Creates a dual quat from a quaternion and a translation
  *
  * @param {ReadonlyQuat2} dual quaternion receiving operation result
  * @param {ReadonlyQuat} q a normalized quaternion
- * @param {ReadonlyVec3} t tranlation vector
+ * @param {ReadonlyVec3} t translation vector
  * @returns {quat2} dual quaternion receiving operation result
  * @function
  */
-
 function fromRotationTranslation(out, q, t) {
   var ax = t[0] * 0.5,
-      ay = t[1] * 0.5,
-      az = t[2] * 0.5,
-      bx = q[0],
-      by = q[1],
-      bz = q[2],
-      bw = q[3];
+    ay = t[1] * 0.5,
+    az = t[2] * 0.5,
+    bx = q[0],
+    by = q[1],
+    bz = q[2],
+    bw = q[3];
   out[0] = bx;
   out[1] = by;
   out[2] = bz;
@@ -6146,6 +6336,7 @@ function fromRotationTranslation(out, q, t) {
   out[7] = -ax * bx - ay * by - az * bz;
   return out;
 }
+
 /**
  * Creates a dual quat from a translation
  *
@@ -6154,7 +6345,6 @@ function fromRotationTranslation(out, q, t) {
  * @returns {quat2} dual quaternion receiving operation result
  * @function
  */
-
 function fromTranslation(out, t) {
   out[0] = 0;
   out[1] = 0;
@@ -6166,6 +6356,7 @@ function fromTranslation(out, t) {
   out[7] = 0;
   return out;
 }
+
 /**
  * Creates a dual quat from a quaternion
  *
@@ -6174,7 +6365,6 @@ function fromTranslation(out, t) {
  * @returns {quat2} dual quaternion receiving operation result
  * @function
  */
-
 function fromRotation(out, q) {
   out[0] = q[0];
   out[1] = q[1];
@@ -6186,6 +6376,7 @@ function fromRotation(out, q) {
   out[7] = 0;
   return out;
 }
+
 /**
  * Creates a new dual quat from a matrix (4x4)
  *
@@ -6194,16 +6385,16 @@ function fromRotation(out, q) {
  * @returns {quat2} dual quat receiving operation result
  * @function
  */
-
 function fromMat4(out, a) {
   //TODO Optimize this
-  var outer = create$3();
+  var outer = create$4();
   getRotation(outer, a);
   var t = new ARRAY_TYPE(3);
   getTranslation$2(t, a);
   fromRotationTranslation(out, outer, t);
   return out;
 }
+
 /**
  * Copy the values from one dual quat to another
  *
@@ -6212,7 +6403,6 @@ function fromMat4(out, a) {
  * @returns {quat2} out
  * @function
  */
-
 function copy$3(out, a) {
   out[0] = a[0];
   out[1] = a[1];
@@ -6224,13 +6414,13 @@ function copy$3(out, a) {
   out[7] = a[7];
   return out;
 }
+
 /**
  * Set a dual quat to the identity dual quaternion
  *
  * @param {quat2} out the receiving quaternion
  * @returns {quat2} out
  */
-
 function identity$1(out) {
   out[0] = 0;
   out[1] = 0;
@@ -6242,6 +6432,7 @@ function identity$1(out) {
   out[7] = 0;
   return out;
 }
+
 /**
  * Set the components of a dual quat to the given values
  *
@@ -6257,7 +6448,6 @@ function identity$1(out) {
  * @returns {quat2} out
  * @function
  */
-
 function set$1(out, x1, y1, z1, w1, x2, y2, z2, w2) {
   out[0] = x1;
   out[1] = y1;
@@ -6269,21 +6459,21 @@ function set$1(out, x1, y1, z1, w1, x2, y2, z2, w2) {
   out[7] = w2;
   return out;
 }
+
 /**
  * Gets the real part of a dual quat
  * @param  {quat} out real part
  * @param  {ReadonlyQuat2} a Dual Quaternion
  * @return {quat} real part
  */
-
 var getReal = copy$4;
+
 /**
  * Gets the dual part of a dual quat
  * @param  {quat} out dual part
  * @param  {ReadonlyQuat2} a Dual Quaternion
  * @return {quat} dual part
  */
-
 function getDual(out, a) {
   out[0] = a[4];
   out[1] = a[5];
@@ -6291,6 +6481,7 @@ function getDual(out, a) {
   out[3] = a[7];
   return out;
 }
+
 /**
  * Set the real component of a dual quat to the given quaternion
  *
@@ -6299,8 +6490,8 @@ function getDual(out, a) {
  * @returns {quat2} out
  * @function
  */
-
 var setReal = copy$4;
+
 /**
  * Set the dual component of a dual quat to the given quaternion
  *
@@ -6309,7 +6500,6 @@ var setReal = copy$4;
  * @returns {quat2} out
  * @function
  */
-
 function setDual(out, q) {
   out[4] = q[0];
   out[5] = q[1];
@@ -6317,27 +6507,28 @@ function setDual(out, q) {
   out[7] = q[3];
   return out;
 }
+
 /**
  * Gets the translation of a normalized dual quat
  * @param  {vec3} out translation
  * @param  {ReadonlyQuat2} a Dual Quaternion to be decomposed
  * @return {vec3} translation
  */
-
 function getTranslation$1(out, a) {
   var ax = a[4],
-      ay = a[5],
-      az = a[6],
-      aw = a[7],
-      bx = -a[0],
-      by = -a[1],
-      bz = -a[2],
-      bw = a[3];
+    ay = a[5],
+    az = a[6],
+    aw = a[7],
+    bx = -a[0],
+    by = -a[1],
+    bz = -a[2],
+    bw = a[3];
   out[0] = (ax * bw + aw * bx + ay * bz - az * by) * 2;
   out[1] = (ay * bw + aw * by + az * bx - ax * bz) * 2;
   out[2] = (az * bw + aw * bz + ax * by - ay * bx) * 2;
   return out;
 }
+
 /**
  * Translates a dual quat by the given vector
  *
@@ -6346,19 +6537,18 @@ function getTranslation$1(out, a) {
  * @param {ReadonlyVec3} v vector to translate by
  * @returns {quat2} out
  */
-
 function translate$1(out, a, v) {
   var ax1 = a[0],
-      ay1 = a[1],
-      az1 = a[2],
-      aw1 = a[3],
-      bx1 = v[0] * 0.5,
-      by1 = v[1] * 0.5,
-      bz1 = v[2] * 0.5,
-      ax2 = a[4],
-      ay2 = a[5],
-      az2 = a[6],
-      aw2 = a[7];
+    ay1 = a[1],
+    az1 = a[2],
+    aw1 = a[3],
+    bx1 = v[0] * 0.5,
+    by1 = v[1] * 0.5,
+    bz1 = v[2] * 0.5,
+    ax2 = a[4],
+    ay2 = a[5],
+    az2 = a[6],
+    aw2 = a[7];
   out[0] = ax1;
   out[1] = ay1;
   out[2] = az1;
@@ -6369,6 +6559,7 @@ function translate$1(out, a, v) {
   out[7] = -ax1 * bx1 - ay1 * by1 - az1 * bz1 + aw2;
   return out;
 }
+
 /**
  * Rotates a dual quat around the X axis
  *
@@ -6377,20 +6568,19 @@ function translate$1(out, a, v) {
  * @param {number} rad how far should the rotation be
  * @returns {quat2} out
  */
-
 function rotateX$1(out, a, rad) {
   var bx = -a[0],
-      by = -a[1],
-      bz = -a[2],
-      bw = a[3],
-      ax = a[4],
-      ay = a[5],
-      az = a[6],
-      aw = a[7],
-      ax1 = ax * bw + aw * bx + ay * bz - az * by,
-      ay1 = ay * bw + aw * by + az * bx - ax * bz,
-      az1 = az * bw + aw * bz + ax * by - ay * bx,
-      aw1 = aw * bw - ax * bx - ay * by - az * bz;
+    by = -a[1],
+    bz = -a[2],
+    bw = a[3],
+    ax = a[4],
+    ay = a[5],
+    az = a[6],
+    aw = a[7],
+    ax1 = ax * bw + aw * bx + ay * bz - az * by,
+    ay1 = ay * bw + aw * by + az * bx - ax * bz,
+    az1 = az * bw + aw * bz + ax * by - ay * bx,
+    aw1 = aw * bw - ax * bx - ay * by - az * bz;
   rotateX$2(out, a, rad);
   bx = out[0];
   by = out[1];
@@ -6402,6 +6592,7 @@ function rotateX$1(out, a, rad) {
   out[7] = aw1 * bw - ax1 * bx - ay1 * by - az1 * bz;
   return out;
 }
+
 /**
  * Rotates a dual quat around the Y axis
  *
@@ -6410,20 +6601,19 @@ function rotateX$1(out, a, rad) {
  * @param {number} rad how far should the rotation be
  * @returns {quat2} out
  */
-
 function rotateY$1(out, a, rad) {
   var bx = -a[0],
-      by = -a[1],
-      bz = -a[2],
-      bw = a[3],
-      ax = a[4],
-      ay = a[5],
-      az = a[6],
-      aw = a[7],
-      ax1 = ax * bw + aw * bx + ay * bz - az * by,
-      ay1 = ay * bw + aw * by + az * bx - ax * bz,
-      az1 = az * bw + aw * bz + ax * by - ay * bx,
-      aw1 = aw * bw - ax * bx - ay * by - az * bz;
+    by = -a[1],
+    bz = -a[2],
+    bw = a[3],
+    ax = a[4],
+    ay = a[5],
+    az = a[6],
+    aw = a[7],
+    ax1 = ax * bw + aw * bx + ay * bz - az * by,
+    ay1 = ay * bw + aw * by + az * bx - ax * bz,
+    az1 = az * bw + aw * bz + ax * by - ay * bx,
+    aw1 = aw * bw - ax * bx - ay * by - az * bz;
   rotateY$2(out, a, rad);
   bx = out[0];
   by = out[1];
@@ -6435,6 +6625,7 @@ function rotateY$1(out, a, rad) {
   out[7] = aw1 * bw - ax1 * bx - ay1 * by - az1 * bz;
   return out;
 }
+
 /**
  * Rotates a dual quat around the Z axis
  *
@@ -6443,20 +6634,19 @@ function rotateY$1(out, a, rad) {
  * @param {number} rad how far should the rotation be
  * @returns {quat2} out
  */
-
 function rotateZ$1(out, a, rad) {
   var bx = -a[0],
-      by = -a[1],
-      bz = -a[2],
-      bw = a[3],
-      ax = a[4],
-      ay = a[5],
-      az = a[6],
-      aw = a[7],
-      ax1 = ax * bw + aw * bx + ay * bz - az * by,
-      ay1 = ay * bw + aw * by + az * bx - ax * bz,
-      az1 = az * bw + aw * bz + ax * by - ay * bx,
-      aw1 = aw * bw - ax * bx - ay * by - az * bz;
+    by = -a[1],
+    bz = -a[2],
+    bw = a[3],
+    ax = a[4],
+    ay = a[5],
+    az = a[6],
+    aw = a[7],
+    ax1 = ax * bw + aw * bx + ay * bz - az * by,
+    ay1 = ay * bw + aw * by + az * bx - ax * bz,
+    az1 = az * bw + aw * bz + ax * by - ay * bx,
+    aw1 = aw * bw - ax * bx - ay * by - az * bz;
   rotateZ$2(out, a, rad);
   bx = out[0];
   by = out[1];
@@ -6468,6 +6658,7 @@ function rotateZ$1(out, a, rad) {
   out[7] = aw1 * bw - ax1 * bx - ay1 * by - az1 * bz;
   return out;
 }
+
 /**
  * Rotates a dual quat by a given quaternion (a * q)
  *
@@ -6476,16 +6667,15 @@ function rotateZ$1(out, a, rad) {
  * @param {ReadonlyQuat} q quaternion to rotate by
  * @returns {quat2} out
  */
-
 function rotateByQuatAppend(out, a, q) {
   var qx = q[0],
-      qy = q[1],
-      qz = q[2],
-      qw = q[3],
-      ax = a[0],
-      ay = a[1],
-      az = a[2],
-      aw = a[3];
+    qy = q[1],
+    qz = q[2],
+    qw = q[3],
+    ax = a[0],
+    ay = a[1],
+    az = a[2],
+    aw = a[3];
   out[0] = ax * qw + aw * qx + ay * qz - az * qy;
   out[1] = ay * qw + aw * qy + az * qx - ax * qz;
   out[2] = az * qw + aw * qz + ax * qy - ay * qx;
@@ -6500,6 +6690,7 @@ function rotateByQuatAppend(out, a, q) {
   out[7] = aw * qw - ax * qx - ay * qy - az * qz;
   return out;
 }
+
 /**
  * Rotates a dual quat by a given quaternion (q * a)
  *
@@ -6508,16 +6699,15 @@ function rotateByQuatAppend(out, a, q) {
  * @param {ReadonlyQuat2} a the dual quaternion to rotate
  * @returns {quat2} out
  */
-
 function rotateByQuatPrepend(out, q, a) {
   var qx = q[0],
-      qy = q[1],
-      qz = q[2],
-      qw = q[3],
-      bx = a[0],
-      by = a[1],
-      bz = a[2],
-      bw = a[3];
+    qy = q[1],
+    qz = q[2],
+    qw = q[3],
+    bx = a[0],
+    by = a[1],
+    bz = a[2],
+    bw = a[3];
   out[0] = qx * bw + qw * bx + qy * bz - qz * by;
   out[1] = qy * bw + qw * by + qz * bx - qx * bz;
   out[2] = qz * bw + qw * bz + qx * by - qy * bx;
@@ -6532,6 +6722,7 @@ function rotateByQuatPrepend(out, q, a) {
   out[7] = qw * bw - qx * bx - qy * by - qz * bz;
   return out;
 }
+
 /**
  * Rotates a dual quat around a given axis. Does the normalisation automatically
  *
@@ -6541,14 +6732,12 @@ function rotateByQuatPrepend(out, q, a) {
  * @param {Number} rad how far the rotation should be
  * @returns {quat2} out
  */
-
 function rotateAroundAxis(out, a, axis, rad) {
   //Special case for rad = 0
   if (Math.abs(rad) < EPSILON) {
     return copy$3(out, a);
   }
-
-  var axisLength = Math.hypot(axis[0], axis[1], axis[2]);
+  var axisLength = Math.sqrt(axis[0] * axis[0] + axis[1] * axis[1] + axis[2] * axis[2]);
   rad = rad * 0.5;
   var s = Math.sin(rad);
   var bx = s * axis[0] / axisLength;
@@ -6556,23 +6745,24 @@ function rotateAroundAxis(out, a, axis, rad) {
   var bz = s * axis[2] / axisLength;
   var bw = Math.cos(rad);
   var ax1 = a[0],
-      ay1 = a[1],
-      az1 = a[2],
-      aw1 = a[3];
+    ay1 = a[1],
+    az1 = a[2],
+    aw1 = a[3];
   out[0] = ax1 * bw + aw1 * bx + ay1 * bz - az1 * by;
   out[1] = ay1 * bw + aw1 * by + az1 * bx - ax1 * bz;
   out[2] = az1 * bw + aw1 * bz + ax1 * by - ay1 * bx;
   out[3] = aw1 * bw - ax1 * bx - ay1 * by - az1 * bz;
   var ax = a[4],
-      ay = a[5],
-      az = a[6],
-      aw = a[7];
+    ay = a[5],
+    az = a[6],
+    aw = a[7];
   out[4] = ax * bw + aw * bx + ay * bz - az * by;
   out[5] = ay * bw + aw * by + az * bx - ax * bz;
   out[6] = az * bw + aw * bz + ax * by - ay * bx;
   out[7] = aw * bw - ax * bx - ay * by - az * bz;
   return out;
 }
+
 /**
  * Adds two dual quat's
  *
@@ -6582,7 +6772,6 @@ function rotateAroundAxis(out, a, axis, rad) {
  * @returns {quat2} out
  * @function
  */
-
 function add$2(out, a, b) {
   out[0] = a[0] + b[0];
   out[1] = a[1] + b[1];
@@ -6594,6 +6783,7 @@ function add$2(out, a, b) {
   out[7] = a[7] + b[7];
   return out;
 }
+
 /**
  * Multiplies two dual quat's
  *
@@ -6602,24 +6792,23 @@ function add$2(out, a, b) {
  * @param {ReadonlyQuat2} b the second operand
  * @returns {quat2} out
  */
-
 function multiply$3(out, a, b) {
   var ax0 = a[0],
-      ay0 = a[1],
-      az0 = a[2],
-      aw0 = a[3],
-      bx1 = b[4],
-      by1 = b[5],
-      bz1 = b[6],
-      bw1 = b[7],
-      ax1 = a[4],
-      ay1 = a[5],
-      az1 = a[6],
-      aw1 = a[7],
-      bx0 = b[0],
-      by0 = b[1],
-      bz0 = b[2],
-      bw0 = b[3];
+    ay0 = a[1],
+    az0 = a[2],
+    aw0 = a[3],
+    bx1 = b[4],
+    by1 = b[5],
+    bz1 = b[6],
+    bw1 = b[7],
+    ax1 = a[4],
+    ay1 = a[5],
+    az1 = a[6],
+    aw1 = a[7],
+    bx0 = b[0],
+    by0 = b[1],
+    bz0 = b[2],
+    bw0 = b[3];
   out[0] = ax0 * bw0 + aw0 * bx0 + ay0 * bz0 - az0 * by0;
   out[1] = ay0 * bw0 + aw0 * by0 + az0 * bx0 - ax0 * bz0;
   out[2] = az0 * bw0 + aw0 * bz0 + ax0 * by0 - ay0 * bx0;
@@ -6630,12 +6819,13 @@ function multiply$3(out, a, b) {
   out[7] = aw0 * bw1 - ax0 * bx1 - ay0 * by1 - az0 * bz1 + aw1 * bw0 - ax1 * bx0 - ay1 * by0 - az1 * bz0;
   return out;
 }
+
 /**
  * Alias for {@link quat2.multiply}
  * @function
  */
-
 var mul$1 = multiply$3;
+
 /**
  * Scales a dual quat by a scalar number
  *
@@ -6645,7 +6835,6 @@ var mul$1 = multiply$3;
  * @returns {quat2} out
  * @function
  */
-
 function scale$2(out, a, b) {
   out[0] = a[0] * b;
   out[1] = a[1] * b;
@@ -6657,6 +6846,7 @@ function scale$2(out, a, b) {
   out[7] = a[7] * b;
   return out;
 }
+
 /**
  * Calculates the dot product of two dual quat's (The dot product of the real parts)
  *
@@ -6665,8 +6855,8 @@ function scale$2(out, a, b) {
  * @returns {Number} dot product of a and b
  * @function
  */
-
 var dot$2 = dot$3;
+
 /**
  * Performs a linear interpolation between two dual quats's
  * NOTE: The resulting dual quaternions won't always be normalized (The error is most noticeable when t = 0.5)
@@ -6677,7 +6867,6 @@ var dot$2 = dot$3;
  * @param {Number} t interpolation amount, in the range [0-1], between the two inputs
  * @returns {quat2} out
  */
-
 function lerp$2(out, a, b, t) {
   var mt = 1 - t;
   if (dot$2(a, b) < 0) t = -t;
@@ -6691,6 +6880,7 @@ function lerp$2(out, a, b, t) {
   out[7] = a[7] * mt + b[7] * t;
   return out;
 }
+
 /**
  * Calculates the inverse of a dual quat. If they are normalized, conjugate is cheaper
  *
@@ -6698,7 +6888,6 @@ function lerp$2(out, a, b, t) {
  * @param {ReadonlyQuat2} a dual quat to calculate inverse of
  * @returns {quat2} out
  */
-
 function invert(out, a) {
   var sqlen = squaredLength$1(a);
   out[0] = -a[0] / sqlen;
@@ -6711,6 +6900,7 @@ function invert(out, a) {
   out[7] = a[7] / sqlen;
   return out;
 }
+
 /**
  * Calculates the conjugate of a dual quat
  * If the dual quaternion is normalized, this function is faster than quat2.inverse and produces the same result.
@@ -6719,7 +6909,6 @@ function invert(out, a) {
  * @param {ReadonlyQuat2} a quat to calculate conjugate of
  * @returns {quat2} out
  */
-
 function conjugate(out, a) {
   out[0] = -a[0];
   out[1] = -a[1];
@@ -6731,6 +6920,7 @@ function conjugate(out, a) {
   out[7] = a[7];
   return out;
 }
+
 /**
  * Calculates the length of a dual quat
  *
@@ -6738,14 +6928,14 @@ function conjugate(out, a) {
  * @returns {Number} length of a
  * @function
  */
-
 var length$3 = length$4;
+
 /**
  * Alias for {@link quat2.length}
  * @function
  */
-
 var len$1 = length$3;
+
 /**
  * Calculates the squared length of a dual quat
  *
@@ -6753,14 +6943,14 @@ var len$1 = length$3;
  * @returns {Number} squared length of a
  * @function
  */
-
 var squaredLength$1 = squaredLength$2;
+
 /**
  * Alias for {@link quat2.squaredLength}
  * @function
  */
-
 var sqrLen$1 = squaredLength$1;
+
 /**
  * Normalize a dual quat
  *
@@ -6769,10 +6959,8 @@ var sqrLen$1 = squaredLength$1;
  * @returns {quat2} out
  * @function
  */
-
 function normalize$2(out, a) {
   var magnitude = squaredLength$1(a);
-
   if (magnitude > 0) {
     magnitude = Math.sqrt(magnitude);
     var a0 = a[0] / magnitude;
@@ -6793,19 +6981,19 @@ function normalize$2(out, a) {
     out[6] = (b2 - a2 * a_dot_b) / magnitude;
     out[7] = (b3 - a3 * a_dot_b) / magnitude;
   }
-
   return out;
 }
+
 /**
- * Returns a string representation of a dual quatenion
+ * Returns a string representation of a dual quaternion
  *
  * @param {ReadonlyQuat2} a dual quaternion to represent as a string
  * @returns {String} string representation of the dual quat
  */
-
 function str$1(a) {
   return "quat2(" + a[0] + ", " + a[1] + ", " + a[2] + ", " + a[3] + ", " + a[4] + ", " + a[5] + ", " + a[6] + ", " + a[7] + ")";
 }
+
 /**
  * Returns whether or not the dual quaternions have exactly the same elements in the same position (when compared with ===)
  *
@@ -6813,10 +7001,10 @@ function str$1(a) {
  * @param {ReadonlyQuat2} b the second dual quaternion.
  * @returns {Boolean} true if the dual quaternions are equal, false otherwise.
  */
-
 function exactEquals$1(a, b) {
   return a[0] === b[0] && a[1] === b[1] && a[2] === b[2] && a[3] === b[3] && a[4] === b[4] && a[5] === b[5] && a[6] === b[6] && a[7] === b[7];
 }
+
 /**
  * Returns whether or not the dual quaternions have approximately the same elements in the same position.
  *
@@ -6824,30 +7012,29 @@ function exactEquals$1(a, b) {
  * @param {ReadonlyQuat2} b the second dual quat.
  * @returns {Boolean} true if the dual quats are equal, false otherwise.
  */
-
 function equals$1(a, b) {
   var a0 = a[0],
-      a1 = a[1],
-      a2 = a[2],
-      a3 = a[3],
-      a4 = a[4],
-      a5 = a[5],
-      a6 = a[6],
-      a7 = a[7];
+    a1 = a[1],
+    a2 = a[2],
+    a3 = a[3],
+    a4 = a[4],
+    a5 = a[5],
+    a6 = a[6],
+    a7 = a[7];
   var b0 = b[0],
-      b1 = b[1],
-      b2 = b[2],
-      b3 = b[3],
-      b4 = b[4],
-      b5 = b[5],
-      b6 = b[6],
-      b7 = b[7];
+    b1 = b[1],
+    b2 = b[2],
+    b3 = b[3],
+    b4 = b[4],
+    b5 = b[5],
+    b6 = b[6],
+    b7 = b[7];
   return Math.abs(a0 - b0) <= EPSILON * Math.max(1.0, Math.abs(a0), Math.abs(b0)) && Math.abs(a1 - b1) <= EPSILON * Math.max(1.0, Math.abs(a1), Math.abs(b1)) && Math.abs(a2 - b2) <= EPSILON * Math.max(1.0, Math.abs(a2), Math.abs(b2)) && Math.abs(a3 - b3) <= EPSILON * Math.max(1.0, Math.abs(a3), Math.abs(b3)) && Math.abs(a4 - b4) <= EPSILON * Math.max(1.0, Math.abs(a4), Math.abs(b4)) && Math.abs(a5 - b5) <= EPSILON * Math.max(1.0, Math.abs(a5), Math.abs(b5)) && Math.abs(a6 - b6) <= EPSILON * Math.max(1.0, Math.abs(a6), Math.abs(b6)) && Math.abs(a7 - b7) <= EPSILON * Math.max(1.0, Math.abs(a7), Math.abs(b7));
 }
 
 var quat2 = /*#__PURE__*/Object.freeze({
   __proto__: null,
-  create: create$2,
+  create: create$3,
   clone: clone$1,
   fromValues: fromValues$1,
   fromRotationTranslationValues: fromRotationTranslationValues,
@@ -6898,30 +7085,28 @@ var quat2 = /*#__PURE__*/Object.freeze({
  *
  * @returns {vec2} a new 2D vector
  */
-
-function create$1() {
+function create$2() {
   var out = new ARRAY_TYPE(2);
-
   if (ARRAY_TYPE != Float32Array) {
     out[0] = 0;
     out[1] = 0;
   }
-
   return out;
 }
+
 /**
  * Creates a new vec2 initialized with values from an existing vector
  *
  * @param {ReadonlyVec2} a vector to clone
  * @returns {vec2} a new 2D vector
  */
-
 function clone(a) {
   var out = new ARRAY_TYPE(2);
   out[0] = a[0];
   out[1] = a[1];
   return out;
 }
+
 /**
  * Creates a new vec2 initialized with the given values
  *
@@ -6929,13 +7114,13 @@ function clone(a) {
  * @param {Number} y Y component
  * @returns {vec2} a new 2D vector
  */
-
 function fromValues(x, y) {
   var out = new ARRAY_TYPE(2);
   out[0] = x;
   out[1] = y;
   return out;
 }
+
 /**
  * Copy the values from one vec2 to another
  *
@@ -6943,12 +7128,12 @@ function fromValues(x, y) {
  * @param {ReadonlyVec2} a the source vector
  * @returns {vec2} out
  */
-
 function copy$2(out, a) {
   out[0] = a[0];
   out[1] = a[1];
   return out;
 }
+
 /**
  * Set the components of a vec2 to the given values
  *
@@ -6957,12 +7142,12 @@ function copy$2(out, a) {
  * @param {Number} y Y component
  * @returns {vec2} out
  */
-
 function set(out, x, y) {
   out[0] = x;
   out[1] = y;
   return out;
 }
+
 /**
  * Adds two vec2's
  *
@@ -6971,12 +7156,12 @@ function set(out, x, y) {
  * @param {ReadonlyVec2} b the second operand
  * @returns {vec2} out
  */
-
 function add$1(out, a, b) {
   out[0] = a[0] + b[0];
   out[1] = a[1] + b[1];
   return out;
 }
+
 /**
  * Subtracts vector b from vector a
  *
@@ -6985,12 +7170,12 @@ function add$1(out, a, b) {
  * @param {ReadonlyVec2} b the second operand
  * @returns {vec2} out
  */
-
 function subtract$1(out, a, b) {
   out[0] = a[0] - b[0];
   out[1] = a[1] - b[1];
   return out;
 }
+
 /**
  * Multiplies two vec2's
  *
@@ -6999,12 +7184,12 @@ function subtract$1(out, a, b) {
  * @param {ReadonlyVec2} b the second operand
  * @returns {vec2} out
  */
-
 function multiply$2(out, a, b) {
   out[0] = a[0] * b[0];
   out[1] = a[1] * b[1];
   return out;
 }
+
 /**
  * Divides two vec2's
  *
@@ -7013,12 +7198,12 @@ function multiply$2(out, a, b) {
  * @param {ReadonlyVec2} b the second operand
  * @returns {vec2} out
  */
-
 function divide$1(out, a, b) {
   out[0] = a[0] / b[0];
   out[1] = a[1] / b[1];
   return out;
 }
+
 /**
  * Math.ceil the components of a vec2
  *
@@ -7026,12 +7211,12 @@ function divide$1(out, a, b) {
  * @param {ReadonlyVec2} a vector to ceil
  * @returns {vec2} out
  */
-
 function ceil(out, a) {
   out[0] = Math.ceil(a[0]);
   out[1] = Math.ceil(a[1]);
   return out;
 }
+
 /**
  * Math.floor the components of a vec2
  *
@@ -7039,12 +7224,12 @@ function ceil(out, a) {
  * @param {ReadonlyVec2} a vector to floor
  * @returns {vec2} out
  */
-
 function floor(out, a) {
   out[0] = Math.floor(a[0]);
   out[1] = Math.floor(a[1]);
   return out;
 }
+
 /**
  * Returns the minimum of two vec2's
  *
@@ -7053,12 +7238,12 @@ function floor(out, a) {
  * @param {ReadonlyVec2} b the second operand
  * @returns {vec2} out
  */
-
 function min$1(out, a, b) {
   out[0] = Math.min(a[0], b[0]);
   out[1] = Math.min(a[1], b[1]);
   return out;
 }
+
 /**
  * Returns the maximum of two vec2's
  *
@@ -7067,25 +7252,25 @@ function min$1(out, a, b) {
  * @param {ReadonlyVec2} b the second operand
  * @returns {vec2} out
  */
-
 function max$1(out, a, b) {
   out[0] = Math.max(a[0], b[0]);
   out[1] = Math.max(a[1], b[1]);
   return out;
 }
+
 /**
- * Math.round the components of a vec2
+ * symmetric round the components of a vec2
  *
  * @param {vec2} out the receiving vector
  * @param {ReadonlyVec2} a vector to round
  * @returns {vec2} out
  */
-
 function round(out, a) {
-  out[0] = Math.round(a[0]);
-  out[1] = Math.round(a[1]);
+  out[0] = round$3(a[0]);
+  out[1] = round$3(a[1]);
   return out;
 }
+
 /**
  * Scales a vec2 by a scalar number
  *
@@ -7094,12 +7279,12 @@ function round(out, a) {
  * @param {Number} b amount to scale the vector by
  * @returns {vec2} out
  */
-
 function scale$1(out, a, b) {
   out[0] = a[0] * b;
   out[1] = a[1] * b;
   return out;
 }
+
 /**
  * Adds two vec2's after scaling the second operand by a scalar value
  *
@@ -7109,12 +7294,12 @@ function scale$1(out, a, b) {
  * @param {Number} scale the amount to scale b by before adding
  * @returns {vec2} out
  */
-
 function scaleAndAdd(out, a, b, scale) {
   out[0] = a[0] + b[0] * scale;
   out[1] = a[1] + b[1] * scale;
   return out;
 }
+
 /**
  * Calculates the euclidian distance between two vec2's
  *
@@ -7122,12 +7307,12 @@ function scaleAndAdd(out, a, b, scale) {
  * @param {ReadonlyVec2} b the second operand
  * @returns {Number} distance between a and b
  */
-
 function distance$1(a, b) {
   var x = b[0] - a[0],
-      y = b[1] - a[1];
-  return Math.hypot(x, y);
+    y = b[1] - a[1];
+  return Math.sqrt(x * x + y * y);
 }
+
 /**
  * Calculates the squared euclidian distance between two vec2's
  *
@@ -7135,36 +7320,36 @@ function distance$1(a, b) {
  * @param {ReadonlyVec2} b the second operand
  * @returns {Number} squared distance between a and b
  */
-
 function squaredDistance(a, b) {
   var x = b[0] - a[0],
-      y = b[1] - a[1];
+    y = b[1] - a[1];
   return x * x + y * y;
 }
+
 /**
  * Calculates the length of a vec2
  *
  * @param {ReadonlyVec2} a vector to calculate length of
  * @returns {Number} length of a
  */
-
 function length$2(a) {
   var x = a[0],
-      y = a[1];
-  return Math.hypot(x, y);
+    y = a[1];
+  return Math.sqrt(x * x + y * y);
 }
+
 /**
  * Calculates the squared length of a vec2
  *
  * @param {ReadonlyVec2} a vector to calculate squared length of
  * @returns {Number} squared length of a
  */
-
 function squaredLength(a) {
   var x = a[0],
-      y = a[1];
+    y = a[1];
   return x * x + y * y;
 }
+
 /**
  * Negates the components of a vec2
  *
@@ -7172,12 +7357,12 @@ function squaredLength(a) {
  * @param {ReadonlyVec2} a vector to negate
  * @returns {vec2} out
  */
-
 function negate$2(out, a) {
   out[0] = -a[0];
   out[1] = -a[1];
   return out;
 }
+
 /**
  * Returns the inverse of the components of a vec2
  *
@@ -7185,12 +7370,12 @@ function negate$2(out, a) {
  * @param {ReadonlyVec2} a vector to invert
  * @returns {vec2} out
  */
-
 function inverse$1(out, a) {
   out[0] = 1.0 / a[0];
   out[1] = 1.0 / a[1];
   return out;
 }
+
 /**
  * Normalize a vec2
  *
@@ -7198,21 +7383,19 @@ function inverse$1(out, a) {
  * @param {ReadonlyVec2} a vector to normalize
  * @returns {vec2} out
  */
-
 function normalize$1(out, a) {
   var x = a[0],
-      y = a[1];
+    y = a[1];
   var len = x * x + y * y;
-
   if (len > 0) {
     //TODO: evaluate use of glm_invsqrt here?
     len = 1 / Math.sqrt(len);
   }
-
   out[0] = a[0] * len;
   out[1] = a[1] * len;
   return out;
 }
+
 /**
  * Calculates the dot product of two vec2's
  *
@@ -7220,10 +7403,10 @@ function normalize$1(out, a) {
  * @param {ReadonlyVec2} b the second operand
  * @returns {Number} dot product of a and b
  */
-
 function dot$1(a, b) {
   return a[0] * b[0] + a[1] * b[1];
 }
+
 /**
  * Computes the cross product of two vec2's
  * Note that the cross product must by definition produce a 3D vector
@@ -7233,13 +7416,13 @@ function dot$1(a, b) {
  * @param {ReadonlyVec2} b the second operand
  * @returns {vec3} out
  */
-
 function cross$1(out, a, b) {
   var z = a[0] * b[1] - a[1] * b[0];
   out[0] = out[1] = 0;
   out[2] = z;
   return out;
 }
+
 /**
  * Performs a linear interpolation between two vec2's
  *
@@ -7249,29 +7432,29 @@ function cross$1(out, a, b) {
  * @param {Number} t interpolation amount, in the range [0-1], between the two inputs
  * @returns {vec2} out
  */
-
 function lerp$1(out, a, b, t) {
   var ax = a[0],
-      ay = a[1];
+    ay = a[1];
   out[0] = ax + t * (b[0] - ax);
   out[1] = ay + t * (b[1] - ay);
   return out;
 }
+
 /**
  * Generates a random vector with the given scale
  *
  * @param {vec2} out the receiving vector
- * @param {Number} [scale] Length of the resulting vector. If ommitted, a unit vector will be returned
+ * @param {Number} [scale] Length of the resulting vector. If omitted, a unit vector will be returned
  * @returns {vec2} out
  */
-
 function random(out, scale) {
-  scale = scale || 1.0;
+  scale = scale === undefined ? 1.0 : scale;
   var r = RANDOM() * 2.0 * Math.PI;
   out[0] = Math.cos(r) * scale;
   out[1] = Math.sin(r) * scale;
   return out;
 }
+
 /**
  * Transforms the vec2 with a mat2
  *
@@ -7280,14 +7463,14 @@ function random(out, scale) {
  * @param {ReadonlyMat2} m matrix to transform with
  * @returns {vec2} out
  */
-
 function transformMat2(out, a, m) {
   var x = a[0],
-      y = a[1];
+    y = a[1];
   out[0] = m[0] * x + m[2] * y;
   out[1] = m[1] * x + m[3] * y;
   return out;
 }
+
 /**
  * Transforms the vec2 with a mat2d
  *
@@ -7296,14 +7479,14 @@ function transformMat2(out, a, m) {
  * @param {ReadonlyMat2d} m matrix to transform with
  * @returns {vec2} out
  */
-
 function transformMat2d(out, a, m) {
   var x = a[0],
-      y = a[1];
+    y = a[1];
   out[0] = m[0] * x + m[2] * y + m[4];
   out[1] = m[1] * x + m[3] * y + m[5];
   return out;
 }
+
 /**
  * Transforms the vec2 with a mat3
  * 3rd vector component is implicitly '1'
@@ -7313,14 +7496,14 @@ function transformMat2d(out, a, m) {
  * @param {ReadonlyMat3} m matrix to transform with
  * @returns {vec2} out
  */
-
 function transformMat3(out, a, m) {
   var x = a[0],
-      y = a[1];
+    y = a[1];
   out[0] = m[0] * x + m[3] * y + m[6];
   out[1] = m[1] * x + m[4] * y + m[7];
   return out;
 }
+
 /**
  * Transforms the vec2 with a mat4
  * 3rd vector component is implicitly '0'
@@ -7331,7 +7514,6 @@ function transformMat3(out, a, m) {
  * @param {ReadonlyMat4} m matrix to transform with
  * @returns {vec2} out
  */
-
 function transformMat4(out, a, m) {
   var x = a[0];
   var y = a[1];
@@ -7339,6 +7521,7 @@ function transformMat4(out, a, m) {
   out[1] = m[1] * x + m[5] * y + m[13];
   return out;
 }
+
 /**
  * Rotate a 2D vector
  * @param {vec2} out The receiving vec2
@@ -7347,59 +7530,70 @@ function transformMat4(out, a, m) {
  * @param {Number} rad The angle of rotation in radians
  * @returns {vec2} out
  */
-
 function rotate(out, a, b, rad) {
   //Translate point to the origin
   var p0 = a[0] - b[0],
-      p1 = a[1] - b[1],
-      sinC = Math.sin(rad),
-      cosC = Math.cos(rad); //perform rotation and translate to correct position
+    p1 = a[1] - b[1],
+    sinC = Math.sin(rad),
+    cosC = Math.cos(rad);
 
+  //perform rotation and translate to correct position
   out[0] = p0 * cosC - p1 * sinC + b[0];
   out[1] = p0 * sinC + p1 * cosC + b[1];
   return out;
 }
+
 /**
- * Get the angle between two 2D vectors
+ * Get the smallest angle between two 2D vectors
  * @param {ReadonlyVec2} a The first operand
  * @param {ReadonlyVec2} b The second operand
  * @returns {Number} The angle in radians
  */
-
 function angle(a, b) {
-  var x1 = a[0],
-      y1 = a[1],
-      x2 = b[0],
-      y2 = b[1],
-      // mag is the product of the magnitudes of a and b
-  mag = Math.sqrt(x1 * x1 + y1 * y1) * Math.sqrt(x2 * x2 + y2 * y2),
-      // mag &&.. short circuits if mag == 0
-  cosine = mag && (x1 * x2 + y1 * y2) / mag; // Math.min(Math.max(cosine, -1), 1) clamps the cosine between -1 and 1
-
-  return Math.acos(Math.min(Math.max(cosine, -1), 1));
+  var ax = a[0],
+    ay = a[1],
+    bx = b[0],
+    by = b[1];
+  return Math.abs(Math.atan2(ay * bx - ax * by, ax * bx + ay * by));
 }
+
+/**
+ * Get the signed angle in the interval [-pi,pi] between two 2D vectors (positive if `a` is to the right of `b`)
+ * 
+ * @param {ReadonlyVec2} a The first vector
+ * @param {ReadonlyVec2} b The second vector
+ * @returns {number} The signed angle in radians
+ */
+function signedAngle(a, b) {
+  var ax = a[0],
+    ay = a[1],
+    bx = b[0],
+    by = b[1];
+  return Math.atan2(ax * by - ay * bx, ax * bx + ay * by);
+}
+
 /**
  * Set the components of a vec2 to zero
  *
  * @param {vec2} out the receiving vector
  * @returns {vec2} out
  */
-
 function zero(out) {
   out[0] = 0.0;
   out[1] = 0.0;
   return out;
 }
+
 /**
  * Returns a string representation of a vector
  *
  * @param {ReadonlyVec2} a vector to represent as a string
  * @returns {String} string representation of the vector
  */
-
 function str(a) {
   return "vec2(" + a[0] + ", " + a[1] + ")";
 }
+
 /**
  * Returns whether or not the vectors exactly have the same elements in the same position (when compared with ===)
  *
@@ -7407,10 +7601,10 @@ function str(a) {
  * @param {ReadonlyVec2} b The second vector.
  * @returns {Boolean} True if the vectors are equal, false otherwise.
  */
-
 function exactEquals(a, b) {
   return a[0] === b[0] && a[1] === b[1];
 }
+
 /**
  * Returns whether or not the vectors have approximately the same elements in the same position.
  *
@@ -7418,56 +7612,56 @@ function exactEquals(a, b) {
  * @param {ReadonlyVec2} b The second vector.
  * @returns {Boolean} True if the vectors are equal, false otherwise.
  */
-
 function equals(a, b) {
   var a0 = a[0],
-      a1 = a[1];
+    a1 = a[1];
   var b0 = b[0],
-      b1 = b[1];
+    b1 = b[1];
   return Math.abs(a0 - b0) <= EPSILON * Math.max(1.0, Math.abs(a0), Math.abs(b0)) && Math.abs(a1 - b1) <= EPSILON * Math.max(1.0, Math.abs(a1), Math.abs(b1));
 }
+
 /**
  * Alias for {@link vec2.length}
  * @function
  */
-
 var len = length$2;
+
 /**
  * Alias for {@link vec2.subtract}
  * @function
  */
-
 var sub = subtract$1;
+
 /**
  * Alias for {@link vec2.multiply}
  * @function
  */
-
 var mul = multiply$2;
+
 /**
  * Alias for {@link vec2.divide}
  * @function
  */
-
 var div = divide$1;
+
 /**
  * Alias for {@link vec2.distance}
  * @function
  */
-
 var dist = distance$1;
+
 /**
  * Alias for {@link vec2.squaredDistance}
  * @function
  */
-
 var sqrDist = squaredDistance;
+
 /**
  * Alias for {@link vec2.squaredLength}
  * @function
  */
-
 var sqrLen = squaredLength;
+
 /**
  * Perform some operation over an array of vec2s.
  *
@@ -7480,26 +7674,21 @@ var sqrLen = squaredLength;
  * @returns {Array} a
  * @function
  */
-
 var forEach$1 = function () {
-  var vec = create$1();
+  var vec = create$2();
   return function (a, stride, offset, count, fn, arg) {
     var i, l;
-
     if (!stride) {
       stride = 2;
     }
-
     if (!offset) {
       offset = 0;
     }
-
     if (count) {
       l = Math.min(count * stride + offset, a.length);
     } else {
       l = a.length;
     }
-
     for (i = offset; i < l; i += stride) {
       vec[0] = a[i];
       vec[1] = a[i + 1];
@@ -7507,14 +7696,13 @@ var forEach$1 = function () {
       a[i] = vec[0];
       a[i + 1] = vec[1];
     }
-
     return a;
   };
 }();
 
 var vec2 = /*#__PURE__*/Object.freeze({
   __proto__: null,
-  create: create$1,
+  create: create$2,
   clone: clone,
   fromValues: fromValues,
   copy: copy$2,
@@ -7547,6 +7735,7 @@ var vec2 = /*#__PURE__*/Object.freeze({
   transformMat4: transformMat4,
   rotate: rotate,
   angle: angle,
+  signedAngle: signedAngle,
   zero: zero,
   str: str,
   exactEquals: exactEquals,
@@ -7615,7 +7804,7 @@ var webglObjLoader_min = createCommonjsModule(function (module, exports) {
 
 var webglObjLoader_min$1 = unwrapExports(webglObjLoader_min);
 
-/* @license twgl.js 4.19.1 Copyright (c) 2015, Gregg Tavares All Rights Reserved.
+/* @license twgl.js 4.24.0 Copyright (c) 2015, Gregg Tavares All Rights Reserved.
 Available via the MIT license.
 see: http://github.com/greggman/twgl.js for details */
 /*
@@ -8163,6 +8352,15 @@ function negate$1(m, dst) {
   dst[15] = -m[15];
 
   return dst;
+}
+
+/**
+ * Creates a matrix.
+ * @return {module:twgl/m4.Mat4} A new matrix.
+ * @memberOf module:twgl/m4
+ */
+function create$1() {
+  return new MatType(16).fill(0);
 }
 
 /**
@@ -9334,6 +9532,7 @@ var m4 = /*#__PURE__*/Object.freeze({
   axisRotate: axisRotate,
   axisRotation: axisRotation,
   copy: copy$1,
+  create: create$1,
   frustum: frustum,
   getAxis: getAxis,
   getTranslation: getTranslation,
@@ -10038,6 +10237,9 @@ function getNumElementsFromNonIndexedArrays(arrays) {
   }
   const array = arrays[key];
   const length = getArray(array).length;
+  if (length === undefined) {
+    return 1;   // There's no arrays
+  }
   const numComponents = getNumComponents(array, key);
   const numElements = length / numComponents;
   if (length % numComponents > 0) {
@@ -10063,6 +10265,9 @@ function getNumElementsFromAttributes(gl, attribs) {
     key = Object.keys(attribs)[0];
   }
   const attrib = attribs[key];
+  if (!attrib.buffer) {
+    return 1; // There's no buffer
+  }
   gl.bindBuffer(ARRAY_BUFFER, attrib.buffer);
   const numBytes = gl.getBufferParameter(ARRAY_BUFFER, BUFFER_SIZE);
   gl.bindBuffer(ARRAY_BUFFER, null);
@@ -13695,6 +13900,7 @@ function loadAndUseImage(obj, crossOrigin, callback) {
  * @param {module:twgl.TextureOptions} [options] A TextureOptions object with whatever parameters you want set.
  *   This is often the same options you passed in when you created the texture.
  * @memberOf module:twgl/textures
+ * @private
  */
 function setTextureTo1PixelColor(gl, tex, options) {
   options = options || defaults$1.textureOptions;
@@ -13804,6 +14010,7 @@ function loadTextureFromUrl(gl, tex, options, callback) {
  * @param {module:twgl.CubemapReadyCallback} [callback] A function to be called when all the images have finished loading. err will
  *    be non null if there was an error.
  * @memberOf module:twgl/textures
+ * @private
  */
 function loadCubemapFromUrls(gl, tex, options, callback) {
   callback = callback || noop;
@@ -13887,6 +14094,7 @@ function loadCubemapFromUrls(gl, tex, options, callback) {
  * @param {module:twgl.ThreeDReadyCallback} [callback] A function to be called when all the images have finished loading. err will
  *    be non null if there was an error.
  * @memberOf module:twgl/textures
+ * @private
  */
 function loadSlicesFromUrls(gl, tex, options, callback) {
   callback = callback || noop;
@@ -14465,6 +14673,7 @@ const typeMap = {};
 
 /**
  * Returns the corresponding bind point for a given sampler type
+ * @private
  */
 function getBindPointForSamplerType(gl, type) {
   return typeMap[type].bindPoint;
@@ -14673,30 +14882,30 @@ function samplerArraySetter(gl, type, unit, location, size) {
 }
 
 typeMap[FLOAT$3]                         = { Type: Float32Array, size:  4, setter: floatSetter,      arraySetter: floatArraySetter, };
-typeMap[FLOAT_VEC2]                    = { Type: Float32Array, size:  8, setter: floatVec2Setter,  };
-typeMap[FLOAT_VEC3]                    = { Type: Float32Array, size: 12, setter: floatVec3Setter,  };
-typeMap[FLOAT_VEC4]                    = { Type: Float32Array, size: 16, setter: floatVec4Setter,  };
+typeMap[FLOAT_VEC2]                    = { Type: Float32Array, size:  8, setter: floatVec2Setter,  cols: 2, };
+typeMap[FLOAT_VEC3]                    = { Type: Float32Array, size: 12, setter: floatVec3Setter,  cols: 3, };
+typeMap[FLOAT_VEC4]                    = { Type: Float32Array, size: 16, setter: floatVec4Setter,  cols: 4, };
 typeMap[INT$3]                           = { Type: Int32Array,   size:  4, setter: intSetter,        arraySetter: intArraySetter, };
-typeMap[INT_VEC2]                      = { Type: Int32Array,   size:  8, setter: intVec2Setter,    };
-typeMap[INT_VEC3]                      = { Type: Int32Array,   size: 12, setter: intVec3Setter,    };
-typeMap[INT_VEC4]                      = { Type: Int32Array,   size: 16, setter: intVec4Setter,    };
+typeMap[INT_VEC2]                      = { Type: Int32Array,   size:  8, setter: intVec2Setter,    cols: 2, };
+typeMap[INT_VEC3]                      = { Type: Int32Array,   size: 12, setter: intVec3Setter,    cols: 3, };
+typeMap[INT_VEC4]                      = { Type: Int32Array,   size: 16, setter: intVec4Setter,    cols: 4, };
 typeMap[UNSIGNED_INT$3]                  = { Type: Uint32Array,  size:  4, setter: uintSetter,       arraySetter: uintArraySetter, };
-typeMap[UNSIGNED_INT_VEC2]             = { Type: Uint32Array,  size:  8, setter: uintVec2Setter,   };
-typeMap[UNSIGNED_INT_VEC3]             = { Type: Uint32Array,  size: 12, setter: uintVec3Setter,   };
-typeMap[UNSIGNED_INT_VEC4]             = { Type: Uint32Array,  size: 16, setter: uintVec4Setter,   };
+typeMap[UNSIGNED_INT_VEC2]             = { Type: Uint32Array,  size:  8, setter: uintVec2Setter,   cols: 2, };
+typeMap[UNSIGNED_INT_VEC3]             = { Type: Uint32Array,  size: 12, setter: uintVec3Setter,   cols: 3, };
+typeMap[UNSIGNED_INT_VEC4]             = { Type: Uint32Array,  size: 16, setter: uintVec4Setter,   cols: 4, };
 typeMap[BOOL]                          = { Type: Uint32Array,  size:  4, setter: intSetter,        arraySetter: intArraySetter, };
-typeMap[BOOL_VEC2]                     = { Type: Uint32Array,  size:  8, setter: intVec2Setter,    };
-typeMap[BOOL_VEC3]                     = { Type: Uint32Array,  size: 12, setter: intVec3Setter,    };
-typeMap[BOOL_VEC4]                     = { Type: Uint32Array,  size: 16, setter: intVec4Setter,    };
-typeMap[FLOAT_MAT2]                    = { Type: Float32Array, size: 16, setter: floatMat2Setter,  };
-typeMap[FLOAT_MAT3]                    = { Type: Float32Array, size: 36, setter: floatMat3Setter,  };
-typeMap[FLOAT_MAT4]                    = { Type: Float32Array, size: 64, setter: floatMat4Setter,  };
-typeMap[FLOAT_MAT2x3]                  = { Type: Float32Array, size: 24, setter: floatMat23Setter, };
-typeMap[FLOAT_MAT2x4]                  = { Type: Float32Array, size: 32, setter: floatMat24Setter, };
-typeMap[FLOAT_MAT3x2]                  = { Type: Float32Array, size: 24, setter: floatMat32Setter, };
-typeMap[FLOAT_MAT3x4]                  = { Type: Float32Array, size: 48, setter: floatMat34Setter, };
-typeMap[FLOAT_MAT4x2]                  = { Type: Float32Array, size: 32, setter: floatMat42Setter, };
-typeMap[FLOAT_MAT4x3]                  = { Type: Float32Array, size: 48, setter: floatMat43Setter, };
+typeMap[BOOL_VEC2]                     = { Type: Uint32Array,  size:  8, setter: intVec2Setter,    cols: 2, };
+typeMap[BOOL_VEC3]                     = { Type: Uint32Array,  size: 12, setter: intVec3Setter,    cols: 3, };
+typeMap[BOOL_VEC4]                     = { Type: Uint32Array,  size: 16, setter: intVec4Setter,    cols: 4, };
+typeMap[FLOAT_MAT2]                    = { Type: Float32Array, size: 32, setter: floatMat2Setter,  rows: 2, cols: 2, };
+typeMap[FLOAT_MAT3]                    = { Type: Float32Array, size: 48, setter: floatMat3Setter,  rows: 3, cols: 3, };
+typeMap[FLOAT_MAT4]                    = { Type: Float32Array, size: 64, setter: floatMat4Setter,  rows: 4, cols: 4, };
+typeMap[FLOAT_MAT2x3]                  = { Type: Float32Array, size: 32, setter: floatMat23Setter, rows: 2, cols: 3, };
+typeMap[FLOAT_MAT2x4]                  = { Type: Float32Array, size: 32, setter: floatMat24Setter, rows: 2, cols: 4, };
+typeMap[FLOAT_MAT3x2]                  = { Type: Float32Array, size: 48, setter: floatMat32Setter, rows: 3, cols: 2, };
+typeMap[FLOAT_MAT3x4]                  = { Type: Float32Array, size: 48, setter: floatMat34Setter, rows: 3, cols: 4, };
+typeMap[FLOAT_MAT4x2]                  = { Type: Float32Array, size: 64, setter: floatMat42Setter, rows: 4, cols: 2, };
+typeMap[FLOAT_MAT4x3]                  = { Type: Float32Array, size: 64, setter: floatMat43Setter, rows: 4, cols: 3, };
 typeMap[SAMPLER_2D]                    = { Type: null,         size:  0, setter: samplerSetter,    arraySetter: samplerArraySetter, bindPoint: TEXTURE_2D$1,       };
 typeMap[SAMPLER_CUBE]                  = { Type: null,         size:  0, setter: samplerSetter,    arraySetter: samplerArraySetter, bindPoint: TEXTURE_CUBE_MAP$1, };
 typeMap[SAMPLER_3D]                    = { Type: null,         size:  0, setter: samplerSetter,    arraySetter: samplerArraySetter, bindPoint: TEXTURE_3D$1,       };
@@ -14860,56 +15069,103 @@ function addLineNumbersWithError(src, log = '', lineOffset = 0) {
  * @memberOf module:twgl
  */
 
+/**
+ * Program Callback
+ * @callback ProgramCallback
+ * @param {string} [err] error message, falsy if no error
+ * @param {WebGLProgram|module:twgl.ProgramInfo} [result] the program or programInfo
+ */
+
 const spaceRE = /^[ \t]*\n/;
+
+/**
+ * Remove the first end of line because WebGL 2.0 requires
+ * #version 300 es
+ * as the first line. No whitespace allowed before that line
+ * so
+ *
+ * <script>
+ * #version 300 es
+ * </script>
+ *
+ * Has one line before it which is invalid according to GLSL ES 3.00
+ *
+ * @param {string} shaderSource The source of the shader
+ * @returns {{shaderSource: string, lineOffset: number}}
+ * @private
+ */
+function prepShaderSource(shaderSource) {
+  let lineOffset = 0;
+  if (spaceRE.test(shaderSource)) {
+    lineOffset = 1;
+    shaderSource = shaderSource.replace(spaceRE, '');
+  }
+  return {lineOffset, shaderSource};
+}
+
+/**
+ * @param {module:twgl.ProgramOptions} progOptions
+ * @param {string} msg
+ * @return null
+ * @private
+ */
+function reportError(progOptions, msg) {
+  progOptions.errorCallback(msg);
+  if (progOptions.callback) {
+    setTimeout(() => {
+      progOptions.callback(`${msg}\n${progOptions.errors.join('\n')}`);
+    });
+  }
+  return null;
+}
 
 /**
  * Loads a shader.
  * @param {WebGLRenderingContext} gl The WebGLRenderingContext to use.
  * @param {string} shaderSource The shader source.
  * @param {number} shaderType The type of shader.
- * @param {module:twgl.ErrorCallback} opt_errorCallback callback for errors.
+ * @param {module:twgl.ProgramOptions} progOptions
  * @return {WebGLShader} The created shader.
  * @private
  */
-function loadShader$1(gl, shaderSource, shaderType, opt_errorCallback) {
-  const errFn = opt_errorCallback || error$1;
+function loadShader$1(gl, shaderSource, shaderType, progOptions) {
   // Create the shader object
   const shader = gl.createShader(shaderType);
 
-  // Remove the first end of line because WebGL 2.0 requires
-  // #version 300 es
-  // as the first line. No whitespace allowed before that line
-  // so
-  //
-  // <script>
-  // #version 300 es
-  // </script>
-  //
-  // Has one line before it which is invalid according to GLSL ES 3.00
-  //
-  let lineOffset = 0;
-  if (spaceRE.test(shaderSource)) {
-    lineOffset = 1;
-    shaderSource = shaderSource.replace(spaceRE, '');
-  }
-
   // Load the shader source
-  gl.shaderSource(shader, shaderSource);
+  gl.shaderSource(shader, prepShaderSource(shaderSource).shaderSource);
 
   // Compile the shader
   gl.compileShader(shader);
 
-  // Check the compile status
-  const compiled = gl.getShaderParameter(shader, COMPILE_STATUS);
-  if (!compiled) {
-    // Something went wrong during compilation; get the error
-    const lastError = gl.getShaderInfoLog(shader);
-    errFn(`${addLineNumbersWithError(shaderSource, lastError, lineOffset)}\nError compiling ${glEnumToString(gl, shaderType)}: ${lastError}`);
+  if (!progOptions.callback && !checkShaderStatus(gl, shaderType, shader, progOptions.errorCallback)) {
     gl.deleteShader(shader);
     return null;
   }
 
   return shader;
+}
+
+/**
+ * Check Shader status
+ * @param {WebGLRenderingContext} gl The WebGLRenderingContext to use.
+ * @param {number} shaderType The shader type
+ * @param {WebGLShader} shader The shader
+ * @param {ErrorCallback} [errFn] function to receive error message.
+ * @return {bool} true if shader is ok.
+ * @private
+ */
+function checkShaderStatus(gl, shaderType, shader, errFn) {
+  errFn = errFn || error$1;
+  // Check the compile status
+  const compiled = gl.getShaderParameter(shader, COMPILE_STATUS);
+  if (!compiled) {
+    // Something went wrong during compilation; get the error
+    const lastError = gl.getShaderInfoLog(shader);
+    const {lineOffset, shaderSource} = prepShaderSource(gl.getShaderSource(shader));
+    errFn(`${addLineNumbersWithError(shaderSource, lastError, lineOffset)}\nError compiling ${glEnumToString(gl, shaderType)}: ${lastError}`);
+  }
+  return compiled;
 }
 
 /**
@@ -14920,6 +15176,7 @@ function loadShader$1(gl, shaderSource, shaderType, opt_errorCallback) {
  *   a BufferInfo will use the attribs names inside. If passed an object of AttribInfos will use the names from that object. Otherwise
  *   you can pass an array of names.
  * @property {number} [transformFeedbackMode] the mode to pass `gl.transformFeedbackVaryings`. Defaults to `SEPARATE_ATTRIBS`.
+ * @property {ProgramCallback} [callback] callback for async program compilation.
  * @memberOf module:twgl
  */
 
@@ -14935,6 +15192,7 @@ function loadShader$1(gl, shaderSource, shaderType, opt_errorCallback) {
 function getProgramOptions(opt_attribs, opt_locations, opt_errorCallback) {
   let transformFeedbackVaryings;
   let transformFeedbackMode;
+  let callback;
   if (typeof opt_locations === 'function') {
     opt_errorCallback = opt_locations;
     opt_locations = undefined;
@@ -14945,7 +15203,7 @@ function getProgramOptions(opt_attribs, opt_locations, opt_errorCallback) {
   } else if (opt_attribs && !Array.isArray(opt_attribs)) {
     // If we have an errorCallback we can just return this object
     // Otherwise we need to construct one with default errorCallback
-    if (opt_attribs.errorCallback) {
+    if (opt_attribs.errorCallback && opt_attribs.errors) {
       return opt_attribs;
     }
     const opt = opt_attribs;
@@ -14953,12 +15211,20 @@ function getProgramOptions(opt_attribs, opt_locations, opt_errorCallback) {
     opt_attribs = opt.attribLocations;
     transformFeedbackVaryings = opt.transformFeedbackVaryings;
     transformFeedbackMode = opt.transformFeedbackMode;
+    callback = opt.callback;
   }
 
+  const errorCallback = opt_errorCallback || error$1;
+  const errors = [];
   const options = {
-    errorCallback: opt_errorCallback || error$1,
-    transformFeedbackVaryings: transformFeedbackVaryings,
-    transformFeedbackMode: transformFeedbackMode,
+    errorCallback(msg, ...args) {
+      errors.push(msg);
+      errorCallback(msg, ...args);
+    },
+    transformFeedbackVaryings,
+    transformFeedbackMode,
+    callback,
+    errors,
   };
 
   if (opt_attribs) {
@@ -14996,9 +15262,11 @@ function deleteShaders(gl, shaders) {
   });
 }
 
+const wait = (ms = 0) => new Promise(resolve => setTimeout(resolve, ms));
+
 /**
  * Creates a program, attaches (and/or compiles) shaders, binds attrib locations, links the
- * program and calls useProgram.
+ * program.
  *
  * NOTE: There are 4 signatures for this function
  *
@@ -15013,11 +15281,13 @@ function deleteShaders(gl, shaders) {
  * @param {number[]} [opt_locations|module:twgl.ErrorCallback] The locations for the. A parallel array to opt_attribs letting you assign locations or an error callback.
  * @param {module:twgl.ErrorCallback} [opt_errorCallback] callback for errors. By default it just prints an error to the console
  *        on error. If you want something else pass an callback. It's passed an error message.
- * @return {WebGLProgram?} the created program or null if error.
+ * @return {WebGLProgram?} the created program or null if error of a callback was provided.
  * @memberOf module:twgl/programs
  */
 function createProgram$1(
     gl, shaders, opt_attribs, opt_locations, opt_errorCallback) {
+  // This code is really convoluted, because it may or may not be async
+  // Maybe it would be better to have a separate function
   const progOptions = getProgramOptions(opt_attribs, opt_locations, opt_errorCallback);
   const realShaders = [];
   const newShaders = [];
@@ -15030,7 +15300,7 @@ function createProgram$1(
       if (elem && elem.type) {
         type = getShaderTypeFromScriptType(gl, elem.type) || type;
       }
-      shader = loadShader$1(gl, src, type, progOptions.errorCallback);
+      shader = loadShader$1(gl, src, type, progOptions);
       newShaders.push(shader);
     }
     if (isShader(gl, shader)) {
@@ -15039,9 +15309,8 @@ function createProgram$1(
   }
 
   if (realShaders.length !== shaders.length) {
-    progOptions.errorCallback("not enough shaders for program");
     deleteShaders(gl, newShaders);
-    return null;
+    return reportError(progOptions, "not enough shaders for program");
   }
 
   const program = gl.createProgram();
@@ -15063,26 +15332,135 @@ function createProgram$1(
     }
     gl.transformFeedbackVaryings(program, varyings, progOptions.transformFeedbackMode || SEPARATE_ATTRIBS);
   }
-  gl.linkProgram(program);
 
+  gl.linkProgram(program);
+  if (progOptions.callback) {
+    checkForProgramLinkCompletionAsync(gl, program, progOptions);
+    return null;
+  } else {
+    if (!checkProgramStatus(gl, program, progOptions.errorCallback)) {
+      gl.deleteProgram(program);
+      deleteShaders(gl, newShaders);
+      return null;
+    }
+    return program;
+  }
+}
+
+/**
+ * Same as createProgram but returns a promise
+ *
+ * NOTE: There are 4 signatures for this function
+ *
+ *     twgl.createProgramAsync(gl, [vs, fs], options);
+ *     twgl.createProgramAsync(gl, [vs, fs], opt_errFunc);
+ *     twgl.createProgramAsync(gl, [vs, fs], opt_attribs, opt_errFunc);
+ *     twgl.createProgramAsync(gl, [vs, fs], opt_attribs, opt_locations, opt_errFunc);
+ *
+ * @param {WebGLRenderingContext} gl The WebGLRenderingContext to use.
+ * @param {WebGLShader[]|string[]} shaders The shaders to attach, or element ids for their source, or strings that contain their source
+ * @param {module:twgl.ProgramOptions|string[]|module:twgl.ErrorCallback} [opt_attribs] Options for the program or an array of attribs names or an error callback. Locations will be assigned by index if not passed in
+ * @param {number[]} [opt_locations|module:twgl.ErrorCallback] The locations for the. A parallel array to opt_attribs letting you assign locations or an error callback.
+ * @param {module:twgl.ErrorCallback} [opt_errorCallback] callback for errors. By default it just prints an error to the console
+ *        on error. If you want something else pass an callback. It's passed an error message.
+ * @return {Promise<WebGLProgram>} The created program
+ * @memberOf module:twgl/programs
+ */
+function createProgramAsync(gl, shaders, ...args) {
+  return new Promise((resolve, reject) => {
+    const programOptions = getProgramOptions(...args);
+    programOptions.callback = (err, program) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(program);
+      }
+    };
+    createProgram$1(gl, shaders, programOptions);
+  });
+}
+
+/**
+ * Same as createProgramInfo but returns a promise
+ * @param {WebGLRenderingContext} gl The WebGLRenderingContext
+ *        to use.
+ * @param {string[]} shaderSources Array of sources for the
+ *        shaders or ids. The first is assumed to be the vertex shader,
+ *        the second the fragment shader.
+ * @param {module:twgl.ProgramOptions|string[]|module:twgl.ErrorCallback} [opt_attribs] Options for the program or an array of attribs names or an error callback. Locations will be assigned by index if not passed in
+ * @param {number[]} [opt_locations|module:twgl.ErrorCallback] The locations for the. A parallel array to opt_attribs letting you assign locations or an error callback.
+ * @param {module:twgl.ErrorCallback} [opt_errorCallback] callback for errors. By default it just prints an error to the console
+ *        on error. If you want something else pass an callback. It's passed an error message.
+ * @return {Promise<module:twgl.ProgramInfo>} The created ProgramInfo
+ * @memberOf module:twgl/programs
+ */
+function createProgramInfoAsync(gl, shaders, ...args) {
+  return new Promise((resolve, reject) => {
+    const programOptions = getProgramOptions(...args);
+    programOptions.callback = (err, programInfo) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(programInfo);
+      }
+    };
+    createProgramInfo(gl, shaders, programOptions);
+  });
+}
+
+
+/**
+ * Asynchronously wait for program to link.
+ * Note: if 'KHR_parallel_shader_compile' extension does not
+ * exist then compilation will not be truly async.
+ * @param {WebGLRenderingContext} gl The context
+ * @param {WebGLProgram} program The program
+ * @param {module:twgl.ProgramOptions} progOptions Options for the program or an array of attribs names or an error callback. Locations will be assigned by index if not passed in
+ * @private
+ */
+async function checkForProgramLinkCompletionAsync(gl, program, progOptions) {
+  const ext = gl.getExtension('KHR_parallel_shader_compile');
+  const checkFn = ext
+      ? (gl, program) => gl.getProgramParameter(program, ext.COMPLETION_STATUS_KHR)
+      : () => true;
+
+  let waitTime = 0;
+  do {
+    await wait(waitTime);  // must wait at least once
+    waitTime = 1000 / 60;
+  } while (!checkFn(gl, program));
+
+  const success = checkProgramStatus(gl, program, progOptions.errorCallback);
+  const err = success ? undefined : progOptions.errors.join('\n');
+  if (!success) {
+    const errFn = progOptions.errorCallback || error$1;
+    errFn(err);
+    gl.deleteProgram(program);
+    // TODO: delete shaders, but only shaders that were created newly for this
+    // program
+    program = null;
+  }
+  progOptions.callback(err, program);
+}
+
+/**
+ * Check a program's link status
+ * @param {WebGLRenderingContext} gl The WebGLRenderingContext to use.
+ * @param {WebGLProgram} program Program to check
+ * @param {ErrorCallback} [errFn] func for errors
+ * @return {bool} true if program is ok
+ * @private
+ */
+function checkProgramStatus(gl, program, errFn) {
+  errFn = errFn || error$1;
   // Check the link status
   const linked = gl.getProgramParameter(program, LINK_STATUS);
   if (!linked) {
     // something went wrong with the link
     const lastError = gl.getProgramInfoLog(program);
-    progOptions.errorCallback(`${
-      realShaders.map(shader => {
-        const src = addLineNumbersWithError(gl.getShaderSource(shader), '', 0);
-        const type = gl.getShaderParameter(shader, gl.SHADER_TYPE);
-        return `${glEnumToString(gl, type)}\n${src}}`;
-      }).join('\n')
-    }\nError in program linking: ${lastError}`);
-
-    gl.deleteProgram(program);
-    deleteShaders(gl, newShaders);
-    return null;
+    errFn(`Error in program linking: ${lastError}`);
   }
-  return program;
+  return linked;
 }
 
 /**
@@ -15091,25 +15469,25 @@ function createProgram$1(
  * @param {string} scriptId The id of the script tag.
  * @param {number} [opt_shaderType] The type of shader. If not passed in it will
  *     be derived from the type of the script tag.
- * @param {module:twgl.ErrorCallback} [opt_errorCallback] callback for errors.
+ * @param {module:twgl.ProgramOptions} [progOptions] callback for errors.
  * @return {WebGLShader?} The created shader or null if error.
  * @private
  */
 function createShaderFromScript(
-    gl, scriptId, opt_shaderType, opt_errorCallback) {
+    gl, scriptId, opt_shaderType, progOptions) {
   let shaderSource = "";
   const shaderScript = getElementById(scriptId);
   if (!shaderScript) {
-    throw new Error(`unknown script element: ${scriptId}`);
+    return reportError(progOptions, `unknown script element: ${scriptId}`);
   }
   shaderSource = shaderScript.text;
 
   const shaderType = opt_shaderType || getShaderTypeFromScriptType(gl, shaderScript.type);
   if (!shaderType) {
-    throw new Error('unknown shader type');
+    return reportError(progOptions, 'unknown shader type');
   }
 
-  return loadShader$1(gl, shaderSource, shaderType, opt_errorCallback);
+  return loadShader$1(gl, shaderSource, shaderType, progOptions);
 }
 
 /**
@@ -15131,7 +15509,7 @@ function createShaderFromScript(
  * @param {number[]} [opt_locations|module:twgl.ErrorCallback] The locations for the. A parallel array to opt_attribs letting you assign locations or an error callback.
  * @param {module:twgl.ErrorCallback} [opt_errorCallback] callback for errors. By default it just prints an error to the console
  *        on error. If you want something else pass an callback. It's passed an error message.
- * @return {WebGLProgram?} the created program or null if error.
+ * @return {WebGLProgram?} the created program or null if error or a callback was provided.
  * @memberOf module:twgl/programs
  */
 function createProgramFromScripts(
@@ -15140,7 +15518,7 @@ function createProgramFromScripts(
   const shaders = [];
   for (let ii = 0; ii < shaderScriptIds.length; ++ii) {
     const shader = createShaderFromScript(
-        gl, shaderScriptIds[ii], gl[defaultShaderType[ii]], progOptions.errorCallback);
+        gl, shaderScriptIds[ii], gl[defaultShaderType[ii]], progOptions);
     if (!shader) {
       return null;
     }
@@ -15168,7 +15546,7 @@ function createProgramFromScripts(
  * @param {number[]} [opt_locations|module:twgl.ErrorCallback] The locations for the. A parallel array to opt_attribs letting you assign locations or an error callback.
  * @param {module:twgl.ErrorCallback} [opt_errorCallback] callback for errors. By default it just prints an error to the console
  *        on error. If you want something else pass an callback. It's passed an error message.
- * @return {WebGLProgram?} the created program or null if error.
+ * @return {WebGLProgram?} the created program or null if error or a callback was provided.
  * @memberOf module:twgl/programs
  */
 function createProgramFromSources(
@@ -15176,9 +15554,8 @@ function createProgramFromSources(
   const progOptions = getProgramOptions(opt_attribs, opt_locations, opt_errorCallback);
   const shaders = [];
   for (let ii = 0; ii < shaderSources.length; ++ii) {
-    const shader = loadShader$1(
-        gl, shaderSources[ii], gl[defaultShaderType[ii]], progOptions.errorCallback);
-    if (!shader) {
+    const shader = loadShader$1(gl, shaderSources[ii], gl[defaultShaderType[ii]], progOptions);
+    if (!progOptions.callback && !shader) {
       return null;
     }
     shaders.push(shader);
@@ -15206,6 +15583,43 @@ function createProgramFromSources(
 function isBuiltIn(info) {
   const name = info.name;
   return name.startsWith("gl_") || name.startsWith("webgl_");
+}
+
+const tokenRE = /(\.|\[|]|\w+)/g;
+const isDigit = s => s >= '0' && s <= '9';
+function addSetterToUniformTree(fullPath, setter, node, uniformSetters) {
+  const tokens = fullPath.split(tokenRE).filter(s => s !== '');
+  let tokenNdx = 0;
+  let path = '';
+
+  for (;;) {
+    const token = tokens[tokenNdx++];  // has to be name or number
+    path += token;
+    const isArrayIndex = isDigit(token[0]);
+    const accessor = isArrayIndex
+        ? parseInt(token)
+        : token;
+    if (isArrayIndex) {
+      path += tokens[tokenNdx++];  // skip ']'
+    }
+    const isLastToken = tokenNdx === tokens.length;
+    if (isLastToken) {
+      node[accessor] = setter;
+      break;
+    } else {
+      const token = tokens[tokenNdx++];  // has to be . or [
+      const isArray = token === '[';
+      const child = node[accessor] || (isArray ? [] : {});
+      node[accessor] = child;
+      node = child;
+      uniformSetters[path] = uniformSetters[path] || function(node) {
+        return function(value) {
+          setUniformTree(node, value);
+        };
+      }(child);
+      path += token;
+    }
+  }
 }
 
 /**
@@ -15257,13 +15671,14 @@ function createUniformSetters(gl, program) {
     return setter;
   }
 
-  const uniformSetters = { };
+  const uniformSetters = {};
+  const uniformTree = {};
   const numUniforms = gl.getProgramParameter(program, ACTIVE_UNIFORMS);
 
   for (let ii = 0; ii < numUniforms; ++ii) {
     const uniformInfo = gl.getActiveUniform(program, ii);
     if (isBuiltIn(uniformInfo)) {
-        continue;
+      continue;
     }
     let name = uniformInfo.name;
     // remove the array suffix.
@@ -15273,9 +15688,12 @@ function createUniformSetters(gl, program) {
     const location = gl.getUniformLocation(program, uniformInfo.name);
     // the uniform will have no location if it's in a uniform block
     if (location) {
-      uniformSetters[name] = createUniformSetter(program, uniformInfo, location);
+      const setter = createUniformSetter(program, uniformInfo, location);
+      uniformSetters[name] = setter;
+      addSetterToUniformTree(name, setter, uniformTree, uniformSetters);
     }
   }
+
   return uniformSetters;
 }
 
@@ -15355,6 +15773,7 @@ function createTransformFeedback(gl, programInfo, bufferInfo) {
 
 /**
  * @typedef {Object} UniformData
+ * @property {string} name The name of the uniform
  * @property {number} type The WebGL type enum for this uniform
  * @property {number} size The number of elements for this uniform
  * @property {number} blockNdx The block index this uniform appears in
@@ -15381,7 +15800,7 @@ function createTransformFeedback(gl, programInfo, bufferInfo) {
  * UniformBlockObjects for a given program
  *
  * @typedef {Object} UniformBlockSpec
- * @property {Object.<string, module:twgl.BlockSpec> blockSpecs The BlockSpec for each block by block name
+ * @property {Object.<string, module:twgl.BlockSpec>} blockSpecs The BlockSpec for each block by block name
  * @property {UniformData[]} uniformData An array of data for each uniform by uniform index.
  * @memberOf module:twgl
  */
@@ -15406,9 +15825,6 @@ function createUniformBlockSpecFromProgram(gl, program) {
     uniformIndices.push(ii);
     uniformData.push({});
     const uniformInfo = gl.getActiveUniform(program, ii);
-    if (isBuiltIn(uniformInfo)) {
-      break;
-    }
     uniformData[ii].name = uniformInfo.name;
   }
 
@@ -15451,17 +15867,19 @@ const arraySuffixRE = /\[\d+\]\.$/;  // better way to check?
 
 const pad = (v, padding) => ((v + (padding - 1)) / padding | 0) * padding;
 
-function createUniformBlockUniformSetter(view, Type, typeSize, paddedSize, isArray) {
-  if (isArray) {
-    const numElements = typeSize / Type.BYTES_PER_ELEMENT;
-    const numPaddedElements = paddedSize / Type.BYTES_PER_ELEMENT;
+function createUniformBlockUniformSetter(view, isArray, rows, cols) {
+  if (isArray || rows) {
+    cols = cols || 1;
+    const numElements = view.length;
+    const totalRows = numElements / 4;
     return function(value) {
       let dst = 0;
-      for (let src = 0; src < value.length; src += numElements) {
-        for (let i = 0; i < numElements; ++i) {
-          view[dst + i] = value[src + i];
+      let src = 0;
+      for (let row = 0; row < totalRows; ++row) {
+        for (let col = 0; col < cols; ++col) {
+          view[dst++] = value[src++];
         }
-        dst += numPaddedElements;
+        dst += 4 - cols;
       }
     };
   } else {
@@ -15542,12 +15960,9 @@ function createUniformBlockInfoFromProgram(gl, program, uniformBlockSpec, blockN
   }
   const uniforms = {};
   const setters = {};
+  const setterTree = {};
   blockSpec.uniformIndices.forEach(function(uniformNdx) {
     const data = uniformData[uniformNdx];
-    const typeInfo = typeMap[data.type];
-    const Type = typeInfo.Type;
-    const paddedSize = pad(typeInfo.size, 16);
-    const length = typeInfo.size + (data.size - 1) * paddedSize;
     let name = data.name;
     if (name.startsWith(prefix)) {
       name = name.substr(prefix.length);
@@ -15556,9 +15971,41 @@ function createUniformBlockInfoFromProgram(gl, program, uniformBlockSpec, blockN
     if (isArray) {
       name = name.substr(0, name.length - 3);
     }
-    const uniformView = new Type(array, data.offset, length / Type.BYTES_PER_ELEMENT);
+    const typeInfo = typeMap[data.type];
+    const Type = typeInfo.Type;
+    const byteLength = isArray
+        ? pad(typeInfo.size, 16) * data.size
+        : typeInfo.size * data.size;
+    const uniformView = new Type(array, data.offset, byteLength / Type.BYTES_PER_ELEMENT);
     uniforms[name] = uniformView;
-    setters[name] = createUniformBlockUniformSetter(uniformView, Type, typeInfo.size, paddedSize, isArray);
+    // Note: I'm not sure what to do here. The original
+    // idea was to create TypedArray views into each part
+    // of the block. This is useful, for example if you have
+    // a block with { mat4: model; mat4 view; mat4 projection; }
+    // you'll get a Float32Array for each one suitable for
+    // passing to most JS math libraries including twgl's and glMatrix.js.
+    //
+    // But, if you have a an array of structures, especially if that
+    // array is large, you get a whole bunch of TypedArray views.
+    // Every one of them has overhead and switching between them all
+    // is probably a cache miss. In that case it would really be better
+    // to just have one view (asFloat) and have all the setters
+    // just reference the correct portion. But, then you can't easily
+    // treat a matrix, or a vec4, as a standalone thing like you can
+    // with all the views.
+    //
+    // Another problem with the views is they are not shared. With
+    // uniforms you have one set of setters. With UniformBlockInfo
+    // you have a set of setters *pre block instance*. That's because
+    // TypedArray views can't be mapped to different buffers.
+    //
+    // My gut right now is if you really want the speed and compactness
+    // then you should probably roll your own solution. TWGL's goal
+    // here is ease of use as AFAICT there is no simple generic efficient
+    // solution.
+    const setter = createUniformBlockUniformSetter(uniformView, isArray, typeInfo.rows, typeInfo.cols);
+    setters[name] = setter;
+    addSetterToUniformTree(name, setter, setterTree, setters);
   });
   return {
     name: blockName,
@@ -15665,6 +16112,63 @@ function setUniformBlock(gl, programInfo, uniformBlockInfo) {
  *
  *  Arrays can be JavaScript arrays or typed arrays
  *
+ *  You can also fill out structure and array values either via
+ *  shortcut. Example
+ *
+ *     // -- in shader --
+ *     struct Light {
+ *       float intensity;
+ *       vec4 color;
+ *       float nearFar[2];
+ *     };
+ *     uniform Lights {
+ *       Light lights[2];
+ *     };
+ *
+ *     // in JavaScript
+ *
+ *     twgl.setBlockUniforms(someBlockInfo, {
+ *       lights: [
+ *         { intensity: 5.0, color: [1, 0, 0, 1], nearFar[0.1, 10] },
+ *         { intensity: 2.0, color: [0, 0, 1, 1], nearFar[0.2, 15] },
+ *       ],
+ *     });
+ *
+ *   or the more traditional way
+ *
+ *     twgl.setBlockUniforms(someBlockInfo, {
+ *       "lights[0].intensity": 5.0,
+ *       "lights[0].color": [1, 0, 0, 1],
+ *       "lights[0].nearFar": [0.1, 10],
+ *       "lights[1].intensity": 2.0,
+ *       "lights[1].color": [0, 0, 1, 1],
+ *       "lights[1].nearFar": [0.2, 15],
+ *     });
+ *
+ *   You can also specify partial paths
+ *
+ *     twgl.setBlockUniforms(someBlockInfo, {
+ *       'lights[1]': { intensity: 5.0, color: [1, 0, 0, 1], nearFar[0.2, 15] },
+ *     });
+ *
+ *   But you can not specify leaf array indices.
+ *
+ *     twgl.setBlockUniforms(someBlockInfo, {
+ *       'lights[1].nearFar[1]': 15,     // BAD! nearFar is a leaf
+ *       'lights[1].nearFar': [0.2, 15], // GOOD
+ *     });
+ *
+ *  **IMPORTANT!**, packing in a UniformBlock is unintuitive.
+ *  For example the actual layout of `someVec3Array` above in memory
+ *  is `1, 2, 3, unused, 4, 5, 6, unused`. twgl takes in 6 values
+ *  as shown about and copies them, skipping the padding. This might
+ *  be confusing if you're already familiar with Uniform blocks.
+ *
+ *  If you want to deal with the padding yourself you can access the array
+ *  buffer views directly. eg:
+ *
+ *      someBlockInfo.someVec3Array.set([1, 2, 3, 0, 4, 5, 6, 0]);
+ *
  *  Any name that doesn't match will be ignored
  * @memberOf module:twgl/programs
  */
@@ -15675,6 +16179,17 @@ function setBlockUniforms(uniformBlockInfo, values) {
     if (setter) {
       const value = values[name];
       setter(value);
+    }
+  }
+}
+
+function setUniformTree(tree, values) {
+  for (const name in values) {
+    const prop = tree[name];
+    if (typeof prop === 'function') {
+      prop(values[name]);
+    } else {
+      setUniformTree(tree[name], values[name]);
     }
   }
 }
@@ -15791,13 +16306,57 @@ function setBlockUniforms(uniformBlockInfo, values) {
  *     twgl.setUniforms(programInfo, sharedUniforms);
  *     twgl.setUniforms(programInfo, localUniforms};
  *
+ *   You can also fill out structure and array values either via
+ *   shortcut. Example
+ *
+ *     // -- in shader --
+ *     struct Light {
+ *       float intensity;
+ *       vec4 color;
+ *       float nearFar[2];
+ *     };
+ *     uniform Light lights[2];
+ *
+ *     // in JavaScript
+ *
+ *     twgl.setUniforms(programInfo, {
+ *       lights: [
+ *         { intensity: 5.0, color: [1, 0, 0, 1], nearFar[0.1, 10] },
+ *         { intensity: 2.0, color: [0, 0, 1, 1], nearFar[0.2, 15] },
+ *       ],
+ *     });
+ *
+ *   or the more traditional way
+ *
+ *     twgl.setUniforms(programInfo, {
+ *       "lights[0].intensity": 5.0,
+ *       "lights[0].color": [1, 0, 0, 1],
+ *       "lights[0].nearFar": [0.1, 10],
+ *       "lights[1].intensity": 2.0,
+ *       "lights[1].color": [0, 0, 1, 1],
+ *       "lights[1].nearFar": [0.2, 15],
+ *     });
+ *
+ *   You can also specify partial paths
+ *
+ *     twgl.setUniforms(programInfo, {
+ *       'lights[1]': { intensity: 5.0, color: [1, 0, 0, 1], nearFar[0.2, 15] },
+ *     });
+ *
+ *   But you can not specify leaf array indices
+ *
+ *     twgl.setUniforms(programInfo, {
+ *       'lights[1].nearFar[1]': 15,     // BAD! nearFar is a leaf
+ *       'lights[1].nearFar': [0.2, 15], // GOOD
+ *     });
+ *
  * @memberOf module:twgl/programs
  */
-function setUniforms(setters, values) {  // eslint-disable-line
+function setUniforms(setters, ...args) {  // eslint-disable-line
   const actualSetters = setters.uniformSetters || setters;
-  const numArgs = arguments.length;
-  for (let aNdx = 1; aNdx < numArgs; ++aNdx) {
-    const values = arguments[aNdx];
+  const numArgs = args.length;
+  for (let aNdx = 0; aNdx < numArgs; ++aNdx) {
+    const values = args[aNdx];
     if (Array.isArray(values)) {
       const numValues = values.length;
       for (let ii = 0; ii < numValues; ++ii) {
@@ -15842,7 +16401,7 @@ function createAttributeSetters(gl, program) {
   for (let ii = 0; ii < numAttribs; ++ii) {
     const attribInfo = gl.getActiveAttrib(program, ii);
     if (isBuiltIn(attribInfo)) {
-        continue;
+      continue;
     }
     const index = gl.getAttribLocation(program, attribInfo.name);
     const typeInfo = attrTypeMap[attribInfo.type];
@@ -15907,6 +16466,7 @@ function createAttributeSetters(gl, program) {
  * @param {Object.<string, module:twgl.AttribInfo>} buffers AttribInfos mapped by attribute name.
  * @memberOf module:twgl/programs
  * @deprecated use {@link module:twgl.setBuffersAndAttributes}
+ * @private
  */
 function setAttributes(setters, buffers) {
   for (const name in buffers) {
@@ -15970,7 +16530,7 @@ function setBuffersAndAttributes(gl, programInfo, buffers) {
  * @property {WebGLProgram} program A shader program
  * @property {Object<string, function>} uniformSetters object of setters as returned from createUniformSetters,
  * @property {Object<string, function>} attribSetters object of setters as returned from createAttribSetters,
- * @property {module:twgl.UniformBlockSpec} [uniformBlockSpace] a uniform block spec for making UniformBlockInfos with createUniformBlockInfo etc..
+ * @property {module:twgl.UniformBlockSpec} [uniformBlockSpec] a uniform block spec for making UniformBlockInfos with createUniformBlockInfo etc..
  * @property {Object<string, module:twgl.TransformFeedbackInfo>} [transformFeedbackInfo] info for transform feedbacks
  * @memberOf module:twgl
  */
@@ -15996,9 +16556,9 @@ function createProgramInfoFromProgram(gl, program) {
   const uniformSetters = createUniformSetters(gl, program);
   const attribSetters = createAttributeSetters(gl, program);
   const programInfo = {
-    program: program,
-    uniformSetters: uniformSetters,
-    attribSetters: attribSetters,
+    program,
+    uniformSetters,
+    attribSetters,
   };
 
   if (isWebGL2(gl)) {
@@ -16008,6 +16568,8 @@ function createProgramInfoFromProgram(gl, program) {
 
   return programInfo;
 }
+
+const notIdRE = /\s|{|}|;/;
 
 /**
  * Creates a ProgramInfo from 2 sources.
@@ -16042,22 +16604,33 @@ function createProgramInfoFromProgram(gl, program) {
 function createProgramInfo(
     gl, shaderSources, opt_attribs, opt_locations, opt_errorCallback) {
   const progOptions = getProgramOptions(opt_attribs, opt_locations, opt_errorCallback);
-  let good = true;
+  const errors = [];
   shaderSources = shaderSources.map(function(source) {
     // Lets assume if there is no \n it's an id
-    if (source.indexOf("\n") < 0) {
+    if (!notIdRE.test(source)) {
       const script = getElementById(source);
       if (!script) {
-        progOptions.errorCallback("no element with id: " + source);
-        good = false;
+        const err = `no element with id: ${source}`;
+        progOptions.errorCallback(err);
+        errors.push(err);
       } else {
         source = script.text;
       }
     }
     return source;
   });
-  if (!good) {
-    return null;
+  if (errors.length) {
+    return reportError(progOptions, '');
+  }
+  const origCallback = progOptions.callback;
+  if (origCallback) {
+    progOptions.callback = (err, program) => {
+      let programInfo;
+      if (!err) {
+        programInfo = createProgramInfoFromProgram(gl, program);
+      }
+      origCallback(err, programInfo);
+    };
   }
   const program = createProgramFromSources(gl, shaderSources, progOptions);
   if (!program) {
@@ -16070,9 +16643,11 @@ var programs = /*#__PURE__*/Object.freeze({
   __proto__: null,
   createAttributeSetters: createAttributeSetters,
   createProgram: createProgram$1,
+  createProgramAsync: createProgramAsync,
   createProgramFromScripts: createProgramFromScripts,
   createProgramFromSources: createProgramFromSources,
   createProgramInfo: createProgramInfo,
+  createProgramInfoAsync: createProgramInfoAsync,
   createProgramInfoFromProgram: createProgramInfoFromProgram,
   createUniformSetters: createUniformSetters,
   createUniformBlockSpecFromProgram: createUniformBlockSpecFromProgram,
@@ -16333,10 +16908,11 @@ const LINEAR$1                         = 0x2601;
  * @property {number} [type] The type. Used for texture. Default = `gl.UNSIGNED_BYTE`.
  * @property {number} [target] The texture target for `gl.framebufferTexture2D`.
  *   Defaults to `gl.TEXTURE_2D`. Set to appropriate face for cube maps.
+ * @property {number} [samples] The number of samples. Default = 1
  * @property {number} [level] level for `gl.framebufferTexture2D`. Defaults to 0.
  * @property {number} [layer] layer for `gl.framebufferTextureLayer`. Defaults to undefined.
  *   If set then `gl.framebufferTextureLayer` is called, if not then `gl.framebufferTexture2D`
- * @property {WebGLObject} [attachment] An existing renderbuffer or texture.
+ * @property {(WebGLRenderbuffer | WebGLTexture)} [attachment] An existing renderbuffer or texture.
  *    If provided will attach this Object. This allows you to share
  *    attachments across framebuffers.
  * @memberOf module:twgl
@@ -16376,10 +16952,16 @@ function isRenderbufferFormat(format) {
   return renderbufferFormats[format];
 }
 
+const MAX_COLOR_ATTACHMENT_POINTS = 32;  // even an 3090 only supports 8 but WebGL/OpenGL ES define constants for 32
+
+function isColorAttachmentPoint(attachmentPoint) {
+  return attachmentPoint >= COLOR_ATTACHMENT0 && attachmentPoint < COLOR_ATTACHMENT0 + MAX_COLOR_ATTACHMENT_POINTS;
+}
+
 /**
  * @typedef {Object} FramebufferInfo
  * @property {WebGLFramebuffer} framebuffer The WebGLFramebuffer for this framebufferInfo
- * @property {WebGLObject[]} attachments The created attachments in the same order as passed in to {@link module:twgl.createFramebufferInfo}.
+ * @property {Array.<(WebGLRenderbuffer | WebGLTexture)>} attachments The created attachments in the same order as passed in to {@link module:twgl.createFramebufferInfo}.
  * @property {number} width The width of the framebuffer and its attachments
  * @property {number} height The width of the framebuffer and its attachments
  * @memberOf module:twgl
@@ -16389,6 +16971,9 @@ function isRenderbufferFormat(format) {
  * Creates a framebuffer and attachments.
  *
  * This returns a {@link module:twgl.FramebufferInfo} because it needs to return the attachments as well as the framebuffer.
+ * It also leaves the framebuffer it just created as the currently bound `FRAMEBUFFER`.
+ * Note: If this is WebGL2 or if you called {@link module:twgl.addExtensionsToContext} then it will set the drawBuffers
+ * to `[COLOR_ATTACHMENT0, COLOR_ATTACHMENT1, ...]` for how ever many color attachments were created.
  *
  * The simplest usage
  *
@@ -16428,25 +17013,34 @@ function createFramebufferInfo(gl, attachments, width, height) {
   width  = width  || gl.drawingBufferWidth;
   height = height || gl.drawingBufferHeight;
   attachments = attachments || defaultAttachments;
-  let colorAttachmentCount = 0;
+  const usedColorAttachmentsPoints = [];
   const framebufferInfo = {
     framebuffer: fb,
     attachments: [],
     width: width,
     height: height,
   };
-  attachments.forEach(function(attachmentOptions) {
+
+  attachments.forEach(function(attachmentOptions, i) {
     let attachment = attachmentOptions.attachment;
+    const samples = attachmentOptions.samples;
     const format = attachmentOptions.format;
     let attachmentPoint = attachmentOptions.attachmentPoint || getAttachmentPointForFormat(format, attachmentOptions.internalFormat);
     if (!attachmentPoint) {
-      attachmentPoint = COLOR_ATTACHMENT0 + colorAttachmentCount++;
+      attachmentPoint = COLOR_ATTACHMENT0 + i;
+    }
+    if (isColorAttachmentPoint(attachmentPoint)) {
+      usedColorAttachmentsPoints.push(attachmentPoint);
     }
     if (!attachment) {
-      if (isRenderbufferFormat(format)) {
+      if (samples !== undefined || isRenderbufferFormat(format)) {
         attachment = gl.createRenderbuffer();
         gl.bindRenderbuffer(RENDERBUFFER, attachment);
-        gl.renderbufferStorage(RENDERBUFFER, format, width, height);
+        if (samples > 1) {
+          gl.renderbufferStorageMultisample(RENDERBUFFER, samples, format, width, height);
+        } else {
+          gl.renderbufferStorage(RENDERBUFFER, format, width, height);
+        }
       } else {
         const textureOptions = Object.assign({}, attachmentOptions);
         textureOptions.width = width;
@@ -16484,6 +17078,9 @@ function createFramebufferInfo(gl, attachments, width, height) {
     }
     framebufferInfo.attachments.push(attachment);
   });
+  if (gl.drawBuffers) {
+    gl.drawBuffers(usedColorAttachmentsPoints);
+  }
   return framebufferInfo;
 }
 
@@ -16539,9 +17136,14 @@ function resizeFramebufferInfo(gl, framebufferInfo, attachments, width, height) 
   attachments.forEach(function(attachmentOptions, ndx) {
     const attachment = framebufferInfo.attachments[ndx];
     const format = attachmentOptions.format;
-    if (isRenderbuffer(gl, attachment)) {
+    const samples = attachmentOptions.samples;
+    if (samples !== undefined || isRenderbuffer(gl, attachment)) {
       gl.bindRenderbuffer(RENDERBUFFER, attachment);
-      gl.renderbufferStorage(RENDERBUFFER, format, width, height);
+      if (samples > 1) {
+        gl.renderbufferStorageMultisample(RENDERBUFFER, samples, format, width, height);
+      } else {
+        gl.renderbufferStorage(RENDERBUFFER, format, width, height);
+      }
     } else if (isTexture(gl, attachment)) {
       resizeTexture(gl, attachment, attachmentOptions, width, height);
     } else {
@@ -16695,6 +17297,9 @@ function createVertexArrayInfo(gl, programInfos, bufferInfo) {
  * @param {Object.<string, function>} setters Attribute setters as returned from createAttributeSetters
  * @param {Object.<string, module:twgl.AttribInfo>} attribs AttribInfos mapped by attribute name.
  * @param {WebGLBuffer} [indices] an optional ELEMENT_ARRAY_BUFFER of indices
+ *
+ * @return {WebGLVertexArrayObject|null} The created WebGLVertexArrayObject
+ *
  * @memberOf module:twgl/vertexArrays
  */
 function createVAOAndSetAttributes(gl, setters, attribs, indices) {
@@ -16719,6 +17324,9 @@ function createVAOAndSetAttributes(gl, setters, attribs, indices) {
  * @param {Object.<string, function>| module:twgl.ProgramInfo} programInfo as returned from createProgramInfo or Attribute setters as returned from createAttributeSetters
  * @param {module:twgl.BufferInfo} bufferInfo BufferInfo as returned from createBufferInfoFromArrays etc...
  * @param {WebGLBuffer} [indices] an optional ELEMENT_ARRAY_BUFFER of indices
+ *
+ * @return {WebGLVertexArrayObject|null} The created WebGLVertexArrayObject
+ *
  * @memberOf module:twgl/vertexArrays
  */
 function createVAOFromBufferInfo(gl, programInfo, bufferInfo) {
@@ -17002,6 +17610,8 @@ function create3DContext(canvas, opt_attribs) {
  * @param {WebGLContextAttributes} [opt_attribs] optional webgl context creation attributes
  * @return {WebGLRenderingContext} The created context.
  * @memberOf module:twgl
+ * @deprecated
+ * @private
  */
 function getWebGLContext(canvas, opt_attribs) {
   const gl = create3DContext(canvas, opt_attribs);
@@ -17097,9 +17707,11 @@ var twglFull_module = /*#__PURE__*/Object.freeze({
   createBuffersFromArrays: createBuffersFromArrays,
   createFramebufferInfo: createFramebufferInfo,
   createProgram: createProgram$1,
+  createProgramAsync: createProgramAsync,
   createProgramFromScripts: createProgramFromScripts,
   createProgramFromSources: createProgramFromSources,
   createProgramInfo: createProgramInfo,
+  createProgramInfoAsync: createProgramInfoAsync,
   createProgramInfoFromProgram: createProgramInfoFromProgram,
   createSampler: createSampler,
   createSamplers: createSamplers,
@@ -17170,20 +17782,14 @@ function assert$2(condition, message) {
   }
 }
 
-function _typeof(obj) {
+function _typeof(o) {
   "@babel/helpers - typeof";
 
-  if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
-    _typeof = function _typeof(obj) {
-      return typeof obj;
-    };
-  } else {
-    _typeof = function _typeof(obj) {
-      return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
-    };
-  }
-
-  return _typeof(obj);
+  return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
+    return typeof o;
+  } : function (o) {
+    return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
+  }, _typeof(o);
 }
 
 var globals$1 = {
@@ -17201,805 +17807,387 @@ var isWorker = typeof importScripts === 'function';
 var matches$1 = typeof process !== 'undefined' && process.version && process.version.match(/v([0-9]*)/);
 var nodeVersion = matches$1 && parseFloat(matches$1[1]) || 0;
 
-function _defineProperty$1(obj, key, value) {
-  if (key in obj) {
-    Object.defineProperty(obj, key, {
-      value: value,
-      enumerable: true,
-      configurable: true,
-      writable: true
-    });
-  } else {
-    obj[key] = value;
+function toPrimitive(t, r) {
+  if ("object" != _typeof(t) || !t) return t;
+  var e = t[Symbol.toPrimitive];
+  if (void 0 !== e) {
+    var i = e.call(t, r || "default");
+    if ("object" != _typeof(i)) return i;
+    throw new TypeError("@@toPrimitive must return a primitive value.");
   }
-
-  return obj;
+  return ("string" === r ? String : Number)(t);
 }
 
-var runtime_1 = createCommonjsModule(function (module) {
-/**
- * Copyright (c) 2014-present, Facebook, Inc.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- */
+function toPropertyKey(t) {
+  var i = toPrimitive(t, "string");
+  return "symbol" == _typeof(i) ? i : i + "";
+}
 
-var runtime = (function (exports) {
+function _defineProperty$1(e, r, t) {
+  return (r = toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
+    value: t,
+    enumerable: !0,
+    configurable: !0,
+    writable: !0
+  }) : e[r] = t, e;
+}
 
-  var Op = Object.prototype;
-  var hasOwn = Op.hasOwnProperty;
-  var undefined$1; // More compressible than void 0.
-  var $Symbol = typeof Symbol === "function" ? Symbol : {};
-  var iteratorSymbol = $Symbol.iterator || "@@iterator";
-  var asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator";
-  var toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag";
+var OverloadYield = createCommonjsModule(function (module) {
+function _OverloadYield(e, d) {
+  this.v = e, this.k = d;
+}
+module.exports = _OverloadYield, module.exports.__esModule = true, module.exports["default"] = module.exports;
+});
 
-  function define(obj, key, value) {
-    Object.defineProperty(obj, key, {
-      value: value,
-      enumerable: true,
-      configurable: true,
-      writable: true
-    });
-    return obj[key];
-  }
+unwrapExports(OverloadYield);
+
+var regeneratorDefine = createCommonjsModule(function (module) {
+function _regeneratorDefine(e, r, n, t) {
+  var i = Object.defineProperty;
   try {
-    // IE 8 has a broken Object.defineProperty that only works on DOM objects.
-    define({}, "");
-  } catch (err) {
-    define = function(obj, key, value) {
-      return obj[key] = value;
-    };
+    i({}, "", {});
+  } catch (e) {
+    i = 0;
   }
-
-  function wrap(innerFn, outerFn, self, tryLocsList) {
-    // If outerFn provided and outerFn.prototype is a Generator, then outerFn.prototype instanceof Generator.
-    var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator;
-    var generator = Object.create(protoGenerator.prototype);
-    var context = new Context(tryLocsList || []);
-
-    // The ._invoke method unifies the implementations of the .next,
-    // .throw, and .return methods.
-    generator._invoke = makeInvokeMethod(innerFn, self, context);
-
-    return generator;
-  }
-  exports.wrap = wrap;
-
-  // Try/catch helper to minimize deoptimizations. Returns a completion
-  // record like context.tryEntries[i].completion. This interface could
-  // have been (and was previously) designed to take a closure to be
-  // invoked without arguments, but in all the cases we care about we
-  // already have an existing method we want to call, so there's no need
-  // to create a new function object. We can even get away with assuming
-  // the method takes exactly one argument, since that happens to be true
-  // in every case, so we don't have to touch the arguments object. The
-  // only additional allocation required is the completion record, which
-  // has a stable shape and so hopefully should be cheap to allocate.
-  function tryCatch(fn, obj, arg) {
-    try {
-      return { type: "normal", arg: fn.call(obj, arg) };
-    } catch (err) {
-      return { type: "throw", arg: err };
+  module.exports = _regeneratorDefine = function regeneratorDefine(e, r, n, t) {
+    function o(r, n) {
+      _regeneratorDefine(e, r, function (e) {
+        return this._invoke(r, n, e);
+      });
     }
+    r ? i ? i(e, r, {
+      value: n,
+      enumerable: !t,
+      configurable: !t,
+      writable: !t
+    }) : e[r] = n : (o("next", 0), o("throw", 1), o("return", 2));
+  }, module.exports.__esModule = true, module.exports["default"] = module.exports, _regeneratorDefine(e, r, n, t);
+}
+module.exports = _regeneratorDefine, module.exports.__esModule = true, module.exports["default"] = module.exports;
+});
+
+unwrapExports(regeneratorDefine);
+
+var regenerator$1 = createCommonjsModule(function (module) {
+function _regenerator() {
+  /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/babel/babel/blob/main/packages/babel-helpers/LICENSE */
+  var e,
+    t,
+    r = "function" == typeof Symbol ? Symbol : {},
+    n = r.iterator || "@@iterator",
+    o = r.toStringTag || "@@toStringTag";
+  function i(r, n, o, i) {
+    var c = n && n.prototype instanceof Generator ? n : Generator,
+      u = Object.create(c.prototype);
+    return regeneratorDefine(u, "_invoke", function (r, n, o) {
+      var i,
+        c,
+        u,
+        f = 0,
+        p = o || [],
+        y = !1,
+        G = {
+          p: 0,
+          n: 0,
+          v: e,
+          a: d,
+          f: d.bind(e, 4),
+          d: function d(t, r) {
+            return i = t, c = 0, u = e, G.n = r, a;
+          }
+        };
+      function d(r, n) {
+        for (c = r, u = n, t = 0; !y && f && !o && t < p.length; t++) {
+          var o,
+            i = p[t],
+            d = G.p,
+            l = i[2];
+          r > 3 ? (o = l === n) && (u = i[(c = i[4]) ? 5 : (c = 3, 3)], i[4] = i[5] = e) : i[0] <= d && ((o = r < 2 && d < i[1]) ? (c = 0, G.v = n, G.n = i[1]) : d < l && (o = r < 3 || i[0] > n || n > l) && (i[4] = r, i[5] = n, G.n = l, c = 0));
+        }
+        if (o || r > 1) return a;
+        throw y = !0, n;
+      }
+      return function (o, p, l) {
+        if (f > 1) throw TypeError("Generator is already running");
+        for (y && 1 === p && d(p, l), c = p, u = l; (t = c < 2 ? e : u) || !y;) {
+          i || (c ? c < 3 ? (c > 1 && (G.n = -1), d(c, u)) : G.n = u : G.v = u);
+          try {
+            if (f = 2, i) {
+              if (c || (o = "next"), t = i[o]) {
+                if (!(t = t.call(i, u))) throw TypeError("iterator result is not an object");
+                if (!t.done) return t;
+                u = t.value, c < 2 && (c = 0);
+              } else 1 === c && (t = i["return"]) && t.call(i), c < 2 && (u = TypeError("The iterator does not provide a '" + o + "' method"), c = 1);
+              i = e;
+            } else if ((t = (y = G.n < 0) ? u : r.call(n, G)) !== a) break;
+          } catch (t) {
+            i = e, c = 1, u = t;
+          } finally {
+            f = 1;
+          }
+        }
+        return {
+          value: t,
+          done: y
+        };
+      };
+    }(r, o, i), !0), u;
   }
-
-  var GenStateSuspendedStart = "suspendedStart";
-  var GenStateSuspendedYield = "suspendedYield";
-  var GenStateExecuting = "executing";
-  var GenStateCompleted = "completed";
-
-  // Returning this object from the innerFn has the same effect as
-  // breaking out of the dispatch switch statement.
-  var ContinueSentinel = {};
-
-  // Dummy constructor functions that we use as the .constructor and
-  // .constructor.prototype properties for functions that return Generator
-  // objects. For full spec compliance, you may wish to configure your
-  // minifier not to mangle the names of these two functions.
+  var a = {};
   function Generator() {}
   function GeneratorFunction() {}
   function GeneratorFunctionPrototype() {}
-
-  // This is a polyfill for %IteratorPrototype% for environments that
-  // don't natively support it.
-  var IteratorPrototype = {};
-  IteratorPrototype[iteratorSymbol] = function () {
+  t = Object.getPrototypeOf;
+  var c = [][n] ? t(t([][n]())) : (regeneratorDefine(t = {}, n, function () {
+      return this;
+    }), t),
+    u = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(c);
+  function f(e) {
+    return Object.setPrototypeOf ? Object.setPrototypeOf(e, GeneratorFunctionPrototype) : (e.__proto__ = GeneratorFunctionPrototype, regeneratorDefine(e, o, "GeneratorFunction")), e.prototype = Object.create(u), e;
+  }
+  return GeneratorFunction.prototype = GeneratorFunctionPrototype, regeneratorDefine(u, "constructor", GeneratorFunctionPrototype), regeneratorDefine(GeneratorFunctionPrototype, "constructor", GeneratorFunction), GeneratorFunction.displayName = "GeneratorFunction", regeneratorDefine(GeneratorFunctionPrototype, o, "GeneratorFunction"), regeneratorDefine(u), regeneratorDefine(u, o, "Generator"), regeneratorDefine(u, n, function () {
     return this;
-  };
-
-  var getProto = Object.getPrototypeOf;
-  var NativeIteratorPrototype = getProto && getProto(getProto(values([])));
-  if (NativeIteratorPrototype &&
-      NativeIteratorPrototype !== Op &&
-      hasOwn.call(NativeIteratorPrototype, iteratorSymbol)) {
-    // This environment has a native %IteratorPrototype%; use it instead
-    // of the polyfill.
-    IteratorPrototype = NativeIteratorPrototype;
-  }
-
-  var Gp = GeneratorFunctionPrototype.prototype =
-    Generator.prototype = Object.create(IteratorPrototype);
-  GeneratorFunction.prototype = Gp.constructor = GeneratorFunctionPrototype;
-  GeneratorFunctionPrototype.constructor = GeneratorFunction;
-  GeneratorFunction.displayName = define(
-    GeneratorFunctionPrototype,
-    toStringTagSymbol,
-    "GeneratorFunction"
-  );
-
-  // Helper for defining the .next, .throw, and .return methods of the
-  // Iterator interface in terms of a single ._invoke method.
-  function defineIteratorMethods(prototype) {
-    ["next", "throw", "return"].forEach(function(method) {
-      define(prototype, method, function(arg) {
-        return this._invoke(method, arg);
-      });
-    });
-  }
-
-  exports.isGeneratorFunction = function(genFun) {
-    var ctor = typeof genFun === "function" && genFun.constructor;
-    return ctor
-      ? ctor === GeneratorFunction ||
-        // For the native GeneratorFunction constructor, the best we can
-        // do is to check its .name property.
-        (ctor.displayName || ctor.name) === "GeneratorFunction"
-      : false;
-  };
-
-  exports.mark = function(genFun) {
-    if (Object.setPrototypeOf) {
-      Object.setPrototypeOf(genFun, GeneratorFunctionPrototype);
-    } else {
-      genFun.__proto__ = GeneratorFunctionPrototype;
-      define(genFun, toStringTagSymbol, "GeneratorFunction");
-    }
-    genFun.prototype = Object.create(Gp);
-    return genFun;
-  };
-
-  // Within the body of any async function, `await x` is transformed to
-  // `yield regeneratorRuntime.awrap(x)`, so that the runtime can test
-  // `hasOwn.call(value, "__await")` to determine if the yielded value is
-  // meant to be awaited.
-  exports.awrap = function(arg) {
-    return { __await: arg };
-  };
-
-  function AsyncIterator(generator, PromiseImpl) {
-    function invoke(method, arg, resolve, reject) {
-      var record = tryCatch(generator[method], generator, arg);
-      if (record.type === "throw") {
-        reject(record.arg);
-      } else {
-        var result = record.arg;
-        var value = result.value;
-        if (value &&
-            typeof value === "object" &&
-            hasOwn.call(value, "__await")) {
-          return PromiseImpl.resolve(value.__await).then(function(value) {
-            invoke("next", value, resolve, reject);
-          }, function(err) {
-            invoke("throw", err, resolve, reject);
-          });
-        }
-
-        return PromiseImpl.resolve(value).then(function(unwrapped) {
-          // When a yielded Promise is resolved, its final value becomes
-          // the .value of the Promise<{value,done}> result for the
-          // current iteration.
-          result.value = unwrapped;
-          resolve(result);
-        }, function(error) {
-          // If a rejected Promise was yielded, throw the rejection back
-          // into the async generator function so it can be handled there.
-          return invoke("throw", error, resolve, reject);
-        });
-      }
-    }
-
-    var previousPromise;
-
-    function enqueue(method, arg) {
-      function callInvokeWithMethodAndArg() {
-        return new PromiseImpl(function(resolve, reject) {
-          invoke(method, arg, resolve, reject);
-        });
-      }
-
-      return previousPromise =
-        // If enqueue has been called before, then we want to wait until
-        // all previous Promises have been resolved before calling invoke,
-        // so that results are always delivered in the correct order. If
-        // enqueue has not been called before, then it is important to
-        // call invoke immediately, without waiting on a callback to fire,
-        // so that the async generator function has the opportunity to do
-        // any necessary setup in a predictable way. This predictability
-        // is why the Promise constructor synchronously invokes its
-        // executor callback, and why async functions synchronously
-        // execute code before the first await. Since we implement simple
-        // async functions in terms of async generators, it is especially
-        // important to get this right, even though it requires care.
-        previousPromise ? previousPromise.then(
-          callInvokeWithMethodAndArg,
-          // Avoid propagating failures to Promises returned by later
-          // invocations of the iterator.
-          callInvokeWithMethodAndArg
-        ) : callInvokeWithMethodAndArg();
-    }
-
-    // Define the unified helper method that is used to implement .next,
-    // .throw, and .return (see defineIteratorMethods).
-    this._invoke = enqueue;
-  }
-
-  defineIteratorMethods(AsyncIterator.prototype);
-  AsyncIterator.prototype[asyncIteratorSymbol] = function () {
-    return this;
-  };
-  exports.AsyncIterator = AsyncIterator;
-
-  // Note that simple async functions are implemented on top of
-  // AsyncIterator objects; they just return a Promise for the value of
-  // the final result produced by the iterator.
-  exports.async = function(innerFn, outerFn, self, tryLocsList, PromiseImpl) {
-    if (PromiseImpl === void 0) PromiseImpl = Promise;
-
-    var iter = new AsyncIterator(
-      wrap(innerFn, outerFn, self, tryLocsList),
-      PromiseImpl
-    );
-
-    return exports.isGeneratorFunction(outerFn)
-      ? iter // If outerFn is a generator, return the full iterator.
-      : iter.next().then(function(result) {
-          return result.done ? result.value : iter.next();
-        });
-  };
-
-  function makeInvokeMethod(innerFn, self, context) {
-    var state = GenStateSuspendedStart;
-
-    return function invoke(method, arg) {
-      if (state === GenStateExecuting) {
-        throw new Error("Generator is already running");
-      }
-
-      if (state === GenStateCompleted) {
-        if (method === "throw") {
-          throw arg;
-        }
-
-        // Be forgiving, per 25.3.3.3.3 of the spec:
-        // https://people.mozilla.org/~jorendorff/es6-draft.html#sec-generatorresume
-        return doneResult();
-      }
-
-      context.method = method;
-      context.arg = arg;
-
-      while (true) {
-        var delegate = context.delegate;
-        if (delegate) {
-          var delegateResult = maybeInvokeDelegate(delegate, context);
-          if (delegateResult) {
-            if (delegateResult === ContinueSentinel) continue;
-            return delegateResult;
-          }
-        }
-
-        if (context.method === "next") {
-          // Setting context._sent for legacy support of Babel's
-          // function.sent implementation.
-          context.sent = context._sent = context.arg;
-
-        } else if (context.method === "throw") {
-          if (state === GenStateSuspendedStart) {
-            state = GenStateCompleted;
-            throw context.arg;
-          }
-
-          context.dispatchException(context.arg);
-
-        } else if (context.method === "return") {
-          context.abrupt("return", context.arg);
-        }
-
-        state = GenStateExecuting;
-
-        var record = tryCatch(innerFn, self, context);
-        if (record.type === "normal") {
-          // If an exception is thrown from innerFn, we leave state ===
-          // GenStateExecuting and loop back for another invocation.
-          state = context.done
-            ? GenStateCompleted
-            : GenStateSuspendedYield;
-
-          if (record.arg === ContinueSentinel) {
-            continue;
-          }
-
-          return {
-            value: record.arg,
-            done: context.done
-          };
-
-        } else if (record.type === "throw") {
-          state = GenStateCompleted;
-          // Dispatch the exception by looping back around to the
-          // context.dispatchException(context.arg) call above.
-          context.method = "throw";
-          context.arg = record.arg;
-        }
-      }
-    };
-  }
-
-  // Call delegate.iterator[context.method](context.arg) and handle the
-  // result, either by returning a { value, done } result from the
-  // delegate iterator, or by modifying context.method and context.arg,
-  // setting context.delegate to null, and returning the ContinueSentinel.
-  function maybeInvokeDelegate(delegate, context) {
-    var method = delegate.iterator[context.method];
-    if (method === undefined$1) {
-      // A .throw or .return when the delegate iterator has no .throw
-      // method always terminates the yield* loop.
-      context.delegate = null;
-
-      if (context.method === "throw") {
-        // Note: ["return"] must be used for ES3 parsing compatibility.
-        if (delegate.iterator["return"]) {
-          // If the delegate iterator has a return method, give it a
-          // chance to clean up.
-          context.method = "return";
-          context.arg = undefined$1;
-          maybeInvokeDelegate(delegate, context);
-
-          if (context.method === "throw") {
-            // If maybeInvokeDelegate(context) changed context.method from
-            // "return" to "throw", let that override the TypeError below.
-            return ContinueSentinel;
-          }
-        }
-
-        context.method = "throw";
-        context.arg = new TypeError(
-          "The iterator does not provide a 'throw' method");
-      }
-
-      return ContinueSentinel;
-    }
-
-    var record = tryCatch(method, delegate.iterator, context.arg);
-
-    if (record.type === "throw") {
-      context.method = "throw";
-      context.arg = record.arg;
-      context.delegate = null;
-      return ContinueSentinel;
-    }
-
-    var info = record.arg;
-
-    if (! info) {
-      context.method = "throw";
-      context.arg = new TypeError("iterator result is not an object");
-      context.delegate = null;
-      return ContinueSentinel;
-    }
-
-    if (info.done) {
-      // Assign the result of the finished delegate to the temporary
-      // variable specified by delegate.resultName (see delegateYield).
-      context[delegate.resultName] = info.value;
-
-      // Resume execution at the desired location (see delegateYield).
-      context.next = delegate.nextLoc;
-
-      // If context.method was "throw" but the delegate handled the
-      // exception, let the outer generator proceed normally. If
-      // context.method was "next", forget context.arg since it has been
-      // "consumed" by the delegate iterator. If context.method was
-      // "return", allow the original .return call to continue in the
-      // outer generator.
-      if (context.method !== "return") {
-        context.method = "next";
-        context.arg = undefined$1;
-      }
-
-    } else {
-      // Re-yield the result returned by the delegate method.
-      return info;
-    }
-
-    // The delegate iterator is finished, so forget it and continue with
-    // the outer generator.
-    context.delegate = null;
-    return ContinueSentinel;
-  }
-
-  // Define Generator.prototype.{next,throw,return} in terms of the
-  // unified ._invoke helper method.
-  defineIteratorMethods(Gp);
-
-  define(Gp, toStringTagSymbol, "Generator");
-
-  // A Generator should always return itself as the iterator object when the
-  // @@iterator function is called on it. Some browsers' implementations of the
-  // iterator prototype chain incorrectly implement this, causing the Generator
-  // object to not be returned from this call. This ensures that doesn't happen.
-  // See https://github.com/facebook/regenerator/issues/274 for more details.
-  Gp[iteratorSymbol] = function() {
-    return this;
-  };
-
-  Gp.toString = function() {
+  }), regeneratorDefine(u, "toString", function () {
     return "[object Generator]";
-  };
-
-  function pushTryEntry(locs) {
-    var entry = { tryLoc: locs[0] };
-
-    if (1 in locs) {
-      entry.catchLoc = locs[1];
-    }
-
-    if (2 in locs) {
-      entry.finallyLoc = locs[2];
-      entry.afterLoc = locs[3];
-    }
-
-    this.tryEntries.push(entry);
-  }
-
-  function resetTryEntry(entry) {
-    var record = entry.completion || {};
-    record.type = "normal";
-    delete record.arg;
-    entry.completion = record;
-  }
-
-  function Context(tryLocsList) {
-    // The root entry object (effectively a try statement without a catch
-    // or a finally block) gives us a place to store values thrown from
-    // locations where there is no enclosing try statement.
-    this.tryEntries = [{ tryLoc: "root" }];
-    tryLocsList.forEach(pushTryEntry, this);
-    this.reset(true);
-  }
-
-  exports.keys = function(object) {
-    var keys = [];
-    for (var key in object) {
-      keys.push(key);
-    }
-    keys.reverse();
-
-    // Rather than returning an object with a next method, we keep
-    // things simple and return the next function itself.
-    return function next() {
-      while (keys.length) {
-        var key = keys.pop();
-        if (key in object) {
-          next.value = key;
-          next.done = false;
-          return next;
-        }
-      }
-
-      // To avoid creating an additional object, we just hang the .value
-      // and .done properties off the next function object itself. This
-      // also ensures that the minifier will not anonymize the function.
-      next.done = true;
-      return next;
+  }), (module.exports = _regenerator = function _regenerator() {
+    return {
+      w: i,
+      m: f
     };
+  }, module.exports.__esModule = true, module.exports["default"] = module.exports)();
+}
+module.exports = _regenerator, module.exports.__esModule = true, module.exports["default"] = module.exports;
+});
+
+unwrapExports(regenerator$1);
+
+var regeneratorAsyncIterator = createCommonjsModule(function (module) {
+function AsyncIterator(t, e) {
+  function n(r, o, i, f) {
+    try {
+      var c = t[r](o),
+        u = c.value;
+      return u instanceof OverloadYield ? e.resolve(u.v).then(function (t) {
+        n("next", t, i, f);
+      }, function (t) {
+        n("throw", t, i, f);
+      }) : e.resolve(u).then(function (t) {
+        c.value = t, i(c);
+      }, function (t) {
+        return n("throw", t, i, f);
+      });
+    } catch (t) {
+      f(t);
+    }
+  }
+  var r;
+  this.next || (regeneratorDefine(AsyncIterator.prototype), regeneratorDefine(AsyncIterator.prototype, "function" == typeof Symbol && Symbol.asyncIterator || "@asyncIterator", function () {
+    return this;
+  })), regeneratorDefine(this, "_invoke", function (t, o, i) {
+    function f() {
+      return new e(function (e, r) {
+        n(t, i, e, r);
+      });
+    }
+    return r = r ? r.then(f, f) : f();
+  }, !0);
+}
+module.exports = AsyncIterator, module.exports.__esModule = true, module.exports["default"] = module.exports;
+});
+
+unwrapExports(regeneratorAsyncIterator);
+
+var regeneratorAsyncGen = createCommonjsModule(function (module) {
+function _regeneratorAsyncGen(r, e, t, o, n) {
+  return new regeneratorAsyncIterator(regenerator$1().w(r, e, t, o), n || Promise);
+}
+module.exports = _regeneratorAsyncGen, module.exports.__esModule = true, module.exports["default"] = module.exports;
+});
+
+unwrapExports(regeneratorAsyncGen);
+
+var regeneratorAsync = createCommonjsModule(function (module) {
+function _regeneratorAsync(n, e, r, t, o) {
+  var a = regeneratorAsyncGen(n, e, r, t, o);
+  return a.next().then(function (n) {
+    return n.done ? n.value : a.next();
+  });
+}
+module.exports = _regeneratorAsync, module.exports.__esModule = true, module.exports["default"] = module.exports;
+});
+
+unwrapExports(regeneratorAsync);
+
+var regeneratorKeys = createCommonjsModule(function (module) {
+function _regeneratorKeys(e) {
+  var n = Object(e),
+    r = [];
+  for (var t in n) r.unshift(t);
+  return function e() {
+    for (; r.length;) if ((t = r.pop()) in n) return e.value = t, e.done = !1, e;
+    return e.done = !0, e;
   };
+}
+module.exports = _regeneratorKeys, module.exports.__esModule = true, module.exports["default"] = module.exports;
+});
 
-  function values(iterable) {
-    if (iterable) {
-      var iteratorMethod = iterable[iteratorSymbol];
-      if (iteratorMethod) {
-        return iteratorMethod.call(iterable);
-      }
+unwrapExports(regeneratorKeys);
 
-      if (typeof iterable.next === "function") {
-        return iterable;
-      }
+var _typeof_1 = createCommonjsModule(function (module) {
+function _typeof(o) {
+  "@babel/helpers - typeof";
 
-      if (!isNaN(iterable.length)) {
-        var i = -1, next = function next() {
-          while (++i < iterable.length) {
-            if (hasOwn.call(iterable, i)) {
-              next.value = iterable[i];
-              next.done = false;
-              return next;
-            }
-          }
+  return module.exports = _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
+    return typeof o;
+  } : function (o) {
+    return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
+  }, module.exports.__esModule = true, module.exports["default"] = module.exports, _typeof(o);
+}
+module.exports = _typeof, module.exports.__esModule = true, module.exports["default"] = module.exports;
+});
 
-          next.value = undefined$1;
-          next.done = true;
+unwrapExports(_typeof_1);
 
-          return next;
+var regeneratorValues = createCommonjsModule(function (module) {
+var _typeof = _typeof_1["default"];
+function _regeneratorValues(e) {
+  if (null != e) {
+    var t = e["function" == typeof Symbol && Symbol.iterator || "@@iterator"],
+      r = 0;
+    if (t) return t.call(e);
+    if ("function" == typeof e.next) return e;
+    if (!isNaN(e.length)) return {
+      next: function next() {
+        return e && r >= e.length && (e = void 0), {
+          value: e && e[r++],
+          done: !e
         };
-
-        return next.next = next;
       }
-    }
-
-    // Return an iterator with no values.
-    return { next: doneResult };
+    };
   }
-  exports.values = values;
+  throw new TypeError(_typeof(e) + " is not iterable");
+}
+module.exports = _regeneratorValues, module.exports.__esModule = true, module.exports["default"] = module.exports;
+});
 
-  function doneResult() {
-    return { value: undefined$1, done: true };
+unwrapExports(regeneratorValues);
+
+var regeneratorRuntime$1 = createCommonjsModule(function (module) {
+function _regeneratorRuntime() {
+
+  var r = regenerator$1(),
+    e = r.m(_regeneratorRuntime),
+    t = (Object.getPrototypeOf ? Object.getPrototypeOf(e) : e.__proto__).constructor;
+  function n(r) {
+    var e = "function" == typeof r && r.constructor;
+    return !!e && (e === t || "GeneratorFunction" === (e.displayName || e.name));
   }
-
-  Context.prototype = {
-    constructor: Context,
-
-    reset: function(skipTempReset) {
-      this.prev = 0;
-      this.next = 0;
-      // Resetting context._sent for legacy support of Babel's
-      // function.sent implementation.
-      this.sent = this._sent = undefined$1;
-      this.done = false;
-      this.delegate = null;
-
-      this.method = "next";
-      this.arg = undefined$1;
-
-      this.tryEntries.forEach(resetTryEntry);
-
-      if (!skipTempReset) {
-        for (var name in this) {
-          // Not sure about the optimal order of these conditions:
-          if (name.charAt(0) === "t" &&
-              hasOwn.call(this, name) &&
-              !isNaN(+name.slice(1))) {
-            this[name] = undefined$1;
-          }
-        }
-      }
-    },
-
-    stop: function() {
-      this.done = true;
-
-      var rootEntry = this.tryEntries[0];
-      var rootRecord = rootEntry.completion;
-      if (rootRecord.type === "throw") {
-        throw rootRecord.arg;
-      }
-
-      return this.rval;
-    },
-
-    dispatchException: function(exception) {
-      if (this.done) {
-        throw exception;
-      }
-
-      var context = this;
-      function handle(loc, caught) {
-        record.type = "throw";
-        record.arg = exception;
-        context.next = loc;
-
-        if (caught) {
-          // If the dispatched exception was caught by a catch block,
-          // then let that catch block handle the exception normally.
-          context.method = "next";
-          context.arg = undefined$1;
-        }
-
-        return !! caught;
-      }
-
-      for (var i = this.tryEntries.length - 1; i >= 0; --i) {
-        var entry = this.tryEntries[i];
-        var record = entry.completion;
-
-        if (entry.tryLoc === "root") {
-          // Exception thrown outside of any try block that could handle
-          // it, so set the completion value of the entire function to
-          // throw the exception.
-          return handle("end");
-        }
-
-        if (entry.tryLoc <= this.prev) {
-          var hasCatch = hasOwn.call(entry, "catchLoc");
-          var hasFinally = hasOwn.call(entry, "finallyLoc");
-
-          if (hasCatch && hasFinally) {
-            if (this.prev < entry.catchLoc) {
-              return handle(entry.catchLoc, true);
-            } else if (this.prev < entry.finallyLoc) {
-              return handle(entry.finallyLoc);
-            }
-
-          } else if (hasCatch) {
-            if (this.prev < entry.catchLoc) {
-              return handle(entry.catchLoc, true);
-            }
-
-          } else if (hasFinally) {
-            if (this.prev < entry.finallyLoc) {
-              return handle(entry.finallyLoc);
-            }
-
-          } else {
-            throw new Error("try statement without catch or finally");
-          }
-        }
-      }
-    },
-
-    abrupt: function(type, arg) {
-      for (var i = this.tryEntries.length - 1; i >= 0; --i) {
-        var entry = this.tryEntries[i];
-        if (entry.tryLoc <= this.prev &&
-            hasOwn.call(entry, "finallyLoc") &&
-            this.prev < entry.finallyLoc) {
-          var finallyEntry = entry;
-          break;
-        }
-      }
-
-      if (finallyEntry &&
-          (type === "break" ||
-           type === "continue") &&
-          finallyEntry.tryLoc <= arg &&
-          arg <= finallyEntry.finallyLoc) {
-        // Ignore the finally entry if control is not jumping to a
-        // location outside the try/catch block.
-        finallyEntry = null;
-      }
-
-      var record = finallyEntry ? finallyEntry.completion : {};
-      record.type = type;
-      record.arg = arg;
-
-      if (finallyEntry) {
-        this.method = "next";
-        this.next = finallyEntry.finallyLoc;
-        return ContinueSentinel;
-      }
-
-      return this.complete(record);
-    },
-
-    complete: function(record, afterLoc) {
-      if (record.type === "throw") {
-        throw record.arg;
-      }
-
-      if (record.type === "break" ||
-          record.type === "continue") {
-        this.next = record.arg;
-      } else if (record.type === "return") {
-        this.rval = this.arg = record.arg;
-        this.method = "return";
-        this.next = "end";
-      } else if (record.type === "normal" && afterLoc) {
-        this.next = afterLoc;
-      }
-
-      return ContinueSentinel;
-    },
-
-    finish: function(finallyLoc) {
-      for (var i = this.tryEntries.length - 1; i >= 0; --i) {
-        var entry = this.tryEntries[i];
-        if (entry.finallyLoc === finallyLoc) {
-          this.complete(entry.completion, entry.afterLoc);
-          resetTryEntry(entry);
-          return ContinueSentinel;
-        }
-      }
-    },
-
-    "catch": function(tryLoc) {
-      for (var i = this.tryEntries.length - 1; i >= 0; --i) {
-        var entry = this.tryEntries[i];
-        if (entry.tryLoc === tryLoc) {
-          var record = entry.completion;
-          if (record.type === "throw") {
-            var thrown = record.arg;
-            resetTryEntry(entry);
-          }
-          return thrown;
-        }
-      }
-
-      // The context.catch method must only be called with a location
-      // argument that corresponds to a known catch block.
-      throw new Error("illegal catch attempt");
-    },
-
-    delegateYield: function(iterable, resultName, nextLoc) {
-      this.delegate = {
-        iterator: values(iterable),
-        resultName: resultName,
-        nextLoc: nextLoc
-      };
-
-      if (this.method === "next") {
-        // Deliberately forget the last sent value so that we don't
-        // accidentally pass it on to the delegate.
-        this.arg = undefined$1;
-      }
-
-      return ContinueSentinel;
-    }
+  var o = {
+    "throw": 1,
+    "return": 2,
+    "break": 3,
+    "continue": 3
   };
+  function a(r) {
+    var e, t;
+    return function (n) {
+      e || (e = {
+        stop: function stop() {
+          return t(n.a, 2);
+        },
+        "catch": function _catch() {
+          return n.v;
+        },
+        abrupt: function abrupt(r, e) {
+          return t(n.a, o[r], e);
+        },
+        delegateYield: function delegateYield(r, o, a) {
+          return e.resultName = o, t(n.d, regeneratorValues(r), a);
+        },
+        finish: function finish(r) {
+          return t(n.f, r);
+        }
+      }, t = function t(r, _t, o) {
+        n.p = e.prev, n.n = e.next;
+        try {
+          return r(_t, o);
+        } finally {
+          e.next = n.n;
+        }
+      }), e.resultName && (e[e.resultName] = n.v, e.resultName = void 0), e.sent = n.v, e.next = n.n;
+      try {
+        return r.call(this, e);
+      } finally {
+        n.p = e.prev, n.n = e.next;
+      }
+    };
+  }
+  return (module.exports = _regeneratorRuntime = function _regeneratorRuntime() {
+    return {
+      wrap: function wrap(e, t, n, o) {
+        return r.w(a(e), t, n, o && o.reverse());
+      },
+      isGeneratorFunction: n,
+      mark: r.m,
+      awrap: function awrap(r, e) {
+        return new OverloadYield(r, e);
+      },
+      AsyncIterator: regeneratorAsyncIterator,
+      async: function async(r, e, t, o, u) {
+        return (n(e) ? regeneratorAsyncGen : regeneratorAsync)(a(r), e, t, o, u);
+      },
+      keys: regeneratorKeys,
+      values: regeneratorValues
+    };
+  }, module.exports.__esModule = true, module.exports["default"] = module.exports)();
+}
+module.exports = _regeneratorRuntime, module.exports.__esModule = true, module.exports["default"] = module.exports;
+});
 
-  // Regardless of whether this script is executing as a CommonJS module
-  // or not, return the runtime object so that we can declare the variable
-  // regeneratorRuntime in the outer scope, which allows this module to be
-  // injected easily by `bin/regenerator --include-runtime script.js`.
-  return exports;
+unwrapExports(regeneratorRuntime$1);
 
-}(
-  // If this script is executing as a CommonJS module, use module.exports
-  // as the regeneratorRuntime namespace. Otherwise create a new empty
-  // object. Either way, the resulting object will be used to initialize
-  // the regeneratorRuntime variable at the top of this file.
-  module.exports 
-));
+var require$$0 = regeneratorRuntime$1;
 
+// TODO(Babel 8): Remove this file.
+
+var runtime = require$$0();
+var regenerator = runtime;
+
+// Copied from https://github.com/facebook/regenerator/blob/main/packages/runtime/runtime.js#L736=
 try {
   regeneratorRuntime = runtime;
 } catch (accidentalStrictMode) {
-  // This module should not be running in strict mode, so the above
-  // assignment should always work unless something is misconfigured. Just
-  // in case runtime.js accidentally runs in strict mode, we can escape
-  // strict mode using a global Function call. This could conceivably fail
-  // if a Content Security Policy forbids using Function, but in that case
-  // the proper solution is to fix the accidental strict mode problem. If
-  // you've misconfigured your bundler to force strict mode and applied a
-  // CSP to forbid Function, and you're not willing to fix either of those
-  // problems, please detail your unique predicament in a GitHub issue.
-  Function("r", "regeneratorRuntime = r")(runtime);
-}
-});
-
-var regenerator = runtime_1;
-
-function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) {
-  try {
-    var info = gen[key](arg);
-    var value = info.value;
-  } catch (error) {
-    reject(error);
-    return;
-  }
-
-  if (info.done) {
-    resolve(value);
+  if (typeof globalThis === "object") {
+    globalThis.regeneratorRuntime = runtime;
   } else {
-    Promise.resolve(value).then(_next, _throw);
+    Function("r", "regeneratorRuntime = r")(runtime);
   }
 }
 
-function _asyncToGenerator(fn) {
+var _regeneratorRuntime = regenerator;
+
+function asyncGeneratorStep(n, t, e, r, o, a, c) {
+  try {
+    var i = n[a](c),
+      u = i.value;
+  } catch (n) {
+    return void e(n);
+  }
+  i.done ? t(u) : Promise.resolve(u).then(r, o);
+}
+function _asyncToGenerator(n) {
   return function () {
-    var self = this,
-        args = arguments;
-    return new Promise(function (resolve, reject) {
-      var gen = fn.apply(self, args);
-
-      function _next(value) {
-        asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value);
+    var t = this,
+      e = arguments;
+    return new Promise(function (r, o) {
+      var a = n.apply(t, e);
+      function _next(n) {
+        asyncGeneratorStep(a, r, o, _next, _throw, "next", n);
       }
-
-      function _throw(err) {
-        asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err);
+      function _throw(n) {
+        asyncGeneratorStep(a, r, o, _next, _throw, "throw", n);
       }
-
-      _next(undefined);
+      _next(void 0);
     });
   };
 }
@@ -18068,133 +18256,112 @@ function parseVersion(version) {
   };
 }
 
-function _AwaitValue(value) {
-  this.wrapped = value;
+function _OverloadYield(e, d) {
+  this.v = e, this.k = d;
 }
 
-function _awaitAsyncGenerator(value) {
-  return new _AwaitValue(value);
+function _awaitAsyncGenerator(e) {
+  return new _OverloadYield(e, 0);
 }
 
-function AsyncGenerator(gen) {
-  var front, back;
-
-  function send(key, arg) {
-    return new Promise(function (resolve, reject) {
-      var request = {
-        key: key,
-        arg: arg,
-        resolve: resolve,
-        reject: reject,
+function _wrapAsyncGenerator(e) {
+  return function () {
+    return new AsyncGenerator(e.apply(this, arguments));
+  };
+}
+function AsyncGenerator(e) {
+  var t, n;
+  function resume(t, n) {
+    try {
+      var r = e[t](n),
+        o = r.value,
+        u = o instanceof _OverloadYield;
+      Promise.resolve(u ? o.v : o).then(function (n) {
+        if (u) {
+          var i = "return" === t && o.k ? t : "next";
+          if (!o.k || n.done) return resume(i, n);
+          n = e[i](n).value;
+        }
+        settle(!!r.done, n);
+      }, function (e) {
+        resume("throw", e);
+      });
+    } catch (e) {
+      settle(2, e);
+    }
+  }
+  function settle(e, r) {
+    2 === e ? t.reject(r) : t.resolve({
+      value: r,
+      done: e
+    }), (t = t.next) ? resume(t.key, t.arg) : n = null;
+  }
+  this._invoke = function (e, r) {
+    return new Promise(function (o, u) {
+      var i = {
+        key: e,
+        arg: r,
+        resolve: o,
+        reject: u,
         next: null
       };
+      n ? n = n.next = i : (t = n = i, resume(e, r));
+    });
+  }, "function" != typeof e["return"] && (this["return"] = void 0);
+}
+AsyncGenerator.prototype["function" == typeof Symbol && Symbol.asyncIterator || "@@asyncIterator"] = function () {
+  return this;
+}, AsyncGenerator.prototype.next = function (e) {
+  return this._invoke("next", e);
+}, AsyncGenerator.prototype["throw"] = function (e) {
+  return this._invoke("throw", e);
+}, AsyncGenerator.prototype["return"] = function (e) {
+  return this._invoke("return", e);
+};
 
-      if (back) {
-        back = back.next = request;
-      } else {
-        front = back = request;
-        resume(key, arg);
-      }
+function _asyncIterator(r) {
+  var n,
+    t,
+    o,
+    e = 2;
+  for ("undefined" != typeof Symbol && (t = Symbol.asyncIterator, o = Symbol.iterator); e--;) {
+    if (t && null != (n = r[t])) return n.call(r);
+    if (o && null != (n = r[o])) return new AsyncFromSyncIterator(n.call(r));
+    t = "@@asyncIterator", o = "@@iterator";
+  }
+  throw new TypeError("Object is not async iterable");
+}
+function AsyncFromSyncIterator(r) {
+  function AsyncFromSyncIteratorContinuation(r) {
+    if (Object(r) !== r) return Promise.reject(new TypeError(r + " is not an object."));
+    var n = r.done;
+    return Promise.resolve(r.value).then(function (r) {
+      return {
+        value: r,
+        done: n
+      };
     });
   }
-
-  function resume(key, arg) {
-    try {
-      var result = gen[key](arg);
-      var value = result.value;
-      var wrappedAwait = value instanceof _AwaitValue;
-      Promise.resolve(wrappedAwait ? value.wrapped : value).then(function (arg) {
-        if (wrappedAwait) {
-          resume(key === "return" ? "return" : "next", arg);
-          return;
-        }
-
-        settle(result.done ? "return" : "normal", arg);
-      }, function (err) {
-        resume("throw", err);
-      });
-    } catch (err) {
-      settle("throw", err);
+  return AsyncFromSyncIterator = function AsyncFromSyncIterator(r) {
+    this.s = r, this.n = r.next;
+  }, AsyncFromSyncIterator.prototype = {
+    s: null,
+    n: null,
+    next: function next() {
+      return AsyncFromSyncIteratorContinuation(this.n.apply(this.s, arguments));
+    },
+    "return": function _return(r) {
+      var n = this.s["return"];
+      return void 0 === n ? Promise.resolve({
+        value: r,
+        done: !0
+      }) : AsyncFromSyncIteratorContinuation(n.apply(this.s, arguments));
+    },
+    "throw": function _throw(r) {
+      var n = this.s["return"];
+      return void 0 === n ? Promise.reject(r) : AsyncFromSyncIteratorContinuation(n.apply(this.s, arguments));
     }
-  }
-
-  function settle(type, value) {
-    switch (type) {
-      case "return":
-        front.resolve({
-          value: value,
-          done: true
-        });
-        break;
-
-      case "throw":
-        front.reject(value);
-        break;
-
-      default:
-        front.resolve({
-          value: value,
-          done: false
-        });
-        break;
-    }
-
-    front = front.next;
-
-    if (front) {
-      resume(front.key, front.arg);
-    } else {
-      back = null;
-    }
-  }
-
-  this._invoke = send;
-
-  if (typeof gen["return"] !== "function") {
-    this["return"] = undefined;
-  }
-}
-
-if (typeof Symbol === "function" && Symbol.asyncIterator) {
-  AsyncGenerator.prototype[Symbol.asyncIterator] = function () {
-    return this;
-  };
-}
-
-AsyncGenerator.prototype.next = function (arg) {
-  return this._invoke("next", arg);
-};
-
-AsyncGenerator.prototype["throw"] = function (arg) {
-  return this._invoke("throw", arg);
-};
-
-AsyncGenerator.prototype["return"] = function (arg) {
-  return this._invoke("return", arg);
-};
-
-function _wrapAsyncGenerator(fn) {
-  return function () {
-    return new AsyncGenerator(fn.apply(this, arguments));
-  };
-}
-
-function _asyncIterator(iterable) {
-  var method;
-
-  if (typeof Symbol !== "undefined") {
-    if (Symbol.asyncIterator) {
-      method = iterable[Symbol.asyncIterator];
-      if (method != null) return method.call(iterable);
-    }
-
-    if (Symbol.iterator) {
-      method = iterable[Symbol.iterator];
-      if (method != null) return method.call(iterable);
-    }
-  }
-
-  throw new TypeError("Object is not async iterable");
+  }, new AsyncFromSyncIterator(r);
 }
 
 function makeTransformIterator(_x, _x2, _x3) {
@@ -18202,10 +18369,10 @@ function makeTransformIterator(_x, _x2, _x3) {
 }
 
 function _makeTransformIterator() {
-  _makeTransformIterator = _wrapAsyncGenerator(regenerator.mark(function _callee(asyncIterator, IncrementalTransform, options) {
+  _makeTransformIterator = _wrapAsyncGenerator(_regeneratorRuntime.mark(function _callee(asyncIterator, IncrementalTransform, options) {
     var transform, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, _value, chunk, _output, output;
 
-    return regenerator.wrap(function _callee$(_context) {
+    return _regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
@@ -18316,26 +18483,20 @@ function _makeTransformIterator() {
   return _makeTransformIterator.apply(this, arguments);
 }
 
-function _classCallCheck$1(instance, Constructor) {
-  if (!(instance instanceof Constructor)) {
-    throw new TypeError("Cannot call a class as a function");
-  }
+function _classCallCheck$1(a, n) {
+  if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function");
 }
 
-function _defineProperties$1(target, props) {
-  for (var i = 0; i < props.length; i++) {
-    var descriptor = props[i];
-    descriptor.enumerable = descriptor.enumerable || false;
-    descriptor.configurable = true;
-    if ("value" in descriptor) descriptor.writable = true;
-    Object.defineProperty(target, descriptor.key, descriptor);
+function _defineProperties$1(e, r) {
+  for (var t = 0; t < r.length; t++) {
+    var o = r[t];
+    o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, toPropertyKey(o.key), o);
   }
 }
-
-function _createClass$1(Constructor, protoProps, staticProps) {
-  if (protoProps) _defineProperties$1(Constructor.prototype, protoProps);
-  if (staticProps) _defineProperties$1(Constructor, staticProps);
-  return Constructor;
+function _createClass$1(e, r, t) {
+  return r && _defineProperties$1(e.prototype, r), t && _defineProperties$1(e, t), Object.defineProperty(e, "prototype", {
+    writable: !1
+  }), e;
 }
 
 var workerURLCache = new Map();
@@ -18397,10 +18558,10 @@ var WorkerThread = function () {
   _createClass$1(WorkerThread, [{
     key: "process",
     value: function () {
-      var _process = _asyncToGenerator(regenerator.mark(function _callee(data) {
+      var _process = _asyncToGenerator(_regeneratorRuntime.mark(function _callee(data) {
         var _this = this;
 
-        return regenerator.wrap(function _callee$(_context) {
+        return _regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
@@ -18510,9 +18671,9 @@ var WorkerPool = function () {
   }, {
     key: "_startQueuedJob",
     value: function () {
-      var _startQueuedJob2 = _asyncToGenerator(regenerator.mark(function _callee() {
+      var _startQueuedJob2 = _asyncToGenerator(_regeneratorRuntime.mark(function _callee() {
         var worker, job;
-        return regenerator.wrap(function _callee$(_context) {
+        return _regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
@@ -18675,9 +18836,9 @@ var WorkerFarm = function () {
   }, {
     key: "process",
     value: function () {
-      var _process = _asyncToGenerator(regenerator.mark(function _callee(workerSource, workerName, data) {
+      var _process = _asyncToGenerator(_regeneratorRuntime.mark(function _callee(workerSource, workerName, data) {
         var workerPool;
-        return regenerator.wrap(function _callee$(_context) {
+        return _regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
@@ -18749,13 +18910,6 @@ function onWorkerMessage$1(onMessage, _ref2) {
   }
 }
 
-var ChildProcess = {};
-
-var node = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  'default': ChildProcess
-});
-
 var VERSION$6 = "2.3.13" ;
 var loadLibraryPromises = {};
 function loadLibrary(_x) {
@@ -18763,11 +18917,11 @@ function loadLibrary(_x) {
 }
 
 function _loadLibrary() {
-  _loadLibrary = _asyncToGenerator(regenerator.mark(function _callee(libraryUrl) {
+  _loadLibrary = _asyncToGenerator(_regeneratorRuntime.mark(function _callee(libraryUrl) {
     var moduleName,
         options,
         _args = arguments;
-    return regenerator.wrap(function _callee$(_context) {
+    return _regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
@@ -18823,10 +18977,10 @@ function loadLibraryFromFile(_x2) {
 }
 
 function _loadLibraryFromFile() {
-  _loadLibraryFromFile = _asyncToGenerator(regenerator.mark(function _callee2(libraryUrl) {
+  _loadLibraryFromFile = _asyncToGenerator(_regeneratorRuntime.mark(function _callee2(libraryUrl) {
     var _response, response, scriptSource;
 
-    return regenerator.wrap(function _callee2$(_context2) {
+    return _regeneratorRuntime.wrap(function _callee2$(_context2) {
       while (1) {
         switch (_context2.prev = _context2.next) {
           case 0:
@@ -19103,10 +19257,10 @@ function makeTextDecoderIterator(_x, _x2) {
 }
 
 function _makeTextDecoderIterator() {
-  _makeTextDecoderIterator = _wrapAsyncGenerator(regenerator.mark(function _callee(arrayBufferIterator, options) {
+  _makeTextDecoderIterator = _wrapAsyncGenerator(_regeneratorRuntime.mark(function _callee(arrayBufferIterator, options) {
     var textDecoder, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, _value, arrayBuffer;
 
-    return regenerator.wrap(function _callee$(_context) {
+    return _regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
@@ -19198,10 +19352,10 @@ function makeTextEncoderIterator(_x3, _x4) {
 }
 
 function _makeTextEncoderIterator() {
-  _makeTextEncoderIterator = _wrapAsyncGenerator(regenerator.mark(function _callee2(textIterator, options) {
+  _makeTextEncoderIterator = _wrapAsyncGenerator(_regeneratorRuntime.mark(function _callee2(textIterator, options) {
     var textEncoder, _iteratorNormalCompletion2, _didIteratorError2, _iteratorError2, _iterator2, _step2, _value2, text;
 
-    return regenerator.wrap(function _callee2$(_context2) {
+    return _regeneratorRuntime.wrap(function _callee2$(_context2) {
       while (1) {
         switch (_context2.prev = _context2.next) {
           case 0:
@@ -19291,10 +19445,10 @@ function makeLineIterator(_x5) {
 }
 
 function _makeLineIterator() {
-  _makeLineIterator = _wrapAsyncGenerator(regenerator.mark(function _callee3(textIterator) {
+  _makeLineIterator = _wrapAsyncGenerator(_regeneratorRuntime.mark(function _callee3(textIterator) {
     var previous, _iteratorNormalCompletion3, _didIteratorError3, _iteratorError3, _iterator3, _step3, _value3, textChunk, eolIndex, line;
 
-    return regenerator.wrap(function _callee3$(_context3) {
+    return _regeneratorRuntime.wrap(function _callee3$(_context3) {
       while (1) {
         switch (_context3.prev = _context3.next) {
           case 0:
@@ -19408,10 +19562,10 @@ function makeNumberedLineIterator(_x6) {
 }
 
 function _makeNumberedLineIterator() {
-  _makeNumberedLineIterator = _wrapAsyncGenerator(regenerator.mark(function _callee4(lineIterator) {
+  _makeNumberedLineIterator = _wrapAsyncGenerator(_regeneratorRuntime.mark(function _callee4(lineIterator) {
     var counter, _iteratorNormalCompletion4, _didIteratorError4, _iteratorError4, _iterator4, _step4, _value4, line;
 
-    return regenerator.wrap(function _callee4$(_context4) {
+    return _regeneratorRuntime.wrap(function _callee4$(_context4) {
       while (1) {
         switch (_context4.prev = _context4.next) {
           case 0:
@@ -19507,10 +19661,10 @@ function forEach(_x, _x2) {
 }
 
 function _forEach() {
-  _forEach = _asyncToGenerator(regenerator.mark(function _callee(iterator, visitor) {
+  _forEach = _asyncToGenerator(_regeneratorRuntime.mark(function _callee(iterator, visitor) {
     var _yield$iterator$next, done, value, cancel;
 
-    return regenerator.wrap(function _callee$(_context) {
+    return _regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
@@ -19560,10 +19714,10 @@ function concatenateChunksAsync(_x3) {
 }
 
 function _concatenateChunksAsync() {
-  _concatenateChunksAsync = _asyncToGenerator(regenerator.mark(function _callee2(asyncIterator) {
+  _concatenateChunksAsync = _asyncToGenerator(_regeneratorRuntime.mark(function _callee2(asyncIterator) {
     var arrayBuffers, strings, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, _value, chunk;
 
-    return regenerator.wrap(function _callee2$(_context2) {
+    return _regeneratorRuntime.wrap(function _callee2$(_context2) {
       while (1) {
         switch (_context2.prev = _context2.next) {
           case 0:
@@ -19666,12 +19820,12 @@ function _concatenateChunksAsync() {
 }
 
 function getHiResTimestamp() {
-  var timestamp;
+  let timestamp;
 
   if (typeof window !== 'undefined' && window.performance) {
     timestamp = window.performance.now();
   } else if (typeof process !== 'undefined' && process.hrtime) {
-    var timeParts = process.hrtime();
+    const timeParts = process.hrtime();
     timestamp = timeParts[0] * 1000 + timeParts[1] / 1e6;
   } else {
     timestamp = Date.now();
@@ -19680,244 +19834,237 @@ function getHiResTimestamp() {
   return timestamp;
 }
 
-var Stat = function () {
-  function Stat(name, type) {
-    _classCallCheck$1(this, Stat);
+class Stat {
+  constructor(name, type) {
+    _defineProperty$1(this, "name", void 0);
+
+    _defineProperty$1(this, "type", void 0);
+
+    _defineProperty$1(this, "sampleSize", 1);
+
+    _defineProperty$1(this, "time", void 0);
+
+    _defineProperty$1(this, "count", void 0);
+
+    _defineProperty$1(this, "samples", void 0);
+
+    _defineProperty$1(this, "lastTiming", void 0);
+
+    _defineProperty$1(this, "lastSampleTime", void 0);
+
+    _defineProperty$1(this, "lastSampleCount", void 0);
+
+    _defineProperty$1(this, "_count", 0);
+
+    _defineProperty$1(this, "_time", 0);
+
+    _defineProperty$1(this, "_samples", 0);
+
+    _defineProperty$1(this, "_startTime", 0);
+
+    _defineProperty$1(this, "_timerPending", false);
 
     this.name = name;
     this.type = type;
-    this.sampleSize = 1;
     this.reset();
   }
 
-  _createClass$1(Stat, [{
-    key: "setSampleSize",
-    value: function setSampleSize(samples) {
-      this.sampleSize = samples;
+  setSampleSize(samples) {
+    this.sampleSize = samples;
+    return this;
+  }
+
+  incrementCount() {
+    this.addCount(1);
+    return this;
+  }
+
+  decrementCount() {
+    this.subtractCount(1);
+    return this;
+  }
+
+  addCount(value) {
+    this._count += value;
+    this._samples++;
+
+    this._checkSampling();
+
+    return this;
+  }
+
+  subtractCount(value) {
+    this._count -= value;
+    this._samples++;
+
+    this._checkSampling();
+
+    return this;
+  }
+
+  addTime(time) {
+    this._time += time;
+    this.lastTiming = time;
+    this._samples++;
+
+    this._checkSampling();
+
+    return this;
+  }
+
+  timeStart() {
+    this._startTime = getHiResTimestamp();
+    this._timerPending = true;
+    return this;
+  }
+
+  timeEnd() {
+    if (!this._timerPending) {
       return this;
     }
-  }, {
-    key: "incrementCount",
-    value: function incrementCount() {
-      this.addCount(1);
-      return this;
-    }
-  }, {
-    key: "decrementCount",
-    value: function decrementCount() {
-      this.subtractCount(1);
-      return this;
-    }
-  }, {
-    key: "addCount",
-    value: function addCount(value) {
-      this._count += value;
-      this._samples++;
 
-      this._checkSampling();
+    this.addTime(getHiResTimestamp() - this._startTime);
+    this._timerPending = false;
 
-      return this;
-    }
-  }, {
-    key: "subtractCount",
-    value: function subtractCount(value) {
-      this._count -= value;
-      this._samples++;
+    this._checkSampling();
 
-      this._checkSampling();
+    return this;
+  }
 
-      return this;
-    }
-  }, {
-    key: "addTime",
-    value: function addTime(time) {
-      this._time += time;
-      this.lastTiming = time;
-      this._samples++;
+  getSampleAverageCount() {
+    return this.sampleSize > 0 ? this.lastSampleCount / this.sampleSize : 0;
+  }
 
-      this._checkSampling();
+  getSampleAverageTime() {
+    return this.sampleSize > 0 ? this.lastSampleTime / this.sampleSize : 0;
+  }
 
-      return this;
-    }
-  }, {
-    key: "timeStart",
-    value: function timeStart() {
-      this._startTime = getHiResTimestamp();
-      this._timerPending = true;
-      return this;
-    }
-  }, {
-    key: "timeEnd",
-    value: function timeEnd() {
-      if (!this._timerPending) {
-        return this;
-      }
+  getSampleHz() {
+    return this.lastSampleTime > 0 ? this.sampleSize / (this.lastSampleTime / 1000) : 0;
+  }
 
-      this.addTime(getHiResTimestamp() - this._startTime);
-      this._timerPending = false;
+  getAverageCount() {
+    return this.samples > 0 ? this.count / this.samples : 0;
+  }
 
-      this._checkSampling();
+  getAverageTime() {
+    return this.samples > 0 ? this.time / this.samples : 0;
+  }
 
-      return this;
-    }
-  }, {
-    key: "getSampleAverageCount",
-    value: function getSampleAverageCount() {
-      return this.sampleSize > 0 ? this.lastSampleCount / this.sampleSize : 0;
-    }
-  }, {
-    key: "getSampleAverageTime",
-    value: function getSampleAverageTime() {
-      return this.sampleSize > 0 ? this.lastSampleTime / this.sampleSize : 0;
-    }
-  }, {
-    key: "getSampleHz",
-    value: function getSampleHz() {
-      return this.lastSampleTime > 0 ? this.sampleSize / (this.lastSampleTime / 1000) : 0;
-    }
-  }, {
-    key: "getAverageCount",
-    value: function getAverageCount() {
-      return this.samples > 0 ? this.count / this.samples : 0;
-    }
-  }, {
-    key: "getAverageTime",
-    value: function getAverageTime() {
-      return this.samples > 0 ? this.time / this.samples : 0;
-    }
-  }, {
-    key: "getHz",
-    value: function getHz() {
-      return this.time > 0 ? this.samples / (this.time / 1000) : 0;
-    }
-  }, {
-    key: "reset",
-    value: function reset() {
-      this.time = 0;
-      this.count = 0;
-      this.samples = 0;
-      this.lastTiming = 0;
-      this.lastSampleTime = 0;
-      this.lastSampleCount = 0;
-      this._count = 0;
+  getHz() {
+    return this.time > 0 ? this.samples / (this.time / 1000) : 0;
+  }
+
+  reset() {
+    this.time = 0;
+    this.count = 0;
+    this.samples = 0;
+    this.lastTiming = 0;
+    this.lastSampleTime = 0;
+    this.lastSampleCount = 0;
+    this._count = 0;
+    this._time = 0;
+    this._samples = 0;
+    this._startTime = 0;
+    this._timerPending = false;
+    return this;
+  }
+
+  _checkSampling() {
+    if (this._samples === this.sampleSize) {
+      this.lastSampleTime = this._time;
+      this.lastSampleCount = this._count;
+      this.count += this._count;
+      this.time += this._time;
+      this.samples += this._samples;
       this._time = 0;
+      this._count = 0;
       this._samples = 0;
-      this._startTime = 0;
-      this._timerPending = false;
-      return this;
     }
-  }, {
-    key: "_checkSampling",
-    value: function _checkSampling() {
-      if (this._samples === this.sampleSize) {
-        this.lastSampleTime = this._time;
-        this.lastSampleCount = this._count;
-        this.count += this._count;
-        this.time += this._time;
-        this.samples += this._samples;
-        this._time = 0;
-        this._count = 0;
-        this._samples = 0;
-      }
-    }
-  }]);
+  }
 
-  return Stat;
-}();
+}
 
-var Stats = function () {
-  function Stats(_ref) {
-    var id = _ref.id,
-        stats = _ref.stats;
+class Stats {
+  constructor(options) {
+    _defineProperty$1(this, "id", void 0);
 
-    _classCallCheck$1(this, Stats);
+    _defineProperty$1(this, "stats", {});
 
-    this.id = id;
+    this.id = options.id;
     this.stats = {};
 
-    this._initializeStats(stats);
+    this._initializeStats(options.stats);
 
     Object.seal(this);
   }
 
-  _createClass$1(Stats, [{
-    key: "get",
-    value: function get(name) {
-      var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'count';
-      return this._getOrCreate({
-        name: name,
-        type: type
-      });
+  get(name) {
+    let type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'count';
+    return this._getOrCreate({
+      name,
+      type
+    });
+  }
+
+  get size() {
+    return Object.keys(this.stats).length;
+  }
+
+  reset() {
+    for (const key in this.stats) {
+      this.stats[key].reset();
     }
-  }, {
-    key: "reset",
-    value: function reset() {
-      for (var key in this.stats) {
-        this.stats[key].reset();
+
+    return this;
+  }
+
+  forEach(fn) {
+    for (const key in this.stats) {
+      fn(this.stats[key]);
+    }
+  }
+
+  getTable() {
+    const table = {};
+    this.forEach(stat => {
+      table[stat.name] = {
+        time: stat.time || 0,
+        count: stat.count || 0,
+        average: stat.getAverageTime() || 0,
+        hz: stat.getHz() || 0
+      };
+    });
+    return table;
+  }
+
+  _initializeStats() {
+    let stats = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+    stats.forEach(stat => this._getOrCreate(stat));
+  }
+
+  _getOrCreate(stat) {
+    if (!stat || !stat.name) {
+      return null;
+    }
+
+    const {
+      name,
+      type
+    } = stat;
+
+    if (!this.stats[name]) {
+      if (stat instanceof Stat) {
+        this.stats[name] = stat;
+      } else {
+        this.stats[name] = new Stat(name, type);
       }
-
-      return this;
     }
-  }, {
-    key: "forEach",
-    value: function forEach(fn) {
-      for (var key in this.stats) {
-        fn(this.stats[key]);
-      }
-    }
-  }, {
-    key: "getTable",
-    value: function getTable() {
-      var table = {};
-      this.forEach(function (stat) {
-        table[stat.name] = {
-          time: stat.time || 0,
-          count: stat.count || 0,
-          average: stat.getAverageTime() || 0,
-          hz: stat.getHz() || 0
-        };
-      });
-      return table;
-    }
-  }, {
-    key: "_initializeStats",
-    value: function _initializeStats() {
-      var _this = this;
 
-      var stats = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
-      stats.forEach(function (stat) {
-        return _this._getOrCreate(stat);
-      });
-    }
-  }, {
-    key: "_getOrCreate",
-    value: function _getOrCreate(stat) {
-      if (!stat || !stat.name) {
-        return null;
-      }
+    return this.stats[name];
+  }
 
-      var name = stat.name,
-          type = stat.type;
-
-      if (!this.stats[name]) {
-        if (stat instanceof Stat) {
-          this.stats[name] = stat;
-        } else {
-          this.stats[name] = new Stat(name, type);
-        }
-      }
-
-      return this.stats[name];
-    }
-  }, {
-    key: "size",
-    get: function get() {
-      return Object.keys(this.stats).length;
-    }
-  }]);
-
-  return Stats;
-}();
+}
 
 function ownKeys$b(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
 
@@ -20081,39 +20228,34 @@ var RequestScheduler = function () {
   return RequestScheduler;
 }();
 
-function _arrayLikeToArray$b(arr, len) {
-  if (len == null || len > arr.length) len = arr.length;
+function _arrayLikeToArray$b(r, a) {
+  (null == a || a > r.length) && (a = r.length);
+  for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
+  return n;
+}
 
-  for (var i = 0, arr2 = new Array(len); i < len; i++) {
-    arr2[i] = arr[i];
+function _arrayWithoutHoles$1(r) {
+  if (Array.isArray(r)) return _arrayLikeToArray$b(r);
+}
+
+function _iterableToArray$1(r) {
+  if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r);
+}
+
+function _unsupportedIterableToArray$b(r, a) {
+  if (r) {
+    if ("string" == typeof r) return _arrayLikeToArray$b(r, a);
+    var t = {}.toString.call(r).slice(8, -1);
+    return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray$b(r, a) : void 0;
   }
-
-  return arr2;
-}
-
-function _arrayWithoutHoles$1(arr) {
-  if (Array.isArray(arr)) return _arrayLikeToArray$b(arr);
-}
-
-function _iterableToArray$1(iter) {
-  if (typeof Symbol !== "undefined" && Symbol.iterator in Object(iter)) return Array.from(iter);
-}
-
-function _unsupportedIterableToArray$b(o, minLen) {
-  if (!o) return;
-  if (typeof o === "string") return _arrayLikeToArray$b(o, minLen);
-  var n = Object.prototype.toString.call(o).slice(8, -1);
-  if (n === "Object" && o.constructor) n = o.constructor.name;
-  if (n === "Map" || n === "Set") return Array.from(o);
-  if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$b(o, minLen);
 }
 
 function _nonIterableSpread$1() {
   throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
 }
 
-function _toConsumableArray$1(arr) {
-  return _arrayWithoutHoles$1(arr) || _iterableToArray$1(arr) || _unsupportedIterableToArray$b(arr) || _nonIterableSpread$1();
+function _toConsumableArray$1(r) {
+  return _arrayWithoutHoles$1(r) || _iterableToArray$1(r) || _unsupportedIterableToArray$b(r) || _nonIterableSpread$1();
 }
 
 function getMeshBoundingBox(attributes) {
@@ -20295,10 +20437,10 @@ function makeResponse(_x) {
 }
 
 function _makeResponse() {
-  _makeResponse = _asyncToGenerator(regenerator.mark(function _callee(resource) {
+  _makeResponse = _asyncToGenerator(_regeneratorRuntime.mark(function _callee(resource) {
     var headers, contentLength, _getResourceUrlAndTyp, url, type, initialDataUrl, response;
 
-    return regenerator.wrap(function _callee$(_context) {
+    return _regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
@@ -20360,9 +20502,9 @@ function checkResponse(_x2) {
 }
 
 function _checkResponse() {
-  _checkResponse = _asyncToGenerator(regenerator.mark(function _callee2(response) {
+  _checkResponse = _asyncToGenerator(_regeneratorRuntime.mark(function _callee2(response) {
     var message;
-    return regenerator.wrap(function _callee2$(_context2) {
+    return _regeneratorRuntime.wrap(function _callee2$(_context2) {
       while (1) {
         switch (_context2.prev = _context2.next) {
           case 0:
@@ -20393,9 +20535,9 @@ function getResponseError(_x3) {
 }
 
 function _getResponseError() {
-  _getResponseError = _asyncToGenerator(regenerator.mark(function _callee3(response) {
+  _getResponseError = _asyncToGenerator(_regeneratorRuntime.mark(function _callee3(response) {
     var message, contentType, text;
-    return regenerator.wrap(function _callee3$(_context3) {
+    return _regeneratorRuntime.wrap(function _callee3$(_context3) {
       while (1) {
         switch (_context3.prev = _context3.next) {
           case 0:
@@ -20446,9 +20588,9 @@ function getInitialDataUrl(_x4) {
 }
 
 function _getInitialDataUrl() {
-  _getInitialDataUrl = _asyncToGenerator(regenerator.mark(function _callee4(resource) {
+  _getInitialDataUrl = _asyncToGenerator(_regeneratorRuntime.mark(function _callee4(resource) {
     var INITIAL_DATA_LENGTH, blobSlice, slice, base64;
-    return regenerator.wrap(function _callee4$(_context4) {
+    return _regeneratorRuntime.wrap(function _callee4$(_context4) {
       while (1) {
         switch (_context4.prev = _context4.next) {
           case 0:
@@ -20521,9 +20663,9 @@ function getErrorMessageFromResponse(_x) {
 }
 
 function _getErrorMessageFromResponse() {
-  _getErrorMessageFromResponse = _asyncToGenerator(regenerator.mark(function _callee(response) {
+  _getErrorMessageFromResponse = _asyncToGenerator(_regeneratorRuntime.mark(function _callee(response) {
     var message, contentType;
-    return regenerator.wrap(function _callee$(_context) {
+    return _regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
@@ -20575,11 +20717,11 @@ function fetchFile(_x) {
 }
 
 function _fetchFile() {
-  _fetchFile = _asyncToGenerator(regenerator.mark(function _callee(url) {
+  _fetchFile = _asyncToGenerator(_regeneratorRuntime.mark(function _callee(url) {
     var options,
         response,
         _args = arguments;
-    return regenerator.wrap(function _callee$(_context) {
+    return _regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
@@ -21066,7 +21208,7 @@ function _unregisterLoaders() {
   state.loaderRegistry = [];
 }
 
-var _marked$2 = regenerator.mark(makeStringIterator);
+var _marked$2 = _regeneratorRuntime.mark(makeStringIterator);
 
 function makeStringIterator(string) {
   var options,
@@ -21078,7 +21220,7 @@ function makeStringIterator(string) {
       chunk,
       _args = arguments;
 
-  return regenerator.wrap(function makeStringIterator$(_context) {
+  return _regeneratorRuntime.wrap(function makeStringIterator$(_context) {
     while (1) {
       switch (_context.prev = _context.next) {
         case 0:
@@ -21111,7 +21253,7 @@ function makeStringIterator(string) {
   }, _marked$2);
 }
 
-var _marked$1 = regenerator.mark(makeArrayBufferIterator);
+var _marked$1 = _regeneratorRuntime.mark(makeArrayBufferIterator);
 
 function makeArrayBufferIterator(arrayBuffer) {
   var options,
@@ -21124,7 +21266,7 @@ function makeArrayBufferIterator(arrayBuffer) {
       chunkArray,
       _args = arguments;
 
-  return regenerator.wrap(function makeArrayBufferIterator$(_context) {
+  return _regeneratorRuntime.wrap(function makeArrayBufferIterator$(_context) {
     while (1) {
       switch (_context.prev = _context.next) {
         case 0:
@@ -21165,14 +21307,14 @@ function makeBlobIterator(_x) {
 }
 
 function _makeBlobIterator() {
-  _makeBlobIterator = _wrapAsyncGenerator(regenerator.mark(function _callee(file) {
+  _makeBlobIterator = _wrapAsyncGenerator(_regeneratorRuntime.mark(function _callee(file) {
     var options,
         chunkSize,
         offset,
         end,
         chunk,
         _args = arguments;
-    return regenerator.wrap(function _callee$(_context) {
+    return _regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
@@ -21215,8 +21357,8 @@ function readFileSlice$1(_x2, _x3, _x4) {
 }
 
 function _readFileSlice$1() {
-  _readFileSlice$1 = _asyncToGenerator(regenerator.mark(function _callee2(file, offset, end) {
-    return regenerator.wrap(function _callee2$(_context2) {
+  _readFileSlice$1 = _asyncToGenerator(_regeneratorRuntime.mark(function _callee2(file, offset, end) {
+    return _regeneratorRuntime.wrap(function _callee2$(_context2) {
       while (1) {
         switch (_context2.prev = _context2.next) {
           case 0:
@@ -21268,10 +21410,10 @@ function makeToArrayBufferIterator(_x) {
 }
 
 function _makeToArrayBufferIterator() {
-  _makeToArrayBufferIterator = _wrapAsyncGenerator(regenerator.mark(function _callee(asyncIterator) {
+  _makeToArrayBufferIterator = _wrapAsyncGenerator(_regeneratorRuntime.mark(function _callee(asyncIterator) {
     var _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, _value, chunk;
 
-    return regenerator.wrap(function _callee$(_context) {
+    return _regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
@@ -21360,10 +21502,10 @@ function makeBrowserStreamIterator(_x2) {
 }
 
 function _makeBrowserStreamIterator() {
-  _makeBrowserStreamIterator = _wrapAsyncGenerator(regenerator.mark(function _callee2(stream) {
+  _makeBrowserStreamIterator = _wrapAsyncGenerator(_regeneratorRuntime.mark(function _callee2(stream) {
     var reader, _yield$_awaitAsyncGen, done, value;
 
-    return regenerator.wrap(function _callee2$(_context2) {
+    return _regeneratorRuntime.wrap(function _callee2$(_context2) {
       while (1) {
         switch (_context2.prev = _context2.next) {
           case 0:
@@ -21419,9 +21561,9 @@ function makeNodeStreamIterator(_x3) {
 }
 
 function _makeNodeStreamIterator() {
-  _makeNodeStreamIterator = _wrapAsyncGenerator(regenerator.mark(function _callee3(stream) {
+  _makeNodeStreamIterator = _wrapAsyncGenerator(_regeneratorRuntime.mark(function _callee3(stream) {
     var data;
-    return regenerator.wrap(function _callee3$(_context3) {
+    return _regeneratorRuntime.wrap(function _callee3$(_context3) {
       while (1) {
         switch (_context3.prev = _context3.next) {
           case 0:
@@ -21477,8 +21619,8 @@ function onceReadable(_x4) {
 }
 
 function _onceReadable() {
-  _onceReadable = _asyncToGenerator(regenerator.mark(function _callee4(stream) {
-    return regenerator.wrap(function _callee4$(_context4) {
+  _onceReadable = _asyncToGenerator(_regeneratorRuntime.mark(function _callee4(stream) {
+    return _regeneratorRuntime.wrap(function _callee4$(_context4) {
       while (1) {
         switch (_context4.prev = _context4.next) {
           case 0:
@@ -21563,9 +21705,9 @@ function getArrayBufferOrStringFromData(_x, _x2) {
 }
 
 function _getArrayBufferOrStringFromData() {
-  _getArrayBufferOrStringFromData = _asyncToGenerator(regenerator.mark(function _callee(data, loader) {
+  _getArrayBufferOrStringFromData = _asyncToGenerator(_regeneratorRuntime.mark(function _callee(data, loader) {
     var isArrayBuffer, response;
-    return regenerator.wrap(function _callee$(_context3) {
+    return _regeneratorRuntime.wrap(function _callee$(_context3) {
       while (1) {
         switch (_context3.prev = _context3.next) {
           case 0:
@@ -21654,8 +21796,8 @@ function getAsyncIteratorFromData(_x3) {
 }
 
 function _getAsyncIteratorFromData() {
-  _getAsyncIteratorFromData = _asyncToGenerator(regenerator.mark(function _callee2(data) {
-    return regenerator.wrap(function _callee2$(_context4) {
+  _getAsyncIteratorFromData = _asyncToGenerator(_regeneratorRuntime.mark(function _callee2(data) {
+    return _regeneratorRuntime.wrap(function _callee2$(_context4) {
       while (1) {
         switch (_context4.prev = _context4.next) {
           case 0:
@@ -21709,8 +21851,8 @@ function _getAsyncIteratorFromData() {
 
 function getIteratorFromData(data) {
   if (ArrayBuffer.isView(data)) {
-    return regenerator.mark(function oneChunk() {
-      return regenerator.wrap(function oneChunk$(_context) {
+    return _regeneratorRuntime.mark(function oneChunk() {
+      return _regeneratorRuntime.wrap(function oneChunk$(_context) {
         while (1) {
           switch (_context.prev = _context.next) {
             case 0:
@@ -21727,8 +21869,8 @@ function getIteratorFromData(data) {
   }
 
   if (data instanceof ArrayBuffer) {
-    return regenerator.mark(function oneChunk() {
-      return regenerator.wrap(function oneChunk$(_context2) {
+    return _regeneratorRuntime.mark(function oneChunk() {
+      return _regeneratorRuntime.wrap(function oneChunk$(_context2) {
         while (1) {
           switch (_context2.prev = _context2.next) {
             case 0:
@@ -21760,9 +21902,9 @@ function getReadableStream(_x4) {
 }
 
 function _getReadableStream() {
-  _getReadableStream = _asyncToGenerator(regenerator.mark(function _callee3(data) {
+  _getReadableStream = _asyncToGenerator(_regeneratorRuntime.mark(function _callee3(data) {
     var response;
-    return regenerator.wrap(function _callee3$(_context5) {
+    return _regeneratorRuntime.wrap(function _callee3$(_context5) {
       while (1) {
         switch (_context5.prev = _context5.next) {
           case 0:
@@ -21904,9 +22046,9 @@ function onWorkerMessage(_x) {
 }
 
 function _onWorkerMessage() {
-  _onWorkerMessage = _asyncToGenerator(regenerator.mark(function _callee(_ref2) {
+  _onWorkerMessage = _asyncToGenerator(_regeneratorRuntime.mark(function _callee(_ref2) {
     var worker, data, resolve, reject, result;
-    return regenerator.wrap(function _callee$(_context) {
+    return _regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
@@ -21975,13 +22117,13 @@ function selectLoader(_x) {
 }
 
 function _selectLoader() {
-  _selectLoader = _asyncToGenerator(regenerator.mark(function _callee(data) {
+  _selectLoader = _asyncToGenerator(_regeneratorRuntime.mark(function _callee(data) {
     var loaders,
         options,
         context,
         loader,
         _args = arguments;
-    return regenerator.wrap(function _callee$(_context) {
+    return _regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
@@ -22262,10 +22404,10 @@ function parse$2(_x, _x2, _x3, _x4) {
 }
 
 function _parse$2() {
-  _parse$2 = _asyncToGenerator(regenerator.mark(function _callee(data, loaders, options, context) {
+  _parse$2 = _asyncToGenerator(_regeneratorRuntime.mark(function _callee(data, loaders, options, context) {
     var _getResourceUrlAndTyp, url, candidateLoaders, loader;
 
-    return regenerator.wrap(function _callee$(_context) {
+    return _regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
@@ -22326,8 +22468,8 @@ function parseWithLoader(_x5, _x6, _x7, _x8) {
 }
 
 function _parseWithLoader() {
-  _parseWithLoader = _asyncToGenerator(regenerator.mark(function _callee2(loader, data, options, context) {
-    return regenerator.wrap(function _callee2$(_context2) {
+  _parseWithLoader = _asyncToGenerator(_regeneratorRuntime.mark(function _callee2(loader, data, options, context) {
+    return _regeneratorRuntime.wrap(function _callee2$(_context2) {
       while (1) {
         switch (_context2.prev = _context2.next) {
           case 0:
@@ -22440,59 +22582,27 @@ function parseWithLoaderSync(loader, data, options, context) {
   throw new Error("".concat(loader.name, " loader: 'parseSync' not supported by this loader, use 'parse' instead. ").concat(context.url || ''));
 }
 
-function _asyncGeneratorDelegate(inner, awaitWrap) {
-  var iter = {},
-      waiting = false;
-
-  function pump(key, value) {
-    waiting = true;
-    value = new Promise(function (resolve) {
-      resolve(inner[key](value));
-    });
-    return {
-      done: false,
-      value: awaitWrap(value)
+function _asyncGeneratorDelegate(t) {
+  var e = {},
+    n = !1;
+  function pump(e, r) {
+    return n = !0, r = new Promise(function (n) {
+      n(t[e](r));
+    }), {
+      done: !1,
+      value: new _OverloadYield(r, 1)
     };
   }
-
-  if (typeof Symbol === "function" && Symbol.iterator) {
-    iter[Symbol.iterator] = function () {
-      return this;
-    };
-  }
-
-  iter.next = function (value) {
-    if (waiting) {
-      waiting = false;
-      return value;
-    }
-
-    return pump("next", value);
-  };
-
-  if (typeof inner["throw"] === "function") {
-    iter["throw"] = function (value) {
-      if (waiting) {
-        waiting = false;
-        throw value;
-      }
-
-      return pump("throw", value);
-    };
-  }
-
-  if (typeof inner["return"] === "function") {
-    iter["return"] = function (value) {
-      if (waiting) {
-        waiting = false;
-        return value;
-      }
-
-      return pump("return", value);
-    };
-  }
-
-  return iter;
+  return e["undefined" != typeof Symbol && Symbol.iterator || "@@iterator"] = function () {
+    return this;
+  }, e.next = function (t) {
+    return n ? (n = !1, t) : pump("next", t);
+  }, "function" == typeof t["throw"] && (e["throw"] = function (t) {
+    if (n) throw n = !1, t;
+    return pump("throw", t);
+  }), "function" == typeof t["return"] && (e["return"] = function (t) {
+    return n ? (n = !1, t) : pump("return", t);
+  }), e;
 }
 
 function _createForOfIteratorHelper$6(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$7(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
@@ -22505,10 +22615,10 @@ function parseInBatches(_x2, _x3, _x4, _x5) {
 }
 
 function _parseInBatches() {
-  _parseInBatches = _asyncToGenerator(regenerator.mark(function _callee(data, loaders, options, context) {
+  _parseInBatches = _asyncToGenerator(_regeneratorRuntime.mark(function _callee(data, loaders, options, context) {
     var _getResourceUrlAndTyp, url, loader;
 
-    return regenerator.wrap(function _callee$(_context) {
+    return _regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
@@ -22569,16 +22679,16 @@ function parseWithLoaderInBatches(_x6, _x7, _x8, _x9) {
 }
 
 function _parseWithLoaderInBatches() {
-  _parseWithLoaderInBatches = _asyncToGenerator(regenerator.mark(function _callee3(loader, data, options, context) {
+  _parseWithLoaderInBatches = _asyncToGenerator(_regeneratorRuntime.mark(function _callee3(loader, data, options, context) {
     var outputIterator, metadataBatch, makeMetadataBatchIterator, _makeMetadataBatchIterator;
 
-    return regenerator.wrap(function _callee3$(_context3) {
+    return _regeneratorRuntime.wrap(function _callee3$(_context3) {
       while (1) {
         switch (_context3.prev = _context3.next) {
           case 0:
             _makeMetadataBatchIterator = function _makeMetadataBatchIte2() {
-              _makeMetadataBatchIterator = _wrapAsyncGenerator(regenerator.mark(function _callee2(iterator) {
-                return regenerator.wrap(function _callee2$(_context2) {
+              _makeMetadataBatchIterator = _wrapAsyncGenerator(_regeneratorRuntime.mark(function _callee2(iterator) {
+                return _regeneratorRuntime.wrap(function _callee2$(_context2) {
                   while (1) {
                     switch (_context2.prev = _context2.next) {
                       case 0:
@@ -22586,7 +22696,7 @@ function _parseWithLoaderInBatches() {
                         return metadataBatch;
 
                       case 2:
-                        return _context2.delegateYield(_asyncGeneratorDelegate(_asyncIterator(iterator), _awaitAsyncGenerator), "t0", 3);
+                        return _context2.delegateYield(_asyncGeneratorDelegate(_asyncIterator(iterator)), "t0", 3);
 
                       case 3:
                       case "end":
@@ -22642,17 +22752,17 @@ function parseToOutputIterator(_x10, _x11, _x12, _x13) {
 }
 
 function _parseToOutputIterator() {
-  _parseToOutputIterator = _asyncToGenerator(regenerator.mark(function _callee5(loader, data, options, context) {
+  _parseToOutputIterator = _asyncToGenerator(_regeneratorRuntime.mark(function _callee5(loader, data, options, context) {
     var inputIterator, iteratorChain, stream, parseChunkInBatches, _parseChunkInBatches;
 
-    return regenerator.wrap(function _callee5$(_context5) {
+    return _regeneratorRuntime.wrap(function _callee5$(_context5) {
       while (1) {
         switch (_context5.prev = _context5.next) {
           case 0:
             _parseChunkInBatches = function _parseChunkInBatches3() {
-              _parseChunkInBatches = _wrapAsyncGenerator(regenerator.mark(function _callee4() {
+              _parseChunkInBatches = _wrapAsyncGenerator(_regeneratorRuntime.mark(function _callee4() {
                 var inputIterator, arrayBuffer;
-                return regenerator.wrap(function _callee4$(_context4) {
+                return _regeneratorRuntime.wrap(function _callee4$(_context4) {
                   while (1) {
                     switch (_context4.prev = _context4.next) {
                       case 0:
@@ -22765,9 +22875,9 @@ function load(_x, _x2, _x3) {
 }
 
 function _load() {
-  _load = _asyncToGenerator(regenerator.mark(function _callee(url, loaders, options) {
+  _load = _asyncToGenerator(_regeneratorRuntime.mark(function _callee(url, loaders, options) {
     var fetch, data;
-    return regenerator.wrap(function _callee$(_context) {
+    return _regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
@@ -22848,9 +22958,9 @@ function loadOneFileInBatches(_x, _x2, _x3, _x4) {
 }
 
 function _loadOneFileInBatches() {
-  _loadOneFileInBatches = _asyncToGenerator(regenerator.mark(function _callee(file, loaders, options, fetch) {
+  _loadOneFileInBatches = _asyncToGenerator(_regeneratorRuntime.mark(function _callee(file, loaders, options, fetch) {
     var url, response;
-    return regenerator.wrap(function _callee$(_context) {
+    return _regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
@@ -22897,10 +23007,10 @@ function encode$4(_x, _x2, _x3, _x4) {
 }
 
 function _encode() {
-  _encode = _asyncToGenerator(regenerator.mark(function _callee(data, writer, options, url) {
+  _encode = _asyncToGenerator(_regeneratorRuntime.mark(function _callee(data, writer, options, url) {
     var batches, chunks, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, _value, batch, tmpInputFilename, tmpOutputFilename, outputFilename, response;
 
-    return regenerator.wrap(function _callee$(_context) {
+    return _regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
@@ -23070,9 +23180,9 @@ function encodeText(_x5, _x6, _x7, _x8) {
 }
 
 function _encodeText() {
-  _encodeText = _asyncToGenerator(regenerator.mark(function _callee2(data, writer, options, url) {
+  _encodeText = _asyncToGenerator(_regeneratorRuntime.mark(function _callee2(data, writer, options, url) {
     var arrayBuffer;
-    return regenerator.wrap(function _callee2$(_context2) {
+    return _regeneratorRuntime.wrap(function _callee2$(_context2) {
       while (1) {
         switch (_context2.prev = _context2.next) {
           case 0:
@@ -23136,9 +23246,9 @@ function encodeURLtoURL(_x9, _x10, _x11, _x12) {
 }
 
 function _encodeURLtoURL() {
-  _encodeURLtoURL = _asyncToGenerator(regenerator.mark(function _callee3(inputUrl, outputUrl, writer, options) {
+  _encodeURLtoURL = _asyncToGenerator(_regeneratorRuntime.mark(function _callee3(inputUrl, outputUrl, writer, options) {
     var outputFilename;
-    return regenerator.wrap(function _callee3$(_context3) {
+    return _regeneratorRuntime.wrap(function _callee3$(_context3) {
       while (1) {
         switch (_context3.prev = _context3.next) {
           case 0:
@@ -23187,8 +23297,8 @@ var NullLoader = {
   mimeTypes: ['application/x.empty'],
   extensions: ['null'],
   parse: function () {
-    var _parse = _asyncToGenerator(regenerator.mark(function _callee(arrayBuffer, options) {
-      return regenerator.wrap(function _callee$(_context) {
+    var _parse = _asyncToGenerator(_regeneratorRuntime.mark(function _callee(arrayBuffer, options) {
+      return _regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
           switch (_context.prev = _context.next) {
             case 0:
@@ -23212,18 +23322,18 @@ var NullLoader = {
     return arrayBuffer;
   },
   parseInBatches: function () {
-    var _parseInBatches2 = _asyncToGenerator(regenerator.mark(function _callee3(asyncIterator, options) {
-      return regenerator.wrap(function _callee3$(_context3) {
+    var _parseInBatches2 = _asyncToGenerator(_regeneratorRuntime.mark(function _callee3(asyncIterator, options) {
+      return _regeneratorRuntime.wrap(function _callee3$(_context3) {
         while (1) {
           switch (_context3.prev = _context3.next) {
             case 0:
               return _context3.abrupt("return", function () {
-                var _parseInBatches = _wrapAsyncGenerator(regenerator.mark(function _callee2() {
-                  return regenerator.wrap(function _callee2$(_context2) {
+                var _parseInBatches = _wrapAsyncGenerator(_regeneratorRuntime.mark(function _callee2() {
+                  return _regeneratorRuntime.wrap(function _callee2$(_context2) {
                     while (1) {
                       switch (_context2.prev = _context2.next) {
                         case 0:
-                          return _context2.delegateYield(_asyncGeneratorDelegate(_asyncIterator(asyncIterator), _awaitAsyncGenerator), "t0", 1);
+                          return _context2.delegateYield(_asyncGeneratorDelegate(_asyncIterator(asyncIterator)), "t0", 1);
 
                         case 1:
                         case "end":
@@ -23265,7 +23375,7 @@ function fetchProgress(_x, _x2) {
 }
 
 function _fetchProgress() {
-  _fetchProgress = _asyncToGenerator(regenerator.mark(function _callee(response, onProgress) {
+  _fetchProgress = _asyncToGenerator(_regeneratorRuntime.mark(function _callee(response, onProgress) {
     var onDone,
         onError,
         body,
@@ -23273,7 +23383,7 @@ function _fetchProgress() {
         totalBytes,
         progressStream,
         _args = arguments;
-    return regenerator.wrap(function _callee$(_context) {
+    return _regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
@@ -23345,10 +23455,10 @@ function read(_x3, _x4, _x5, _x6, _x7, _x8, _x9) {
 }
 
 function _read() {
-  _read = _asyncToGenerator(regenerator.mark(function _callee2(controller, reader, loadedBytes, totalBytes, onProgress, onDone, onError) {
+  _read = _asyncToGenerator(_regeneratorRuntime.mark(function _callee2(controller, reader, loadedBytes, totalBytes, onProgress, onDone, onError) {
     var _yield$reader$read, done, value, percent;
 
-    return regenerator.wrap(function _callee2$(_context2) {
+    return _regeneratorRuntime.wrap(function _callee2$(_context2) {
       while (1) {
         switch (_context2.prev = _context2.next) {
           case 0:
@@ -23421,13 +23531,13 @@ var BrowserFileSystem = function () {
   _createClass$1(BrowserFileSystem, [{
     key: "fetch",
     value: function () {
-      var _fetch = _asyncToGenerator(regenerator.mark(function _callee(path) {
+      var _fetch = _asyncToGenerator(_regeneratorRuntime.mark(function _callee(path) {
         var options,
             fallbackFetch,
             file,
             response,
             _args = arguments;
-        return regenerator.wrap(function _callee$(_context) {
+        return _regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
@@ -23478,9 +23588,9 @@ var BrowserFileSystem = function () {
   }, {
     key: "readdir",
     value: function () {
-      var _readdir = _asyncToGenerator(regenerator.mark(function _callee2() {
+      var _readdir = _asyncToGenerator(_regeneratorRuntime.mark(function _callee2() {
         var files, path;
-        return regenerator.wrap(function _callee2$(_context2) {
+        return _regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
@@ -23509,9 +23619,9 @@ var BrowserFileSystem = function () {
   }, {
     key: "stat",
     value: function () {
-      var _stat = _asyncToGenerator(regenerator.mark(function _callee3(path, options) {
+      var _stat = _asyncToGenerator(_regeneratorRuntime.mark(function _callee3(path, options) {
         var file;
-        return regenerator.wrap(function _callee3$(_context3) {
+        return _regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
               case 0:
@@ -23546,8 +23656,8 @@ var BrowserFileSystem = function () {
   }, {
     key: "unlink",
     value: function () {
-      var _unlink = _asyncToGenerator(regenerator.mark(function _callee4(pathname) {
-        return regenerator.wrap(function _callee4$(_context4) {
+      var _unlink = _asyncToGenerator(_regeneratorRuntime.mark(function _callee4(pathname) {
+        return _regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) {
             switch (_context4.prev = _context4.next) {
               case 0:
@@ -23570,8 +23680,8 @@ var BrowserFileSystem = function () {
   }, {
     key: "open",
     value: function () {
-      var _open = _asyncToGenerator(regenerator.mark(function _callee5(pathname) {
-        return regenerator.wrap(function _callee5$(_context5) {
+      var _open = _asyncToGenerator(_regeneratorRuntime.mark(function _callee5(pathname) {
+        return _regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
             switch (_context5.prev = _context5.next) {
               case 0:
@@ -23594,10 +23704,10 @@ var BrowserFileSystem = function () {
   }, {
     key: "read",
     value: function () {
-      var _read = _asyncToGenerator(regenerator.mark(function _callee6(fd, _ref) {
+      var _read = _asyncToGenerator(_regeneratorRuntime.mark(function _callee6(fd, _ref) {
         var _ref$buffer, buffer, _ref$length, length, _ref$position, position, file, arrayBuffer;
 
-        return regenerator.wrap(function _callee6$(_context6) {
+        return _regeneratorRuntime.wrap(function _callee6$(_context6) {
           while (1) {
             switch (_context6.prev = _context6.next) {
               case 0:
@@ -23627,8 +23737,8 @@ var BrowserFileSystem = function () {
   }, {
     key: "close",
     value: function () {
-      var _close = _asyncToGenerator(regenerator.mark(function _callee7(fd) {
-        return regenerator.wrap(function _callee7$(_context7) {
+      var _close = _asyncToGenerator(_regeneratorRuntime.mark(function _callee7(fd) {
+        return _regeneratorRuntime.wrap(function _callee7$(_context7) {
           while (1) {
             switch (_context7.prev = _context7.next) {
               case 0:
@@ -23655,9 +23765,9 @@ function readFileSlice(_x9, _x10, _x11) {
 }
 
 function _readFileSlice() {
-  _readFileSlice = _asyncToGenerator(regenerator.mark(function _callee8(file, start, end) {
+  _readFileSlice = _asyncToGenerator(_regeneratorRuntime.mark(function _callee8(file, start, end) {
     var slice;
-    return regenerator.wrap(function _callee8$(_context8) {
+    return _regeneratorRuntime.wrap(function _callee8$(_context8) {
       while (1) {
         switch (_context8.prev = _context8.next) {
           case 0:
@@ -23890,9 +24000,9 @@ function parseToImage(_x, _x2, _x3) {
 }
 
 function _parseToImage() {
-  _parseToImage = _asyncToGenerator(regenerator.mark(function _callee(arrayBuffer, options, url) {
+  _parseToImage = _asyncToGenerator(_regeneratorRuntime.mark(function _callee(arrayBuffer, options, url) {
     var blobOrDataUrl, URL, objectUrl;
-    return regenerator.wrap(function _callee$(_context) {
+    return _regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
@@ -23930,9 +24040,9 @@ function loadToImage(_x4, _x5) {
 }
 
 function _loadToImage() {
-  _loadToImage = _asyncToGenerator(regenerator.mark(function _callee2(url, options) {
+  _loadToImage = _asyncToGenerator(_regeneratorRuntime.mark(function _callee2(url, options) {
     var image;
-    return regenerator.wrap(function _callee2$(_context2) {
+    return _regeneratorRuntime.wrap(function _callee2$(_context2) {
       while (1) {
         switch (_context2.prev = _context2.next) {
           case 0:
@@ -23986,9 +24096,9 @@ function parseToImageBitmap(_x, _x2, _x3) {
 }
 
 function _parseToImageBitmap() {
-  _parseToImageBitmap = _asyncToGenerator(regenerator.mark(function _callee(arrayBuffer, options, url) {
+  _parseToImageBitmap = _asyncToGenerator(_regeneratorRuntime.mark(function _callee(arrayBuffer, options, url) {
     var blob, image, imagebitmapOptions;
-    return regenerator.wrap(function _callee$(_context) {
+    return _regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
@@ -24032,10 +24142,10 @@ function safeCreateImageBitmap(_x4) {
 }
 
 function _safeCreateImageBitmap() {
-  _safeCreateImageBitmap = _asyncToGenerator(regenerator.mark(function _callee2(blob) {
+  _safeCreateImageBitmap = _asyncToGenerator(_regeneratorRuntime.mark(function _callee2(blob) {
     var imagebitmapOptions,
         _args2 = arguments;
-    return regenerator.wrap(function _callee2$(_context2) {
+    return _regeneratorRuntime.wrap(function _callee2$(_context2) {
       while (1) {
         switch (_context2.prev = _context2.next) {
           case 0:
@@ -24220,10 +24330,10 @@ function parseImage(_x, _x2, _x3) {
 }
 
 function _parseImage() {
-  _parseImage = _asyncToGenerator(regenerator.mark(function _callee(arrayBuffer, options, context) {
+  _parseImage = _asyncToGenerator(_regeneratorRuntime.mark(function _callee(arrayBuffer, options, context) {
     var imageOptions, imageType, _ref, url, loadType, image;
 
-    return regenerator.wrap(function _callee$(_context) {
+    return _regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
@@ -24312,6 +24422,7 @@ var ImageLoader = {
     }
   }
 };
+var ImageLoader$1 = ImageLoader;
 
 function getBinaryImageMIMEType(arrayBuffer) {
   var metadata = getBinaryImageMetadata(arrayBuffer);
@@ -24350,43 +24461,44 @@ function getTypedArrayForBufferView(json, buffers, bufferViewIndex) {
   return new Uint8Array(binChunk.arrayBuffer, byteOffset, bufferView.byteLength);
 }
 
-function _arrayWithHoles$1(arr) {
-  if (Array.isArray(arr)) return arr;
+function _arrayWithHoles$1(r) {
+  if (Array.isArray(r)) return r;
 }
 
-function _iterableToArrayLimit$1(arr, i) {
-  if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return;
-  var _arr = [];
-  var _n = true;
-  var _d = false;
-  var _e = undefined;
-
-  try {
-    for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
-      _arr.push(_s.value);
-
-      if (i && _arr.length === i) break;
-    }
-  } catch (err) {
-    _d = true;
-    _e = err;
-  } finally {
+function _iterableToArrayLimit$1(r, l) {
+  var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
+  if (null != t) {
+    var e,
+      n,
+      i,
+      u,
+      a = [],
+      f = !0,
+      o = !1;
     try {
-      if (!_n && _i["return"] != null) _i["return"]();
+      if (i = (t = t.call(r)).next, 0 === l) {
+        if (Object(t) !== t) return;
+        f = !1;
+      } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0);
+    } catch (r) {
+      o = !0, n = r;
     } finally {
-      if (_d) throw _e;
+      try {
+        if (!f && null != t["return"] && (u = t["return"](), Object(u) !== u)) return;
+      } finally {
+        if (o) throw n;
+      }
     }
+    return a;
   }
-
-  return _arr;
 }
 
 function _nonIterableRest$1() {
   throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
 }
 
-function _slicedToArray$1(arr, i) {
-  return _arrayWithHoles$1(arr) || _iterableToArrayLimit$1(arr, i) || _unsupportedIterableToArray$b(arr, i) || _nonIterableRest$1();
+function _slicedToArray$1(r, e) {
+  return _arrayWithHoles$1(r) || _iterableToArrayLimit$1(r, e) || _unsupportedIterableToArray$b(r, e) || _nonIterableRest$1();
 }
 
 function ownKeys$6(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
@@ -24398,9 +24510,9 @@ function loadDracoDecoderModule(_x) {
 }
 
 function _loadDracoDecoderModule() {
-  _loadDracoDecoderModule = _asyncToGenerator(regenerator.mark(function _callee(options) {
+  _loadDracoDecoderModule = _asyncToGenerator(_regeneratorRuntime.mark(function _callee(options) {
     var modules;
-    return regenerator.wrap(function _callee$(_context) {
+    return _regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
@@ -24441,10 +24553,10 @@ function loadDracoDecoder(_x3) {
 }
 
 function _loadDracoDecoder() {
-  _loadDracoDecoder = _asyncToGenerator(regenerator.mark(function _callee3(options) {
+  _loadDracoDecoder = _asyncToGenerator(_regeneratorRuntime.mark(function _callee3(options) {
     var DracoDecoderModule, wasmBinary, _yield$Promise$all, _yield$Promise$all2;
 
-    return regenerator.wrap(function _callee3$(_context3) {
+    return _regeneratorRuntime.wrap(function _callee3$(_context3) {
       while (1) {
         switch (_context3.prev = _context3.next) {
           case 0:
@@ -24934,10 +25046,10 @@ function parse$1(_x, _x2, _x3, _x4) {
 }
 
 function _parse$1() {
-  _parse$1 = _asyncToGenerator(regenerator.mark(function _callee(arrayBuffer, options, context, loader) {
+  _parse$1 = _asyncToGenerator(_regeneratorRuntime.mark(function _callee(arrayBuffer, options, context, loader) {
     var _yield$loadDracoDecod, draco, dracoParser;
 
-    return regenerator.wrap(function _callee$(_context) {
+    return _regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
@@ -25518,7 +25630,7 @@ function ownKeys$3(object, enumerableOnly) { var keys = Object.keys(object); if 
 
 function _objectSpread$2(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys$3(Object(source), true).forEach(function (key) { _defineProperty$1(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys$3(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
 
-var _marked = regenerator.mark(makeMeshPrimitiveIterator);
+var _marked = _regeneratorRuntime.mark(makeMeshPrimitiveIterator);
 
 function _createForOfIteratorHelper$5(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$6(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
@@ -25530,10 +25642,10 @@ function decode$4(_x, _x2, _x3) {
 }
 
 function _decode() {
-  _decode = _asyncToGenerator(regenerator.mark(function _callee(gltfData, options, context) {
+  _decode = _asyncToGenerator(_regeneratorRuntime.mark(function _callee(gltfData, options, context) {
     var scenegraph, promises, _iterator4, _step4, primitive;
 
-    return regenerator.wrap(function _callee$(_context2) {
+    return _regeneratorRuntime.wrap(function _callee$(_context2) {
       while (1) {
         switch (_context2.prev = _context2.next) {
           case 0:
@@ -25604,10 +25716,10 @@ function decompressPrimitive(_x4, _x5, _x6, _x7) {
 }
 
 function _decompressPrimitive() {
-  _decompressPrimitive = _asyncToGenerator(regenerator.mark(function _callee2(primitive, scenegraph, options, context) {
+  _decompressPrimitive = _asyncToGenerator(_regeneratorRuntime.mark(function _callee2(primitive, scenegraph, options, context) {
     var compressedPrimitive, buffer, bufferCopy, parse, dracoOptions, decodedData, originalAccessors, _i, _arr, _arr$_i, name, index;
 
-    return regenerator.wrap(function _callee2$(_context3) {
+    return _regeneratorRuntime.wrap(function _callee2$(_context3) {
       while (1) {
         switch (_context3.prev = _context3.next) {
           case 0:
@@ -25689,7 +25801,7 @@ function checkPrimitive(primitive) {
 function makeMeshPrimitiveIterator(scenegraph) {
   var _iterator2, _step2, mesh, _iterator3, _step3, primitive;
 
-  return regenerator.wrap(function makeMeshPrimitiveIterator$(_context) {
+  return _regeneratorRuntime.wrap(function makeMeshPrimitiveIterator$(_context) {
     while (1) {
       switch (_context.prev = _context.next) {
         case 0:
@@ -26006,7 +26118,7 @@ function decodeExtensions(_x) {
 }
 
 function _decodeExtensions() {
-  _decodeExtensions = _asyncToGenerator(regenerator.mark(function _callee(gltf) {
+  _decodeExtensions = _asyncToGenerator(_regeneratorRuntime.mark(function _callee(gltf) {
     var options,
         context,
         extensionName,
@@ -26014,14 +26126,14 @@ function _decodeExtensions() {
         exclude,
         extension,
         _args = arguments;
-    return regenerator.wrap(function _callee$(_context) {
+    return _regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
             options = _args.length > 1 && _args[1] !== undefined ? _args[1] : {};
             context = _args.length > 2 ? _args[2] : undefined;
             options.gltf = options.gltf || {};
-            _context.t0 = regenerator.keys(EXTENSIONS);
+            _context.t0 = _regeneratorRuntime.keys(EXTENSIONS);
 
           case 4:
             if ((_context.t1 = _context.t0()).done) {
@@ -26976,7 +27088,7 @@ function parseGLTF(_x, _x2) {
 }
 
 function _parseGLTF() {
-  _parseGLTF = _asyncToGenerator(regenerator.mark(function _callee(gltf, arrayBufferOrString) {
+  _parseGLTF = _asyncToGenerator(_regeneratorRuntime.mark(function _callee(gltf, arrayBufferOrString) {
     var byteOffset,
         options,
         context,
@@ -26985,7 +27097,7 @@ function _parseGLTF() {
         promise,
         _args = arguments;
 
-    return regenerator.wrap(function _callee$(_context) {
+    return _regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
@@ -27073,9 +27185,9 @@ function loadBuffers(_x3, _x4, _x5) {
 }
 
 function _loadBuffers() {
-  _loadBuffers = _asyncToGenerator(regenerator.mark(function _callee2(gltf, options, context) {
+  _loadBuffers = _asyncToGenerator(_regeneratorRuntime.mark(function _callee2(gltf, options, context) {
     var i, buffer, fetch, uri, response, arrayBuffer;
-    return regenerator.wrap(function _callee2$(_context2) {
+    return _regeneratorRuntime.wrap(function _callee2$(_context2) {
       while (1) {
         switch (_context2.prev = _context2.next) {
           case 0:
@@ -27134,9 +27246,9 @@ function loadImages(_x6, _x7, _x8) {
 }
 
 function _loadImages() {
-  _loadImages = _asyncToGenerator(regenerator.mark(function _callee3(gltf, options, context) {
+  _loadImages = _asyncToGenerator(_regeneratorRuntime.mark(function _callee3(gltf, options, context) {
     var images, promises, i;
-    return regenerator.wrap(function _callee3$(_context3) {
+    return _regeneratorRuntime.wrap(function _callee3$(_context3) {
       while (1) {
         switch (_context3.prev = _context3.next) {
           case 0:
@@ -27168,9 +27280,9 @@ function loadImage(_x9, _x10, _x11, _x12, _x13) {
 }
 
 function _loadImage() {
-  _loadImage = _asyncToGenerator(regenerator.mark(function _callee4(gltf, image, i, options, context) {
+  _loadImage = _asyncToGenerator(_regeneratorRuntime.mark(function _callee4(gltf, image, i, options, context) {
     var fetch, parse, arrayBuffer, uri, response, array, parsedImage;
-    return regenerator.wrap(function _callee4$(_context4) {
+    return _regeneratorRuntime.wrap(function _callee4$(_context4) {
       while (1) {
         switch (_context4.prev = _context4.next) {
           case 0:
@@ -27201,7 +27313,7 @@ function _loadImage() {
 
             assert(arrayBuffer, 'glTF image has no data');
             _context4.next = 13;
-            return parse(arrayBuffer, ImageLoader, {}, context);
+            return parse(arrayBuffer, ImageLoader$1, {}, context);
 
           case 13:
             parsedImage = _context4.sent;
@@ -27252,12 +27364,13 @@ var GLTFLoader = {
     }
   }
 };
+var GLTFLoader$1 = GLTFLoader;
 function parse(_x) {
   return _parse.apply(this, arguments);
 }
 
 function _parse() {
-  _parse = _asyncToGenerator(regenerator.mark(function _callee(arrayBuffer) {
+  _parse = _asyncToGenerator(_regeneratorRuntime.mark(function _callee(arrayBuffer) {
     var options,
         context,
         _options,
@@ -27266,7 +27379,7 @@ function _parse() {
         gltf,
         _args = arguments;
 
-    return regenerator.wrap(function _callee$(_context) {
+    return _regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
@@ -27427,8 +27540,8 @@ var glbLoader = {
   mimeTypes: ['model/gltf-binary'],
   binary: true,
   parse: function () {
-    var _parse = _asyncToGenerator(regenerator.mark(function _callee(arrayBuffer, options) {
-      return regenerator.wrap(function _callee$(_context) {
+    var _parse = _asyncToGenerator(_regeneratorRuntime.mark(function _callee(arrayBuffer, options) {
+      return _regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
           switch (_context.prev = _context.next) {
             case 0:
@@ -27637,7 +27750,7 @@ var index = /*#__PURE__*/Object.freeze({
   __proto__: null,
   KHR_DRACO_MESH_COMPRESSION: KHR_DRACO_MESH_COMPRESSION,
   UBER_POINT_CLOUD_EXTENSION: UBER_POINT_CLOUD_EXTENSION,
-  GLTFLoader: GLTFLoader,
+  GLTFLoader: GLTFLoader$1,
   GLTFWriter: gltfWriter,
   GLBLoader: glbLoader,
   GLBWriter: glbWriter,
@@ -27653,11 +27766,9 @@ function fetchImage(url) {
       return response.blob();
     }).then(function (data) {
       var image = new Image();
-
       image.onload = function () {
         resolve(image);
       };
-
       image.src = URL.createObjectURL(data);
     })["catch"](function () {
       console.error("Unable to download texture image: ".concat(url));
@@ -27665,166 +27776,140 @@ function fetchImage(url) {
   });
 }
 
-function _classCallCheck(instance, Constructor) {
-  if (!(instance instanceof Constructor)) {
-    throw new TypeError("Cannot call a class as a function");
+function _arrayLikeToArray(r, a) {
+  (null == a || a > r.length) && (a = r.length);
+  for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
+  return n;
+}
+function _arrayWithHoles(r) {
+  if (Array.isArray(r)) return r;
+}
+function _arrayWithoutHoles(r) {
+  if (Array.isArray(r)) return _arrayLikeToArray(r);
+}
+function _classCallCheck(a, n) {
+  if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function");
+}
+function _defineProperties(e, r) {
+  for (var t = 0; t < r.length; t++) {
+    var o = r[t];
+    o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o);
   }
 }
-
-function _defineProperties(target, props) {
-  for (var i = 0; i < props.length; i++) {
-    var descriptor = props[i];
-    descriptor.enumerable = descriptor.enumerable || false;
-    descriptor.configurable = true;
-    if ("value" in descriptor) descriptor.writable = true;
-    Object.defineProperty(target, descriptor.key, descriptor);
-  }
+function _createClass(e, r, t) {
+  return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", {
+    writable: !1
+  }), e;
 }
-
-function _createClass(Constructor, protoProps, staticProps) {
-  if (protoProps) _defineProperties(Constructor.prototype, protoProps);
-  if (staticProps) _defineProperties(Constructor, staticProps);
-  return Constructor;
+function _defineProperty(e, r, t) {
+  return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
+    value: t,
+    enumerable: !0,
+    configurable: !0,
+    writable: !0
+  }) : e[r] = t, e;
 }
-
-function _defineProperty(obj, key, value) {
-  if (key in obj) {
-    Object.defineProperty(obj, key, {
-      value: value,
-      enumerable: true,
-      configurable: true,
-      writable: true
-    });
-  } else {
-    obj[key] = value;
-  }
-
-  return obj;
+function _iterableToArray(r) {
+  if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r);
 }
-
-function ownKeys(object, enumerableOnly) {
-  var keys = Object.keys(object);
-
-  if (Object.getOwnPropertySymbols) {
-    var symbols = Object.getOwnPropertySymbols(object);
-    if (enumerableOnly) symbols = symbols.filter(function (sym) {
-      return Object.getOwnPropertyDescriptor(object, sym).enumerable;
-    });
-    keys.push.apply(keys, symbols);
-  }
-
-  return keys;
-}
-
-function _objectSpread2(target) {
-  for (var i = 1; i < arguments.length; i++) {
-    var source = arguments[i] != null ? arguments[i] : {};
-
-    if (i % 2) {
-      ownKeys(Object(source), true).forEach(function (key) {
-        _defineProperty(target, key, source[key]);
-      });
-    } else if (Object.getOwnPropertyDescriptors) {
-      Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
-    } else {
-      ownKeys(Object(source)).forEach(function (key) {
-        Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
-      });
-    }
-  }
-
-  return target;
-}
-
-function _slicedToArray(arr, i) {
-  return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest();
-}
-
-function _toConsumableArray(arr) {
-  return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread();
-}
-
-function _arrayWithoutHoles(arr) {
-  if (Array.isArray(arr)) return _arrayLikeToArray(arr);
-}
-
-function _arrayWithHoles(arr) {
-  if (Array.isArray(arr)) return arr;
-}
-
-function _iterableToArray(iter) {
-  if (typeof Symbol !== "undefined" && Symbol.iterator in Object(iter)) return Array.from(iter);
-}
-
-function _iterableToArrayLimit(arr, i) {
-  if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return;
-  var _arr = [];
-  var _n = true;
-  var _d = false;
-  var _e = undefined;
-
-  try {
-    for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
-      _arr.push(_s.value);
-
-      if (i && _arr.length === i) break;
-    }
-  } catch (err) {
-    _d = true;
-    _e = err;
-  } finally {
+function _iterableToArrayLimit(r, l) {
+  var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
+  if (null != t) {
+    var e,
+      n,
+      i,
+      u,
+      a = [],
+      f = !0,
+      o = !1;
     try {
-      if (!_n && _i["return"] != null) _i["return"]();
+      if (i = (t = t.call(r)).next, 0 === l) {
+        if (Object(t) !== t) return;
+        f = !1;
+      } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0);
+    } catch (r) {
+      o = !0, n = r;
     } finally {
-      if (_d) throw _e;
+      try {
+        if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return;
+      } finally {
+        if (o) throw n;
+      }
     }
+    return a;
   }
-
-  return _arr;
 }
-
-function _unsupportedIterableToArray(o, minLen) {
-  if (!o) return;
-  if (typeof o === "string") return _arrayLikeToArray(o, minLen);
-  var n = Object.prototype.toString.call(o).slice(8, -1);
-  if (n === "Object" && o.constructor) n = o.constructor.name;
-  if (n === "Map" || n === "Set") return Array.from(o);
-  if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen);
+function _nonIterableRest() {
+  throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
 }
-
-function _arrayLikeToArray(arr, len) {
-  if (len == null || len > arr.length) len = arr.length;
-
-  for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i];
-
-  return arr2;
-}
-
 function _nonIterableSpread() {
   throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
 }
-
-function _nonIterableRest() {
-  throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+function ownKeys(e, r) {
+  var t = Object.keys(e);
+  if (Object.getOwnPropertySymbols) {
+    var o = Object.getOwnPropertySymbols(e);
+    r && (o = o.filter(function (r) {
+      return Object.getOwnPropertyDescriptor(e, r).enumerable;
+    })), t.push.apply(t, o);
+  }
+  return t;
+}
+function _objectSpread2(e) {
+  for (var r = 1; r < arguments.length; r++) {
+    var t = null != arguments[r] ? arguments[r] : {};
+    r % 2 ? ownKeys(Object(t), !0).forEach(function (r) {
+      _defineProperty(e, r, t[r]);
+    }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) {
+      Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
+    });
+  }
+  return e;
+}
+function _slicedToArray(r, e) {
+  return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest();
+}
+function _toConsumableArray(r) {
+  return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread();
+}
+function _toPrimitive(t, r) {
+  if ("object" != typeof t || !t) return t;
+  var e = t[Symbol.toPrimitive];
+  if (void 0 !== e) {
+    var i = e.call(t, r || "default");
+    if ("object" != typeof i) return i;
+    throw new TypeError("@@toPrimitive must return a primitive value.");
+  }
+  return ("string" === r ? String : Number)(t);
+}
+function _toPropertyKey(t) {
+  var i = _toPrimitive(t, "string");
+  return "symbol" == typeof i ? i : i + "";
+}
+function _unsupportedIterableToArray(r, a) {
+  if (r) {
+    if ("string" == typeof r) return _arrayLikeToArray(r, a);
+    var t = {}.toString.call(r).slice(8, -1);
+    return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0;
+  }
 }
 
 var Camera = /*#__PURE__*/function () {
   function Camera(parameters) {
     _classCallCheck(this, Camera);
-
     this.position = clone$4([0, 0, 0]);
-    this.target = clone$4([0, 0, 0]); // Fix forward vertical, can not calculate right by cross forward and up
-
+    this.target = clone$4([0, 0, 0]);
+    // Fix forward vertical, can not calculate right by cross forward and up
     this.up = clone$4([0, 1, 0.00000001]);
-    this.viewMatrix = create$6();
-    this.projectionMatrix = create$6();
-    this.projectionMatrixInverse = create$6();
+    this.viewMatrix = create$7();
+    this.projectionMatrix = create$7();
+    this.projectionMatrixInverse = create$7();
     this.needUpdateViewMat = true;
     this.needUpdateProjMat = true;
-    this.zoom = parameters.zoom || 1.0; // Carmera type:  OrthoCamera | PerspectiveCamera
+    this.zoom = parameters.zoom || 1.0;
 
+    // Carmera type:  OrthoCamera | PerspectiveCamera
     this.type = parameters.type !== undefined ? parameters.type : 'OrthoCamera';
-
     if (parameters.type === 'OrthoCamera') {
       this.left = parameters.left !== undefined ? parameters.left : -1;
       this.right = parameters.right !== undefined ? parameters.right : 1;
@@ -27838,50 +27923,48 @@ var Camera = /*#__PURE__*/function () {
       this.near = parameters.near !== undefined ? parameters.near : 0.1;
       this.far = parameters.far !== undefined ? parameters.far : 1000;
     }
-
     this.updateProjectionMatrix();
   }
+
   /**
    * Set camera position
    * @param {x, y, z} point
    */
-
-
-  _createClass(Camera, [{
+  return _createClass(Camera, [{
     key: "setPosition",
     value: function setPosition(x, y, z) {
       this.position = clone$4([x, y, z]);
       this.updateViewMatrix();
     }
+
     /**
      * Set camera up direction
      * @param {x, y, z} point
      */
-
   }, {
     key: "setUp",
     value: function setUp(x, y, z) {
       this.up = clone$4([x, y, z]);
       this.updateViewMatrix();
     }
+
     /**
      * Set camera zoom
      * @param {Number} zoom
      */
-
   }, {
     key: "setZoom",
     value: function setZoom(zoom) {
       this.zoom = zoom;
       this.updateProjectionMatrix();
     }
+
     /**
      * Camera look at center point, update view matrix
      * @param {Number} x
      * @param {Number} y
      * @param {Number} z
      */
-
   }, {
     key: "lookAt",
     value: function lookAt(x, y, z) {
@@ -27894,10 +27977,10 @@ var Camera = /*#__PURE__*/function () {
       lookAt$1(this.viewMatrix, this.position, this.target, this.up);
       this.needUpdateViewMat = true;
     }
+
     /**
      * Update projection matrix and it's inverse
      */
-
   }, {
     key: "updateProjectionMatrix",
     value: function updateProjectionMatrix() {
@@ -27909,16 +27992,12 @@ var Camera = /*#__PURE__*/function () {
         ortho$1(this.projectionMatrix, cx - dx, cx + dx, cy - dy, cy + dy, this.near, this.far);
       } else if (this.type === 'PerspectiveCamera') {
         var fovRadians = toRadian(this.fov / this.zoom); // Math.PI * this.fov / 180
-
         perspective$1(this.projectionMatrix, fovRadians, this.aspect, this.near, this.far);
       }
-
       invert$2(this.projectionMatrixInverse, this.projectionMatrix);
       this.needUpdateProjMat = true;
     }
   }]);
-
-  return Camera;
 }();
 
 var MouseBottons = {
@@ -27931,69 +28010,62 @@ var DefaultOptions = {
   maxZoom: 10,
   zoomScale: 0.02,
   rotateSpeed: 0.8
-}; // https://stackoverflow.com/questions/5527601/normalizing-mousewheel-speed-across-browsers?noredirect=1&lq=1
+};
 
+// https://stackoverflow.com/questions/5527601/normalizing-mousewheel-speed-across-browsers?noredirect=1&lq=1
 function normalizeWheelSpeed(event) {
   var normalized;
-
   if (event.wheelDelta) {
     normalized = event.wheelDelta % 120 === 0 ? event.wheelDelta / 120 : event.wheelDelta / 12;
   } else {
     var rawAmmount = event.deltaY ? event.deltaY : event.detail;
     normalized = -(rawAmmount % 3 ? rawAmmount * 10 : rawAmmount / 3);
   }
-
   return normalized;
 }
-
 var Control = /*#__PURE__*/function () {
   function Control(camera, canvasElem) {
     var _this = this;
-
     var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-
     _classCallCheck(this, Control);
-
     this.camera = camera;
     this.canvasElem = canvasElem;
-    this.options = _objectSpread2(_objectSpread2({}, DefaultOptions), options); // vertical rotate angle limits
+    this.options = _objectSpread2(_objectSpread2({}, DefaultOptions), options);
 
-    this.minPolarAngle = -Math.PI / 2;
-    this.maxPolarAngle = Math.PI / 2; // horizontal rotate angle limits
+    // vertical rotate angle limits
+    this.minPolarAngle = -0.4 * Math.PI;
+    this.maxPolarAngle = 0.4 * Math.PI;
 
+    // horizontal rotate angle limits
     this.minAzimuthAngle = -Math.PI;
-    this.maxAziumthAngle = Math.PI; // zoom limits
+    this.maxAziumthAngle = Math.PI;
+
+    // zoom limits
+
     // camera look at point
     // this.target = vec3.clone([0, 0, 0])
-
     this.rotateStart = null;
     this.rotateEnd = null;
-
     this.onMousedown = function (event) {
       event.preventDefault();
-
       switch (event.button) {
         case MouseBottons.left:
           _this.rotateStart = clone([event.clientX, event.clientY]);
-
           _this.canvasElem.addEventListener('mousemove', _this.onMousemove, false);
-
           _this.canvasElem.addEventListener('mouseup', _this.onMouseup, false);
-
           break;
       }
     };
-
     this.onMousemove = function (event) {
       _this.rotateEnd = clone([event.clientX, event.clientY]);
-      var rotateDelta = sub(create$1(), _this.rotateEnd, _this.rotateStart);
+      var rotateDelta = sub(create$2(), _this.rotateEnd, _this.rotateStart);
       var _this$canvasElem = _this.canvasElem,
-          clientHeight = _this$canvasElem.clientHeight,
-          clientWidth = _this$canvasElem.clientWidth;
+        clientHeight = _this$canvasElem.clientHeight,
+        clientWidth = _this$canvasElem.clientWidth;
       var maxAziumthAngle = _this.maxAziumthAngle,
-          minAzimuthAngle = _this.minAzimuthAngle,
-          maxPolarAngle = _this.maxPolarAngle,
-          minPolarAngle = _this.minPolarAngle;
+        minAzimuthAngle = _this.minAzimuthAngle,
+        maxPolarAngle = _this.maxPolarAngle,
+        minPolarAngle = _this.minPolarAngle;
       var speed = _this.options.rotateSpeed / _this.camera.zoom;
       var aziumAngle = speed * (maxAziumthAngle - minAzimuthAngle) * rotateDelta[0] / clientHeight;
       var polarAngle = speed * (maxPolarAngle - minPolarAngle) * rotateDelta[1] / clientWidth;
@@ -28001,44 +28073,40 @@ var Control = /*#__PURE__*/function () {
       var R = distance$3(position, _this.camera.target);
       var theta = Math.atan2(position[2], position[0]) + aziumAngle;
       var phi = Math.asin(position[1] / R) + polarAngle;
-      phi = Math.min(Math.max(phi, _this.minPolarAngle), _this.maxPolarAngle); // console.log('phi: ' + phi)
+      phi = Math.min(Math.max(phi, _this.minPolarAngle), _this.maxPolarAngle);
+      // console.log('phi: ' + phi)
       // console.log('theta: ' + theta)
       // console.log('aziumAngle: ' + aziumAngle)
-
       var z = R * Math.cos(phi) * Math.sin(theta);
       var x = R * Math.cos(phi) * Math.cos(theta);
-      var y = R * Math.sin(phi); // const rotateAziumPosition = vec3.rotateY(vec3.create(), this.camera.position, this.camera.target, aziumAngle)
+      var y = R * Math.sin(phi);
+
+      // const rotateAziumPosition = vec3.rotateY(vec3.create(), this.camera.position, this.camera.target, aziumAngle)
       // const rotateAxis = vec3.normalize(vec3.create(), [rotateAziumPosition[2], 0, -rotateAziumPosition[0]])
       // const polarMatrix = mat4.fromRotation(mat4.create(), polarAngle, rotateAxis)
       // const rotatePolarPosition = vec3.transformMat4(vec3.create(), rotateAziumPosition, polarMatrix)
 
       _this.camera.setPosition(x, y, z);
-
       _this.rotateStart = clone(_this.rotateEnd);
     };
-
     this.onMouseup = function () {
       _this.canvasElem.removeEventListener('mousemove', _this.onMousemove, false);
-
       _this.canvasElem.removeEventListener('mouseup', _this.onMouseup, false);
     };
-
     this.onMousewheel = function (event) {
       event.preventDefault();
       event.stopPropagation();
       var _this$options = _this.options,
-          minZoom = _this$options.minZoom,
-          maxZoom = _this$options.maxZoom,
-          zoomScale = _this$options.zoomScale;
+        minZoom = _this$options.minZoom,
+        maxZoom = _this$options.maxZoom,
+        zoomScale = _this$options.zoomScale;
       var delta = normalizeWheelSpeed(event);
       var zoom = _this.camera.zoom;
       zoom = Math.max(minZoom, Math.min(maxZoom, zoom * (1 + zoomScale * delta)));
-
       _this.camera.setZoom(zoom);
     };
   }
-
-  _createClass(Control, [{
+  return _createClass(Control, [{
     key: "start",
     value: function start() {
       this.canvasElem.addEventListener('mousedown', this.onMousedown, false);
@@ -28055,31 +28123,27 @@ var Control = /*#__PURE__*/function () {
       this.canvasElem.removeEventListener('mouseleave', this.onMouseup, false);
     }
   }]);
-
-  return Control;
 }();
 
 var Light = /*#__PURE__*/function () {
   function Light(_ref) {
     var _ref$ambientColor = _ref.ambientColor,
-        ambientColor = _ref$ambientColor === void 0 ? [1, 1, 1] : _ref$ambientColor,
-        _ref$ambientIntensity = _ref.ambientIntensity,
-        ambientIntensity = _ref$ambientIntensity === void 0 ? 1 : _ref$ambientIntensity,
-        _ref$diffuseColor = _ref.diffuseColor,
-        diffuseColor = _ref$diffuseColor === void 0 ? [1, 1, 1] : _ref$diffuseColor,
-        _ref$diffuseIntensity = _ref.diffuseIntensity,
-        diffuseIntensity = _ref$diffuseIntensity === void 0 ? 1 : _ref$diffuseIntensity,
-        _ref$specularColor = _ref.specularColor,
-        specularColor = _ref$specularColor === void 0 ? [1, 1, 1] : _ref$specularColor,
-        _ref$specularIntensit = _ref.specularIntensity,
-        specularIntensity = _ref$specularIntensit === void 0 ? 1 : _ref$specularIntensit,
-        _ref$shininess = _ref.shininess,
-        shininess = _ref$shininess === void 0 ? 16 : _ref$shininess,
-        _ref$position = _ref.position,
-        position = _ref$position === void 0 ? [0, 0, 0] : _ref$position;
-
+      ambientColor = _ref$ambientColor === void 0 ? [1, 1, 1] : _ref$ambientColor,
+      _ref$ambientIntensity = _ref.ambientIntensity,
+      ambientIntensity = _ref$ambientIntensity === void 0 ? 1 : _ref$ambientIntensity,
+      _ref$diffuseColor = _ref.diffuseColor,
+      diffuseColor = _ref$diffuseColor === void 0 ? [1, 1, 1] : _ref$diffuseColor,
+      _ref$diffuseIntensity = _ref.diffuseIntensity,
+      diffuseIntensity = _ref$diffuseIntensity === void 0 ? 1 : _ref$diffuseIntensity,
+      _ref$specularColor = _ref.specularColor,
+      specularColor = _ref$specularColor === void 0 ? [1, 1, 1] : _ref$specularColor,
+      _ref$specularIntensit = _ref.specularIntensity,
+      specularIntensity = _ref$specularIntensit === void 0 ? 1 : _ref$specularIntensit,
+      _ref$shininess = _ref.shininess,
+      shininess = _ref$shininess === void 0 ? 16 : _ref$shininess,
+      _ref$position = _ref.position,
+      position = _ref$position === void 0 ? [0, 0, 0] : _ref$position;
     _classCallCheck(this, Light);
-
     this.ambientColor = clone$4(ambientColor);
     this.ambientIntensity = ambientIntensity;
     this.diffuseColor = clone$4(diffuseColor);
@@ -28088,50 +28152,45 @@ var Light = /*#__PURE__*/function () {
     this.specularIntensity = specularIntensity;
     this.shininess = shininess;
     this.position = clone$4(position);
-    this.needUpdatePosition = true; // if (parameters.mode === undefined || parameters.mode === 'Standard') {
+    this.needUpdatePosition = true;
+
+    // if (parameters.mode === undefined || parameters.mode === 'Standard') {
     // } else if (parameters.mode === 'Sunlight') {
     //   this.needUpdateDirection = true
     // }
   }
-
-  _createClass(Light, [{
+  return _createClass(Light, [{
     key: "setPosition",
     value: function setPosition(x, y, z) {
       this.position = clone$4([x, y, z]);
       this.needUpdatePosition = true;
     }
   }]);
-
-  return Light;
 }();
 
 /**
  * webgl utils library
  *
  */
+
 function getGLContext(canvas) {
   var names = ['webgl', 'experimental-webgl', 'webkit-3d', 'moz-webgl'];
   var context = null;
-
   for (var i = 0, len = names.length; i < len; i++) {
     try {
       context = canvas.getContext(names[i]);
     } catch (error) {}
-
     if (context) {
       break;
     }
   }
-
   return context;
 }
 function loadShader(gl, type, source) {
   var shader = gl.createShader(type);
-
   try {
     gl.shaderSource(shader, source);
     gl.compileShader(shader);
-
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
       console.log("Failed to compile shader".concat(gl.getShaderInfoLog(shader)));
       gl.deleteShader(shader);
@@ -28140,83 +28199,72 @@ function loadShader(gl, type, source) {
   } catch (error) {
     console.log(error);
   }
-
   return shader;
 }
 function createProgram(gl, vShaderSource, fShaderSource) {
   var vertexShader = loadShader(gl, gl.VERTEX_SHADER, vShaderSource);
   var fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fShaderSource);
-
   if (!vertexShader || !fragmentShader) {
     return null;
   }
-
   var program = gl.createProgram();
-
   if (!program) {
-    return null;
-  } // Attach the shader objects；Link the program object
-
-
-  gl.attachShader(program, vertexShader);
-  gl.attachShader(program, fragmentShader);
-  gl.linkProgram(program); // Check the result of linking
-
-  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    console.log("Failed to link program: ".concat(gl.getProgramInfoLog(program)));
-    gl.deleteProgram(program); // gl.deleteShader(fragmentShader);
-    // gl.deleteShader(vertexShader);
-
     return null;
   }
 
+  // Attach the shader objects；Link the program object
+  gl.attachShader(program, vertexShader);
+  gl.attachShader(program, fragmentShader);
+  gl.linkProgram(program);
+
+  // Check the result of linking
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    console.log("Failed to link program: ".concat(gl.getProgramInfoLog(program)));
+    gl.deleteProgram(program);
+    // gl.deleteShader(fragmentShader);
+    // gl.deleteShader(vertexShader);
+    return null;
+  }
   return program;
 }
 
 function getUniforms(gl, program) {
   var uniformCount = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
   var uniforms = {};
-
   for (var i = 0; i < uniformCount; i++) {
     var info = gl.getActiveUniform(program, i);
     uniforms[info.name] = gl.getUniformLocation(program, info.name);
   }
-
   return uniforms;
 }
-
 function getAttributes(gl, program) {
   var attribCount = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES);
   var attributes = {};
-
   for (var i = 0; i < attribCount; i++) {
     var info = gl.getActiveAttrib(program, i);
     attributes[info.name] = gl.getAttribLocation(program, info.name);
   }
-
   return attributes;
 }
-
 var Program = /*#__PURE__*/function () {
   // cachedAttributes;
+
   // #cachedUniforms;
+
   function Program(gl, vShaderSource, fShaderSource) {
     _classCallCheck(this, Program);
-
     // this.glVertexShader = WebGLUtils.loadShader(vertexShader)
     // this.glFragmentShader = WebGLUtils.loadShader(fragmentShader)
     this.gl = gl;
     this.program = createProgram(gl, vShaderSource, fShaderSource);
     this.gl.useProgram(this.program);
   }
-
-  _createClass(Program, [{
+  return _createClass(Program, [{
     key: "uniforms",
     get: function get() {
       if (this.cachedUniforms === undefined) {
         this.cachedUniforms = getUniforms(this.gl, this.program);
       }
-
       return this.cachedUniforms;
     }
   }, {
@@ -28225,7 +28273,6 @@ var Program = /*#__PURE__*/function () {
       if (this.cachedAttributes === undefined) {
         this.cachedAttributes = getAttributes(this.gl, this.program);
       }
-
       return this.cachedAttributes;
     }
   }, {
@@ -28237,30 +28284,27 @@ var Program = /*#__PURE__*/function () {
       this.cachedUniforms = undefined;
     }
   }]);
-
-  return Program;
 }();
 
 var Renderer = /*#__PURE__*/function () {
   function Renderer(_ref) {
     var canvas = _ref.canvas,
-        camera = _ref.camera,
-        light = _ref.light,
-        vertexShader = _ref.vertexShader,
-        fragmentShader = _ref.fragmentShader;
-
+      camera = _ref.camera,
+      light = _ref.light,
+      vertexShader = _ref.vertexShader,
+      fragmentShader = _ref.fragmentShader;
     _classCallCheck(this, Renderer);
-
     this.geometries = [];
     this.canvas = canvas;
     this.camera = camera;
-    this.light = light; // Get the device pixel ratio, falling back to 1.
+    this.light = light;
 
-    var dpr = Math.max(window.devicePixelRatio || 2, 2); // Get the size of the canvas in CSS pixels.
-
-    var rect = this.canvas.getBoundingClientRect(); // Give the canvas pixel dimensions of their CSS
+    // Get the device pixel ratio, falling back to 1.
+    var dpr = Math.max(window.devicePixelRatio || 2, 2);
+    // Get the size of the canvas in CSS pixels.
+    var rect = this.canvas.getBoundingClientRect();
+    // Give the canvas pixel dimensions of their CSS
     // size * the device pixel ratio.
-
     this.width = rect.width;
     this.height = rect.height;
     this.canvas.width = rect.width * dpr;
@@ -28268,16 +28312,16 @@ var Renderer = /*#__PURE__*/function () {
     this.gl = getGLContext(this.canvas);
     this.gl.getExtension('OES_standard_derivatives');
     this.gl.enable(this.gl.DEPTH_TEST);
-    this.gl.enable(this.gl.CULL_FACE); // this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+    this.gl.enable(this.gl.CULL_FACE);
+
+    // this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
 
     this.updateShader(vertexShader, fragmentShader);
-
     if (this.light) {
       this.updateLightProgram();
     }
   }
-
-  _createClass(Renderer, [{
+  return _createClass(Renderer, [{
     key: "updateShader",
     value: function updateShader(vertexShader, fragmentShader) {
       this.program = new Program(this.gl, vertexShader, fragmentShader);
@@ -28286,43 +28330,31 @@ var Renderer = /*#__PURE__*/function () {
     key: "updateLightProgram",
     value: function updateLightProgram() {
       var _this$gl4;
-
       var uniforms = this.program.uniforms;
       var _this$light = this.light,
-          ambientColor = _this$light.ambientColor,
-          ambientIntensity = _this$light.ambientIntensity,
-          diffuseColor = _this$light.diffuseColor,
-          diffuseIntensity = _this$light.diffuseIntensity,
-          specularColor = _this$light.specularColor,
-          specularIntensity = _this$light.specularIntensity,
-          shininess = _this$light.shininess;
-
+        ambientColor = _this$light.ambientColor,
+        ambientIntensity = _this$light.ambientIntensity,
+        diffuseColor = _this$light.diffuseColor,
+        diffuseIntensity = _this$light.diffuseIntensity,
+        specularColor = _this$light.specularColor,
+        specularIntensity = _this$light.specularIntensity,
+        shininess = _this$light.shininess;
       if (uniforms.u_ambientProduct) {
         var _this$gl;
-
-        var ambient = scale$5(create$5(), ambientColor, ambientIntensity);
-
+        var ambient = scale$5(create$6(), ambientColor, ambientIntensity);
         (_this$gl = this.gl).uniform3f.apply(_this$gl, [uniforms.u_ambientProduct].concat(_toConsumableArray(ambient)));
       }
-
       if (uniforms.u_diffuseProduct) {
         var _this$gl2;
-
-        var diffuse = scale$5(create$5(), diffuseColor, diffuseIntensity);
-
+        var diffuse = scale$5(create$6(), diffuseColor, diffuseIntensity);
         (_this$gl2 = this.gl).uniform3f.apply(_this$gl2, [uniforms.u_diffuseProduct].concat(_toConsumableArray(diffuse)));
       }
-
       if (uniforms.u_specularProduct) {
         var _this$gl3;
-
-        var specular = scale$5(create$5(), specularColor, specularIntensity);
-
+        var specular = scale$5(create$6(), specularColor, specularIntensity);
         (_this$gl3 = this.gl).uniform3f.apply(_this$gl3, [uniforms.u_specularProduct].concat(_toConsumableArray(specular)));
-
         this.gl.uniform1f(uniforms.u_shininess, shininess);
       }
-
       (_this$gl4 = this.gl).uniform3f.apply(_this$gl4, [uniforms.u_lightPosition].concat(_toConsumableArray(this.light.position)));
     }
   }, {
@@ -28342,38 +28374,29 @@ var Renderer = /*#__PURE__*/function () {
     key: "render",
     value: function render() {
       var _gl = this.gl;
-
       _gl.clearColor(1.0, 1.0, 1.0, 1.0);
-
       _gl.clear(_gl.COLOR_BUFFER_BIT | _gl.DEPTH_BUFFER_BIT);
+      var uniforms = this.program.uniforms;
 
-      var uniforms = this.program.uniforms; // _gl.uniform3f(uniform.u_lightPosition, ...this.light.position)
+      // _gl.uniform3f(uniform.u_lightPosition, ...this.light.position)
       // _gl.uniformMatrix4fv(uniform.u_projectionMatrix, false, this.camera.projectionMatrix)
       // _gl.uniformMatrix4fv(uniform.u_viewMatrix, false, this.camera.viewMatrix)
-
       if (this.camera.needUpdateViewMat) {
         _gl.uniformMatrix4fv(uniforms.u_viewMatrix, false, this.camera.viewMatrix);
-
         this.camera.needUpdateViewMat = false;
       }
-
       if (this.camera.needUpdateProjMat) {
         _gl.uniformMatrix4fv(uniforms.u_projectionMatrix, false, this.camera.projectionMatrix);
-
         this.camera.needUpdateProjMat = false;
       }
-
       if (this.light && this.light.needUpdatePosition) {
         _gl.uniform3f.apply(_gl, [uniforms.u_lightPosition].concat(_toConsumableArray(this.light.position)));
-
         this.light.needUpdatePosition = false;
       }
-
       if (this.light && this.light.needUpdateProgram) {
         this.updateLightProgram();
         this.light.needUpdateProgram = false;
       }
-
       for (var i = this.geometries.length - 1; i > -1; i--) {
         this.renderGeometry(this.geometries[i]);
       }
@@ -28385,73 +28408,50 @@ var Renderer = /*#__PURE__*/function () {
       var programAttribs = this.program.attributes;
       var programUniforms = this.program.uniforms;
       var attributes = geometry.attributes;
-
       if (attributes.position && attributes.position.needUpdate) {
         attributes.position.buffer = _gl.createBuffer();
-
         _gl.bindBuffer(_gl.ARRAY_BUFFER, attributes.position.buffer);
-
         _gl.bufferData(_gl.ARRAY_BUFFER, attributes.position.array, _gl.STATIC_DRAW);
-
         _gl.enableVertexAttribArray(programAttribs.a_position);
-
         _gl.vertexAttribPointer(programAttribs.a_position, 3, _gl.FLOAT, false, 0, 0);
-
         attributes.position.needUpdate = false;
       }
-
       if (attributes.normal && attributes.normal.needUpdate) {
         attributes.normal.buffer = _gl.createBuffer();
-
         _gl.bindBuffer(_gl.ARRAY_BUFFER, attributes.normal.buffer);
-
         _gl.bufferData(_gl.ARRAY_BUFFER, attributes.normal.array, _gl.STATIC_DRAW);
-
         _gl.enableVertexAttribArray(programAttribs.a_normal);
-
         _gl.vertexAttribPointer(programAttribs.a_normal, 3, _gl.FLOAT, false, 0, 0);
-
         attributes.normal.needUpdate = false;
       }
-
       if (attributes.barycentric && attributes.barycentric.needUpdate) {
         attributes.barycentric.buffer = _gl.createBuffer();
-
         _gl.bindBuffer(_gl.ARRAY_BUFFER, attributes.barycentric.buffer);
-
         _gl.bufferData(_gl.ARRAY_BUFFER, attributes.barycentric.array, _gl.STATIC_DRAW);
-
         _gl.enableVertexAttribArray(programAttribs.a_barycentric);
-
         _gl.vertexAttribPointer(programAttribs.a_barycentric, 3, _gl.FLOAT, false, 0, 0);
-
         attributes.barycentric.needUpdate = false;
-      } // if (!geometry.wireframe) {
+      }
+
+      // if (!geometry.wireframe) {
       //   _gl.disableVertexAttribArray(programAttribs.a_barycentric);
       // }
 
-
       if (attributes.color && attributes.color.needUpdate) {
         attributes.color.buffer = _gl.createBuffer();
-
         _gl.bindBuffer(_gl.ARRAY_BUFFER, attributes.color.buffer);
-
         _gl.bufferData(_gl.ARRAY_BUFFER, attributes.color.array, _gl.STATIC_DRAW);
-
         _gl.enableVertexAttribArray(programAttribs.a_color);
-
         _gl.vertexAttribPointer(programAttribs.a_color, attributes.color.itemSize, _gl.FLOAT, false, 0, 0);
-
         attributes.color.needUpdate = false;
       }
-
       if (geometry.modelMatrix) {
         _gl.uniformMatrix4fv(programUniforms.u_modelMatrix, false, geometry.modelMatrix);
       } else {
-        _gl.uniformMatrix4fv(programUniforms.u_modelMatrix, false, create$6());
-      } // TRIANGLES LINE_STRIP
+        _gl.uniformMatrix4fv(programUniforms.u_modelMatrix, false, create$7());
+      }
 
-
+      // TRIANGLES LINE_STRIP
       _gl.drawArrays(_gl.TRIANGLES, 0, attributes.position.count);
     }
   }, {
@@ -28461,59 +28461,50 @@ var Renderer = /*#__PURE__*/function () {
       var gl = this.gl;
       var programAttribs = this.program.attributes;
       var programUniforms = this.program.uniforms;
-
       if (model.needUpdate) {
-        model.mesh = {}; // Create the vertex buffer for this mesh
-
+        model.mesh = {};
+        // Create the vertex buffer for this mesh
         var vertexBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
         var vertexData = model.makeBufferData(layout);
         gl.bufferData(gl.ARRAY_BUFFER, vertexData, gl.STATIC_DRAW);
         vertexBuffer.numItems = vertexData.numItems;
         vertexBuffer.layout = layout;
-        model.mesh.vertexBuffer = vertexBuffer; // Create the index buffer for this mesh
+        model.mesh.vertexBuffer = vertexBuffer;
 
+        // Create the index buffer for this mesh
         var indexBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
         var indexData;
         var materialIndices = Object.values(model.materialIndices);
-
         if (materialIndices.length > 0) {
-          indexData = model.makeIndexBufferDataForMaterials.apply(model, _toConsumableArray(materialIndices));
+          indexData = model.makeIndexBufferDataForMaterials.apply(model, materialIndices);
         } else {
           indexData = new Int16Array(model.indices);
           indexData.numItems = model.indices.length;
         }
-
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indexData, gl.STATIC_DRAW);
         indexBuffer.numItems = indexData.numItems;
         model.mesh.indexBuffer = indexBuffer;
         model.needUpdate = false;
       }
-
       gl.bindBuffer(gl.ARRAY_BUFFER, model.mesh.vertexBuffer);
-
       for (var _i = 0, _Object$entries = Object.entries(attrs); _i < _Object$entries.length; _i++) {
         var _Object$entries$_i = _slicedToArray(_Object$entries[_i], 2),
-            attrName = _Object$entries$_i[0],
-            layoutKey = _Object$entries$_i[1];
-
+          attrName = _Object$entries$_i[0],
+          layoutKey = _Object$entries$_i[1];
         var attriLocation = programAttribs[attrName];
-
         if (Number.isFinite(attriLocation) && attriLocation !== -1) {
           var attr = layout.attributeMap[layoutKey];
           gl.enableVertexAttribArray(attriLocation);
           gl.vertexAttribPointer(attriLocation, attr.size, gl[attr.type], attr.normalized, attr.stride, attr.offset);
         }
       }
-
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, model.mesh.indexBuffer);
-      gl.uniformMatrix4fv(programUniforms.u_modelMatrix, false, create$6());
+      gl.uniformMatrix4fv(programUniforms.u_modelMatrix, false, create$7());
       gl.drawElements(gl.TRIANGLES, model.mesh.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
     }
   }]);
-
-  return Renderer;
 }();
 
 var BufferAttribute = /*#__PURE__*/function () {
@@ -28521,9 +28512,7 @@ var BufferAttribute = /*#__PURE__*/function () {
     var array = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
     var itemSize = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 3;
     var normalized = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
-
     _classCallCheck(this, BufferAttribute);
-
     this.array = array;
     this.itemSize = itemSize;
     this.normalized = normalized;
@@ -28535,8 +28524,7 @@ var BufferAttribute = /*#__PURE__*/function () {
     };
     this.offset = 0;
   }
-
-  _createClass(BufferAttribute, [{
+  return _createClass(BufferAttribute, [{
     key: "insertVec3",
     value: function insertVec3(vec3) {
       this.array[this.offset++] = vec3[0];
@@ -28544,8 +28532,6 @@ var BufferAttribute = /*#__PURE__*/function () {
       this.array[this.offset++] = vec3[2];
     }
   }]);
-
-  return BufferAttribute;
 }();
 
 export { BufferAttribute, Camera, Control, Light, webglObjLoader_min$1 as OBJ, Program, Renderer, fetchImage, index$2 as glMatrix, index$1 as loadersCore, index as loadersGLTF, twglFull_module as twgl };
