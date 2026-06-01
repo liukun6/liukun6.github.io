@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
 
   <link rel="stylesheet" type="text/css" href="./main.css">
 </head>
+
 <body>
   <main>
     <canvas id="container"></canvas>
@@ -209,22 +211,77 @@
     let CUBEMAP, PANORAMA_CUBEMAP, IMAGES_CUBEMAP;
     const positionArray = new Float32Array([
       -1.0, -1.0,
-       1.0, -1.0,
-      -1.0,  1.0,
+      1.0, -1.0,
+      -1.0, 1.0,
 
-      -1.0,  1.0,
-       1.0, -1.0,
-       1.0,  1.0,
+      -1.0, 1.0,
+      1.0, -1.0,
+      1.0, 1.0,
     ]);
     const texcoordArray = new Float32Array([
-       0.0,  0.0,
-       1.0,  0.0,
-       0.0,  1.0,
+      0.0, 0.0,
+      1.0, 0.0,
+      0.0, 1.0,
 
-       0.0,  1.0,
-       1.0,  0.0,
-       1.0,  1.0,
+      0.0, 1.0,
+      1.0, 0.0,
+      1.0, 1.0,
     ]);
+
+    const cubePositions = new Float32Array([
+      -0.5, -0.5, -0.5,
+      -0.5, 0.5, -0.5,
+      0.5, -0.5, -0.5,
+      -0.5, 0.5, -0.5,
+      0.5, 0.5, -0.5,
+      0.5, -0.5, -0.5,
+
+      -0.5, -0.5, 0.5,
+      0.5, -0.5, 0.5,
+      -0.5, 0.5, 0.5,
+      -0.5, 0.5, 0.5,
+      0.5, -0.5, 0.5,
+      0.5, 0.5, 0.5,
+
+      -0.5, 0.5, -0.5,
+      -0.5, 0.5, 0.5,
+      0.5, 0.5, -0.5,
+      -0.5, 0.5, 0.5,
+      0.5, 0.5, 0.5,
+      0.5, 0.5, -0.5,
+
+      -0.5, -0.5, -0.5,
+      0.5, -0.5, -0.5,
+      -0.5, -0.5, 0.5,
+      -0.5, -0.5, 0.5,
+      0.5, -0.5, -0.5,
+      0.5, -0.5, 0.5,
+
+      -0.5, -0.5, -0.5,
+      -0.5, -0.5, 0.5,
+      -0.5, 0.5, -0.5,
+      -0.5, -0.5, 0.5,
+      -0.5, 0.5, 0.5,
+      -0.5, 0.5, -0.5,
+
+      0.5, -0.5, -0.5,
+      0.5, 0.5, -0.5,
+      0.5, -0.5, 0.5,
+      0.5, -0.5, 0.5,
+      0.5, 0.5, -0.5,
+      0.5, 0.5, 0.5,
+    ]);
+
+    // Create BufferInfo and VAO once during initialization to avoid per-frame GPU allocation leaks
+    const cubeBufferInfo = twgl.createBufferInfoFromArrays(gl, {
+      a_position: { numComponents: 3, data: cubePositions },
+    });
+    const cubeVao = twgl.createVAOFromBufferInfo(gl, cubemapBoxProgramInfo, cubeBufferInfo);
+
+    const skyboxBufferInfo = twgl.createBufferInfoFromArrays(gl, {
+      a_position: { numComponents: 2, data: positionArray },
+    });
+    const skyboxVao = twgl.createVAOFromBufferInfo(gl, skyboxProgramInfo, skyboxBufferInfo);
 
     async function loadCubemap() {
       const faceInfos = [
@@ -235,7 +292,7 @@
         { target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z, name: 'pos-z' },
         { target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, name: 'neg-z' },
       ];
-      const loadImages = faceInfos.map(({name}) => {
+      const loadImages = faceInfos.map(({ name }) => {
         const filePath = `./data/cubemap/${name}.jpg`;
         return fetchImage(filePath);
       })
@@ -251,56 +308,13 @@
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
       const textureSize = images[0].width;
       for (let i = 0; i < 6; i++) {
-        gl.texImage2D(faceInfos[i].target, 0, gl.RGBA, textureSize, textureSize, 0, gl.RGBA, gl.UNSIGNED_BYTE, images[i]);
+        // Use gl.SRGB8_ALPHA8 for sRGB JPG textures so WebGL automatically decodes to linear space on sampling.
+        gl.texImage2D(faceInfos[i].target, 0, gl.SRGB8_ALPHA8, textureSize, textureSize, 0, gl.RGBA, gl.UNSIGNED_BYTE, images[i]);
       }
 
       return cubemap;
     }
 
-    function drawCubemap_webgl(HDR_Texture) {
-      const textureSize = 256;
-      gl.viewport(0, 0, textureSize, textureSize);
-      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-      const cubemap = gl.createTexture();
-      gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubemap);
-      gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-      for (let i = 0; i < 6; i++) {
-        gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, gl.RGBA, textureSize, textureSize, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-      }
-
-      const geometry = {
-        a_position: { numComponents: 2, data: positionArray },
-        a_texcoord: { numComponents: 2, data: texcoordArray },
-      }
-      const bufferInfo = twgl.createBufferInfoFromArrays(gl, geometry);
-      const vao = twgl.createVAOFromBufferInfo(gl, cubemapProgramInfo, bufferInfo);
-
-      gl.useProgram(cubemapProgramInfo.program);
-      for (let i = 0; i < 6; i++) {
-        const fb = gl.createFramebuffer(gl.FRAMEBUFFER);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
-        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, cubemap, 0);
-
-        const rb = gl.createRenderbuffer();
-        gl.bindRenderbuffer(gl.RENDERBUFFER, rb);
-        gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_STENCIL, textureSize, textureSize);
-        gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_STENCIL_ATTACHMENT, gl.RENDERBUFFER, rb);
-
-        gl.bindVertexArray(vao);
-        twgl.setUniforms(cubemapProgramInfo, {
-          u_panorama: HDR_Texture,
-          u_face: i
-        });
-
-        gl.drawArrays(gl.TRIANGLES, 0, bufferInfo.numElements);
-      }
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-
-      return cubemap;
-    }
 
 
     function panoramaToCubemap(HDR_Texture) {
@@ -345,51 +359,6 @@
     }
 
     function drawCube() {
-      var positions = new Float32Array(
-      [
-        -0.5, -0.5,  -0.5,
-        -0.5,  0.5,  -0.5,
-        0.5, -0.5,  -0.5,
-        -0.5,  0.5,  -0.5,
-        0.5,  0.5,  -0.5,
-        0.5, -0.5,  -0.5,
-
-        -0.5, -0.5,   0.5,
-        0.5, -0.5,   0.5,
-        -0.5,  0.5,   0.5,
-        -0.5,  0.5,   0.5,
-        0.5, -0.5,   0.5,
-        0.5,  0.5,   0.5,
-
-        -0.5,   0.5, -0.5,
-        -0.5,   0.5,  0.5,
-        0.5,   0.5, -0.5,
-        -0.5,   0.5,  0.5,
-        0.5,   0.5,  0.5,
-        0.5,   0.5, -0.5,
-
-        -0.5,  -0.5, -0.5,
-        0.5,  -0.5, -0.5,
-        -0.5,  -0.5,  0.5,
-        -0.5,  -0.5,  0.5,
-        0.5,  -0.5, -0.5,
-        0.5,  -0.5,  0.5,
-
-        -0.5,  -0.5, -0.5,
-        -0.5,  -0.5,  0.5,
-        -0.5,   0.5, -0.5,
-        -0.5,  -0.5,  0.5,
-        -0.5,   0.5,  0.5,
-        -0.5,   0.5, -0.5,
-
-        0.5,  -0.5, -0.5,
-        0.5,   0.5, -0.5,
-        0.5,  -0.5,  0.5,
-        0.5,  -0.5,  0.5,
-        0.5,   0.5, -0.5,
-        0.5,   0.5,  0.5,
-      ]);
-
       twgl.resizeCanvasToDisplaySize(gl.canvas, 2.0);
       gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
       gl.enable(gl.DEPTH_TEST);
@@ -397,17 +366,13 @@
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
       gl.useProgram(cubemapBoxProgramInfo.program);
-      const bufferInfo = twgl.createBufferInfoFromArrays(gl, {
-        a_position: { numComponents: 3, data: positions },
-      });
-      const vao = twgl.createVAOFromBufferInfo(gl, cubemapBoxProgramInfo, bufferInfo);
-      gl.bindVertexArray(vao);
+      gl.bindVertexArray(cubeVao);
 
       twgl.setUniforms(cubemapBoxProgramInfo, {
         u_cubmap: CUBEMAP,
         u_MVP: glMatrix.mat4.multiply([], camera.projectionMatrix, camera.viewMatrix)
       });
-      twgl.drawBufferInfo(gl, bufferInfo);
+      twgl.drawBufferInfo(gl, cubeBufferInfo);
     }
 
     function drawSkybox() {
@@ -417,11 +382,7 @@
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       gl.useProgram(skyboxProgramInfo.program);
 
-      const bufferInfo = twgl.createBufferInfoFromArrays(gl, {
-        a_position: { numComponents: 2, data: positionArray },
-      });
-      const vao = twgl.createVAOFromBufferInfo(gl, skyboxProgramInfo, bufferInfo);
-      gl.bindVertexArray(vao);
+      gl.bindVertexArray(skyboxVao);
 
       const viewDirectionMatrix = glMatrix.mat4.copy([], camera.viewMatrix);
       viewDirectionMatrix[12] = 0;
@@ -434,7 +395,7 @@
         u_cubmap: CUBEMAP,
         u_viewProjectionInverse: viewProjectionInverseMatrix
       });
-      twgl.drawBufferInfo(gl, bufferInfo);
+      twgl.drawBufferInfo(gl, skyboxBufferInfo);
     }
 
 
@@ -455,7 +416,7 @@
       })
     }
 
-    (async() => {
+    (async () => {
       const HDR_URL = './data/DamagedHelmet/footprint_court.hdr';
       const hdr = await fetch(HDR_URL).then(response => response.arrayBuffer());
       const floatRGB = await loadHDR(new Uint8Array(hdr));
@@ -492,4 +453,5 @@
     }
   </script>
 </body>
+
 </html>

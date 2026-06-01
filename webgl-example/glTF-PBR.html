@@ -26,6 +26,11 @@
         <input type="radio" id="Microfacet" name="brdf" value="2">
         <label for="Microfacet">Microfacet Model</label>
       </div>
+
+      <div class="item">
+        <input type="radio" id="KullaConty" name="brdf" value="3">
+        <label for="KullaConty">Kulla-Conty Model</label>
+      </div>
     </div>
   </main>
 
@@ -83,6 +88,10 @@
 
     uniform vec3 u_cameraPosition;
     uniform vec3 u_lightPosition;
+
+    // Kulla-Conty LUTs
+    uniform sampler2D u_EmuLUT;
+    uniform sampler2D u_EavgLUT;
 
     in vec3 v_position;
     in vec3 v_normal;
@@ -232,6 +241,56 @@
       return BRDF * NdotL;
     }
 
+    // https://blog.selfshadow.com/publications/s2017-shading-course/imageworks/s2017_pbs_imageworks_slides_v2.pdf
+    vec3 AverageFresnel(vec3 r, vec3 g) {
+      return vec3(0.087237) + 0.0230685 * g - 0.0864902 * g * g + 0.0774594 * g * g * g
+             + 0.782654 * r - 0.136432 * r * r + 0.278708 * r * r * r
+             + 0.19744 * g * r + 0.0360605 * g * g * r - 0.2586 * g * r * r;
+    }
+
+    vec3 MultiScatterBRDF(float NdotL, float NdotV, float roughness, vec3 albedo) {
+      vec3 E_o = texture(u_EmuLUT, vec2(NdotL, roughness)).rgb;
+      vec3 E_i = texture(u_EmuLUT, vec2(NdotV, roughness)).rgb;
+      vec3 E_avg = texture(u_EavgLUT, vec2(0.0, roughness)).rgb;
+
+      // Copper-like edge tint from hw4
+      vec3 edgetint = vec3(0.827, 0.792, 0.678);
+      vec3 F_avg = AverageFresnel(albedo, edgetint);
+
+      vec3 fms = (vec3(1.0) - E_o) * (vec3(1.0) - E_i) / (PI * (vec3(1.0) - E_avg));
+      vec3 fadd = F_avg * E_avg / (vec3(1.0) - F_avg * (vec3(1.0) - E_avg));
+
+      return fadd * fms;
+    }
+
+    vec3 KullaConty_BRDF(vec3 N, vec3 V, vec3 L, vec3 albedo) {
+      vec3 H = normalize(V + L);
+      float NdotV = max(dot(N, V), 0.0);
+      float NdotL = max(dot(N, L), 0.0);
+      float NdotH = max(dot(N, H), 0.0);
+      float HdotV = max(dot(H, V), 0.0);
+
+      vec4 mr = texture(u_metallicRoughnessTexture, v_texcoord);
+      float roughness = mr.g * u_roughnessFactor;
+      float metallic = mr.b * u_metallicFactor;
+      float alphaRoughness = roughness * roughness;
+
+      vec3 F90 = vec3(1.0);
+      vec3 F0 = mix(vec3(0.04), albedo, metallic);
+
+      float NDF = DistributionGGX(NdotH, alphaRoughness);
+      float G = GeometrySmith(NdotV, NdotL, roughness);
+      vec3 F = FresnelSchlick(HdotV, F0, F90);
+
+      vec3 Fmicro = NDF * G * F / max((4.0 * NdotL * NdotV), 0.001);
+      vec3 Fms = MultiScatterBRDF(NdotL, NdotV, roughness, albedo);
+
+      // Total BRDF = specular + multi-scattering compensation
+      vec3 BRDF = Fmicro + Fms;
+
+      return BRDF * NdotL;
+    }
+
     void main() {
       vec3 V = normalize(u_cameraPosition - v_position);
       vec3 L = normalize(u_lightPosition - v_position);
@@ -249,6 +308,8 @@
         color = Filament_BRDF(N, V, L, albedo);
       } else if (u_brdf == 2) {
         color = Microfacet_BRDF(N, V, L, albedo);
+      } else if (u_brdf == 3) {
+        color = KullaConty_BRDF(N, V, L, albedo);
       }
 
       // Occlusion
@@ -273,7 +334,7 @@
   </script>
 
   <script type="module">
-    import { twgl, glMatrix, Camera, Control, loadersCore, loadersGLTF } from './lib/bundle.js';
+    import { twgl, glMatrix, Camera, Control, loadersCore, loadersGLTF, fetchImage } from './lib/bundle.js';
 
     const { mat4, vec3, vec4 } = glMatrix;
 
@@ -305,7 +366,7 @@
       twgl.drawBufferInfo(gl, mesh.bufferInfo);
     }
 
-    function renderScene(scene) {
+    function renderScene(scene, emuLut, eavgLut) {
       twgl.resizeCanvasToDisplaySize(gl.canvas, 2.0);
       gl.enable(gl.DEPTH_TEST);
       gl.enable(gl.CULL_FACE);
@@ -352,6 +413,10 @@
         u_occlusionStrength: occlusionTexture.strength || 1.0,
         u_emissiveTexture: twgl.createTexture(gl, { src: emissiveTexture.texture.source.image }),
         u_emissiveFactor: emissiveFactor || [1.0, 1.0, 1.0],
+
+        // Kulla-Conty LUTs
+        u_EmuLUT: twgl.createTexture(gl, { src: emuLut, flipY: 0, minMag: gl.LINEAR, wrap: gl.CLAMP_TO_EDGE }),
+        u_EavgLUT: twgl.createTexture(gl, { src: eavgLut, flipY: 0, minMag: gl.LINEAR, wrap: gl.CLAMP_TO_EDGE }),
       };
 
       requestAnimationFrame(() => {
@@ -361,9 +426,17 @@
 
     (async function() {
       const gltfUrl = './data/DamagedHelmet/glTF/DamagedHelmet.gltf';
-      const gltf = await loadersCore.load(gltfUrl, loadersGLTF.GLTFLoader);
+      const [
+        gltf,
+        emuLut,
+        eavgLut
+      ] = await Promise.all([
+        loadersCore.load(gltfUrl, loadersGLTF.GLTFLoader),
+        fetchImage('./data/DamagedHelmet/GGX_E_LUT.png'),
+        fetchImage('./data/DamagedHelmet/GGX_Eavg_LUT.png')
+      ]);
 
-      renderScene(gltf.scenes[0]);
+      renderScene(gltf.scenes[0], emuLut, eavgLut);
       initControl()
     })();
 

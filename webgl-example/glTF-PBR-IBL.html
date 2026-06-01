@@ -235,6 +235,7 @@
     uniform float u_roughness;
     uniform float u_width;
     uniform int u_face;
+    uniform float u_mipCount;
 
     in vec2 v_texcoord;
     out vec4 o_FragColor;
@@ -309,7 +310,8 @@
     }
 
     vec4 ggxSampleHemisphere(vec2 u, float roughness) {
-      float alpha = roughness * roughness;
+      float clampedRoughness = max(roughness, 0.0001); // Prevent roughness = 0 causing division by zero / NaN
+      float alpha = clampedRoughness * clampedRoughness;
       float phi = 2.0 * PI * u.x;
       float cosTheta = clamp(sqrt((1.0 - u.y) / (1.0 + (alpha * alpha - 1.0) * u.y)), 0.0, 1.0);
       float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
@@ -334,7 +336,8 @@
         float pdf = sampleResult.w;
 
         // https://cgg.mff.cuni.cz/~jaroslav/papers/2007-sketch-fis/Final_sap_0073.pdf
-        float mipLevel =  0.5 * log2( 6.0 * float(u_width) * float(u_width) / (float(u_sampleCount) * pdf));
+        float mipLevel = 0.5 * log2(6.0 * float(u_width) * float(u_width) / (float(u_sampleCount) * max(pdf, 0.00001)));
+        mipLevel = clamp(mipLevel, 0.0, u_mipCount - 1.0); // Prevent out-of-bounds mip levels and NaNs
 
         // v = n, h = sampleDirection
         vec3 L = normalize(reflect(-N, sampleDirection));
@@ -663,6 +666,23 @@
       const lowestMipLevel = 4;
       const mipCount = Math.floor(Math.log2(textureSize))+1 - lowestMipLevel;
 
+      // Compile precomputation shader programs once
+      const cubemapProgramInfo = twgl.createProgramInfo(gl, ['cubemap-vs', 'cubemap-fs']);
+      const irradianceProgramInfo = twgl.createProgramInfo(gl, ['precomputedIrradiance-vs', 'precomputedIrradiance-fs']);
+      const preFilterProgramInfo = twgl.createProgramInfo(gl, ['preFilteredEnvironment-vs', 'preFilteredEnvironment-fs']);
+
+      // Create precomputation geometry buffers once
+      const geometry = {
+        a_position: { numComponents: 2, data: CubemapPosition },
+        a_texcoord: { numComponents: 2, data: CubemapTexcoord },
+      };
+      const quadBufferInfo = twgl.createBufferInfoFromArrays(gl, geometry);
+
+      // Create precomputation VAOs once
+      const cubemapVao = twgl.createVAOFromBufferInfo(gl, cubemapProgramInfo, quadBufferInfo);
+      const irradianceVao = twgl.createVAOFromBufferInfo(gl, irradianceProgramInfo, quadBufferInfo);
+      const preFilterVao = twgl.createVAOFromBufferInfo(gl, preFilterProgramInfo, quadBufferInfo);
+
       // HDR
       const floatRGB = await loadHDR(new Uint8Array(envHDR));
       const hdrTexture = twgl.createTexture(gl, {
@@ -675,13 +695,13 @@
 
         target: gl.TEXTURE_2D,
         flipY: 1,
-      })
+      });
 
       // Panorama HDR to CubeMap
-      const cubemapTexture = panoramaToCubemap(hdrTexture, textureSize);
+      const cubemapTexture = panoramaToCubemap(hdrTexture, textureSize, cubemapProgramInfo, cubemapVao, quadBufferInfo);
 
       // Precomputed Irradiance Map
-      const lambertianEnvTexture = precomputedIrradiance(cubemapTexture, textureSize);
+      const lambertianEnvTexture = precomputedIrradiance(cubemapTexture, textureSize, irradianceProgramInfo, irradianceVao, quadBufferInfo);
 
       // Pre-filtered Environment Radiance Map
       const ggxEnvTexture = twgl.createTexture(gl, {
@@ -693,22 +713,50 @@
         // minLod: 0,
         // maxLod: mipCount - 1,
       });
+      gl.bindTexture(gl.TEXTURE_CUBE_MAP, ggxEnvTexture);
+      gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_BASE_LEVEL, 0);
+      gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAX_LEVEL, mipCount - 1);
+      gl.generateMipmap(gl.TEXTURE_CUBE_MAP); // Allocate mipmap levels once before rendering to them
+
       for (let mipLevel = 0; mipLevel < mipCount; mipLevel++) {
         const roughness = mipLevel / (mipCount - 1);
         const size = textureSize >> mipLevel;
-        preFilteredEnvironment(cubemapTexture, ggxEnvTexture, mipLevel, roughness, size);
+        preFilteredEnvironment(
+          cubemapTexture,
+          ggxEnvTexture,
+          mipLevel,
+          roughness,
+          size,
+          mipCount,
+          preFilterProgramInfo,
+          preFilterVao,
+          quadBufferInfo
+        );
       }
-      gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+
+      // Clean up intermediate resources to prevent VRAM and memory leaks
+      gl.deleteTexture(hdrTexture);
+      gl.deleteTexture(cubemapTexture);
+
+      gl.deleteProgram(cubemapProgramInfo.program);
+      gl.deleteProgram(irradianceProgramInfo.program);
+      gl.deleteProgram(preFilterProgramInfo.program);
+
+      gl.deleteVertexArray(cubemapVao);
+      gl.deleteVertexArray(irradianceVao);
+      gl.deleteVertexArray(preFilterVao);
+
+      gl.deleteBuffer(quadBufferInfo.attribs.a_position.buffer);
+      gl.deleteBuffer(quadBufferInfo.attribs.a_texcoord.buffer);
 
       return { mipCount, lambertianEnvTexture, ggxEnvTexture }
     }
 
-    function panoramaToCubemap(panorama, textureSize) {
+    function panoramaToCubemap(panorama, textureSize, programInfo, vao, bufferInfo) {
       gl.viewport(0, 0, textureSize, textureSize);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-      const cubemapProgramInfo = twgl.createProgramInfo(gl, ['cubemap-vs', 'cubemap-fs']);
-      gl.useProgram(cubemapProgramInfo.program);
+      gl.useProgram(programInfo.program);
 
       const cubemap = twgl.createTexture(gl, {
         target: gl.TEXTURE_CUBE_MAP,
@@ -718,23 +766,22 @@
         mag: gl.LINEAR
       });
 
-      const geometry = {
-        a_position: { numComponents: 2, data: CubemapPosition },
-        a_texcoord: { numComponents: 2, data: CubemapTexcoord },
-      }
-      const bufferInfo = twgl.createBufferInfoFromArrays(gl, geometry);
-      const vao = twgl.createVAOFromBufferInfo(gl, cubemapProgramInfo, bufferInfo);
+      // Create a single framebuffer
+      const fb = gl.createFramebuffer();
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+
+      gl.bindVertexArray(vao);
 
       for (let i = 0; i < 6; i++) {
-        const framebufferInfo = twgl.createFramebufferInfo(gl,
-          [{
-            attachment: cubemap,
-            target: gl.TEXTURE_CUBE_MAP_POSITIVE_X + i
-          }], textureSize, textureSize);
-        twgl.bindFramebufferInfo(gl, framebufferInfo);
+        gl.framebufferTexture2D(
+          gl.FRAMEBUFFER,
+          gl.COLOR_ATTACHMENT0,
+          gl.TEXTURE_CUBE_MAP_POSITIVE_X + i,
+          cubemap,
+          0
+        );
 
-        gl.bindVertexArray(vao);
-        twgl.setUniforms(cubemapProgramInfo, {
+        twgl.setUniforms(programInfo, {
           u_panorama: panorama,
           u_face: i
         });
@@ -744,15 +791,15 @@
       gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
 
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.deleteFramebuffer(fb);
 
       return cubemap;
     }
 
-    function precomputedIrradiance(cubemap, textureSize) {
+    function precomputedIrradiance(cubemap, textureSize, programInfo, vao, bufferInfo) {
       gl.viewport(0, 0, textureSize, textureSize);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-      const programInfo = twgl.createProgramInfo(gl, ['precomputedIrradiance-vs', 'precomputedIrradiance-fs']);
       gl.useProgram(programInfo.program);
 
       const irradianceTexture = twgl.createTexture(gl, {
@@ -762,22 +809,21 @@
         minMag: gl.LINEAR,
       });
 
-      const geometry = {
-        a_position: { numComponents: 2, data: CubemapPosition },
-        a_texcoord: { numComponents: 2, data: CubemapTexcoord },
-      }
-      const bufferInfo = twgl.createBufferInfoFromArrays(gl, geometry);
-      const vao = twgl.createVAOFromBufferInfo(gl, programInfo, bufferInfo);
+      // Create a single framebuffer
+      const fb = gl.createFramebuffer();
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+
+      gl.bindVertexArray(vao);
 
       for (let i = 0; i < 6; i++) {
-        const framebufferInfo = twgl.createFramebufferInfo(gl,
-          [{
-            attachment: irradianceTexture,
-            target: gl.TEXTURE_CUBE_MAP_POSITIVE_X + i
-          }], textureSize, textureSize);
-        twgl.bindFramebufferInfo(gl, framebufferInfo);
+        gl.framebufferTexture2D(
+          gl.FRAMEBUFFER,
+          gl.COLOR_ATTACHMENT0,
+          gl.TEXTURE_CUBE_MAP_POSITIVE_X + i,
+          irradianceTexture,
+          0
+        );
 
-        gl.bindVertexArray(vao);
         twgl.setUniforms(programInfo, {
           u_cubemap: cubemap,
           u_face: i,
@@ -787,45 +833,55 @@
         gl.drawArrays(gl.TRIANGLES, 0, bufferInfo.numElements);
       }
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.deleteFramebuffer(fb);
 
       return irradianceTexture;
     }
 
-    function preFilteredEnvironment(cubemap, radianceTexture, mipmapLevel, roughness, textureSize) {
+    function preFilteredEnvironment(
+      cubemap,
+      radianceTexture,
+      mipmapLevel,
+      roughness,
+      textureSize,
+      mipCount,
+      programInfo,
+      vao,
+      bufferInfo
+    ) {
       gl.viewport(0, 0, textureSize, textureSize);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-      const programInfo = twgl.createProgramInfo(gl, ['preFilteredEnvironment-vs', 'preFilteredEnvironment-fs']);
       gl.useProgram(programInfo.program);
 
-      const geometry = {
-        a_position: { numComponents: 2, data: CubemapPosition },
-        a_texcoord: { numComponents: 2, data: CubemapTexcoord },
-      }
-      const bufferInfo = twgl.createBufferInfoFromArrays(gl, geometry);
-      const vao = twgl.createVAOFromBufferInfo(gl, programInfo, bufferInfo);
+      // Create a single framebuffer
+      const fb = gl.createFramebuffer();
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+
+      gl.bindVertexArray(vao);
 
       for (let i = 0; i < 6; i++) {
-        const framebufferInfo = twgl.createFramebufferInfo(gl,
-          [{
-            attachment: radianceTexture,
-            target: gl.TEXTURE_CUBE_MAP_POSITIVE_X + i,
-            level: mipmapLevel
-          }], textureSize, textureSize);
-        twgl.bindFramebufferInfo(gl, framebufferInfo);
+        gl.framebufferTexture2D(
+          gl.FRAMEBUFFER,
+          gl.COLOR_ATTACHMENT0,
+          gl.TEXTURE_CUBE_MAP_POSITIVE_X + i,
+          radianceTexture,
+          mipmapLevel
+        );
 
-        gl.bindVertexArray(vao);
         twgl.setUniforms(programInfo, {
           u_cubemap: cubemap,
           u_face: i,
           u_roughness: roughness,
           u_width: textureSize,
           u_sampleCount: 256,
+          u_mipCount: mipCount,
         });
 
         gl.drawArrays(gl.TRIANGLES, 0, bufferInfo.numElements);
       }
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.deleteFramebuffer(fb);
     }
 
 
