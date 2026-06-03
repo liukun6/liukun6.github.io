@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Path Tracing (Phase 1)</title>
+
+  <link rel="stylesheet" type="text/css" href="./main.css">
+</head>
+
+<body>
+  <main>
+    <canvas id="container"></canvas>
+    <div id="control">
+      <div class="item">
+        <label for="lightIntensity">Light Intensity</label>
+        <input type="range" id="lightIntensity" min="0.1" max="2.0" step="0.1" value="1.0">
+        <span id="lightIntensityVal">1.0</span>
+      </div>
+    </div>
+  </main>
+
+  <script id="vs" type="notjs">#version 300 es
+    precision highp float;
+
+    in vec2 aVertexPosition;
+    out vec2 vScreenPos;
+
+    void main(void) {
+      vScreenPos = aVertexPosition;
+      gl_Position = vec4(aVertexPosition, 0.0, 1.0);
+    }
+  </script>
+
+  <script id="fs" type="notjs">#version 300 es
+    precision highp float;
+
+    uniform vec3 uEyePosition;
+    uniform float uMaxDist;
+    uniform mat3 uRayMatrix;
+    uniform vec2 uViewportSize;
+    uniform int uFrameCount;
+    uniform float uLightIntensity;
+
+    in vec2 vScreenPos;
+    out vec4 o_FragColor;
+
+    const float PI = 3.14159265359;
+    const float EPSILON = 0.00001;
+    const vec3 BgColor = vec3(0.0, 0.0, 0.0);
+
+    const vec3 LightEmit = 8.0 * vec3(0.805, 1.005, 0.747) + 15.6 * vec3(1.027, 0.900, 0.740) + 18.4 * vec3(1.379, 0.896, 0.737);
+
+    const int MaxDepth = 5;
+
+    uint g_seed;
+
+    void initRand(uvec2 co, uint frame) {
+        g_seed = co.x * 1973u + co.y * 9277u + frame * 26699u | 1u;
+    }
+
+    uint wangHash() {
+        g_seed = (g_seed ^ 61u) ^ (g_seed >> 16u);
+        g_seed *= 9u;
+        g_seed = g_seed ^ (g_seed >> 4u);
+        g_seed *= 0x27d4eb2du;
+        g_seed = g_seed ^ (g_seed >> 15u);
+        return g_seed;
+    }
+
+    float rand() {
+        return float(wangHash()) * (1.0 / 4294967296.0);
+    }
+
+    vec3 randomCosineHemisphere(vec3 normal) {
+        float u1 = rand();
+        float u2 = rand();
+        
+        float theta = 2.0 * PI * u1;
+        float r = sqrt(u2);
+        float x = r * cos(theta);
+        float y = r * sin(theta);
+        float z = sqrt(1.0 - u2);
+        
+        vec3 tangent, bitangent;
+        if (abs(normal.x) > 0.1) {
+            tangent = normalize(cross(vec3(0.0, 1.0, 0.0), normal));
+        } else {
+            tangent = normalize(cross(vec3(1.0, 0.0, 0.0), normal));
+        }
+        bitangent = cross(normal, tangent);
+        
+        return tangent * x + bitangent * y + normal * z;
+    }
+
+    float sphereInter(vec3 rayOrigin, vec3 rayDir, vec3 sphereCenter, float sphereRadius, bool testInside) {
+        vec3 oro = rayOrigin - sphereCenter;
+
+        float a = dot(rayDir, rayDir);
+        float b = 2.0 * dot(oro, rayDir);
+        float c = dot(oro, oro) - sphereRadius * sphereRadius;
+
+        float d = b * b - 4.0 * a * c;
+
+        if (d < 0.0) return -1.0;
+
+        float sqrtD = sqrt(d);
+        float t_near = (-b - sqrtD) / (2.0 * a);
+        float t_far  = (-b + sqrtD) / (2.0 * a);
+
+        if (t_near > 0.0) return t_near;
+        if (testInside && t_far > 0.0) return t_far;
+
+        return -1.0;
+    }
+
+    float planeInter(vec3 ro, vec3 rd, vec3 p0, vec3 n) {
+        float denom = dot(rd, n);
+        if (abs(denom) > 0.0001) {
+            float t = dot(p0 - ro, n) / denom;
+            if (t > 0.0) return t;
+        }
+        return -1.0;
+    }
+
+    vec3 rotateY(vec3 v, float angle) {
+        float s = sin(angle);
+        float c = cos(angle);
+        return vec3(c * v.x - s * v.z, v.y, s * v.x + c * v.z);
+    }
+
+    float boxInter(vec3 ro, vec3 rd, vec3 boxSize, out vec3 outNormal) {
+        vec3 m = 1.0 / rd;
+        vec3 n = m * ro;
+        vec3 k = abs(m) * boxSize;
+        vec3 t1 = -n - k;
+        vec3 t2 = -n + k;
+        float tN = max(max(t1.x, t1.y), t1.z);
+        float tF = min(min(t2.x, t2.y), t2.z);
+        if (tN > tF || tF < 0.0) return -1.0;
+        
+        if (tN == t1.x) outNormal = vec3(-sign(rd.x), 0.0, 0.0);
+        else if (tN == t1.y) outNormal = vec3(0.0, -sign(rd.y), 0.0);
+        else outNormal = vec3(0.0, 0.0, -sign(rd.z));
+        
+        return tN;
+    }
+
+    float obbInter(vec3 ro, vec3 rd, vec3 pos, vec3 size, float angle, out vec3 outNormal) {
+        vec3 localRo = ro - pos;
+        localRo = rotateY(localRo, -angle);
+        vec3 localRd = rotateY(rd, -angle);
+        
+        vec3 localNormal;
+        float t = boxInter(localRo, localRd, size * 0.5, localNormal);
+        if (t > 0.0) {
+            outNormal = rotateY(localNormal, angle);
+        }
+        return t;
+    }
+
+    float intersect(vec3 ro, vec3 rd, out vec3 hitPos, out vec3 hitNorm, out vec3 hitColor, out int matType, out vec3 emit) {
+        float tMin = uMaxDist;
+        hitNorm = vec3(0.0);
+        hitColor = vec3(0.0);
+        matType = 0;
+        emit = vec3(0.0);
+        vec3 norm;
+
+        // 1. Tall Box (Diffuse White) - extended slightly below floor to prevent coplanar artifacts
+        vec3 tallBoxPos = vec3(-0.5, -0.95, -0.3);
+        vec3 tallBoxSize = vec3(0.65, 2.3, 0.65);
+        float tTall = obbInter(ro, rd, tallBoxPos, tallBoxSize, 0.26, norm);
+        if (tTall > 0.001 && tTall < tMin) {
+            tMin = tTall;
+            hitPos = ro + tTall * rd;
+            hitNorm = norm;
+            hitColor = vec3(0.725, 0.71, 0.68);
+            matType = 0;
+        }
+
+        // 2. Short Box (Diffuse White) - extended slightly below floor to prevent coplanar artifacts
+        vec3 shortBoxPos = vec3(0.5, -1.5, 0.4);
+        vec3 shortBoxSize = vec3(0.65, 1.2, 0.65);
+        float tShort = obbInter(ro, rd, shortBoxPos, shortBoxSize, -0.3, norm);
+        if (tShort > 0.001 && tShort < tMin) {
+            tMin = tShort;
+            hitPos = ro + tShort * rd;
+            hitNorm = norm;
+            hitColor = vec3(0.725, 0.71, 0.68);
+            matType = 0;
+        }
+
+        // 3. Left Wall (Red) - double-sided normal
+        float tLeft = planeInter(ro, rd, vec3(-2.0, 0.0, 0.0), vec3(1.0, 0.0, 0.0));
+        if (tLeft > 0.001 && tLeft < tMin) {
+            vec3 p = ro + tLeft * rd;
+            if (p.y >= -2.0 && p.y <= 2.0 && p.z >= -2.0 && p.z <= 2.2) {
+                tMin = tLeft;
+                hitPos = p;
+                hitNorm = vec3(-sign(rd.x), 0.0, 0.0);
+                hitColor = vec3(0.63, 0.065, 0.05);
+                matType = 0;
+            }
+        }
+
+        // 4. Right Wall (Green) - double-sided normal
+        float tRight = planeInter(ro, rd, vec3(2.0, 0.0, 0.0), vec3(-1.0, 0.0, 0.0));
+        if (tRight > 0.001 && tRight < tMin) {
+            vec3 p = ro + tRight * rd;
+            if (p.y >= -2.0 && p.y <= 2.0 && p.z >= -2.0 && p.z <= 2.2) {
+                tMin = tRight;
+                hitPos = p;
+                hitNorm = vec3(-sign(rd.x), 0.0, 0.0);
+                hitColor = vec3(0.14, 0.45, 0.091);
+                matType = 0;
+            }
+        }
+
+        // 5. Back Wall (White/Gray) - double-sided normal
+        float tBack = planeInter(ro, rd, vec3(0.0, 0.0, -2.0), vec3(0.0, 0.0, 1.0));
+        if (tBack > 0.001 && tBack < tMin) {
+            vec3 p = ro + tBack * rd;
+            if (p.x >= -2.0 && p.x <= 2.0 && p.y >= -2.0 && p.y <= 2.0) {
+                tMin = tBack;
+                hitPos = p;
+                hitNorm = vec3(0.0, 0.0, -sign(rd.z));
+                hitColor = vec3(0.725, 0.71, 0.68);
+                matType = 0;
+            }
+        }
+
+        // 6. Floor (White/Gray) - double-sided normal
+        float tFloor = planeInter(ro, rd, vec3(0.0, -2.0, 0.0), vec3(0.0, 1.0, 0.0));
+        if (tFloor > 0.001 && tFloor < tMin) {
+            vec3 p = ro + tFloor * rd;
+            if (p.x >= -2.0 && p.x <= 2.0 && p.z >= -2.0 && p.z <= 2.2) {
+                tMin = tFloor;
+                hitPos = p;
+                hitNorm = vec3(0.0, -sign(rd.y), 0.0);
+                hitColor = vec3(0.725, 0.71, 0.68);
+                matType = 0;
+            }
+        }
+
+        // 7. Ceiling (White, including central Area Light) - double-sided normal
+        float tCeil = planeInter(ro, rd, vec3(0.0, 2.0, 0.0), vec3(0.0, -1.0, 0.0));
+        if (tCeil > 0.001 && tCeil < tMin) {
+            vec3 p = ro + tCeil * rd;
+            if (p.x >= -2.0 && p.x <= 2.0 && p.z >= -2.0 && p.z <= 2.2) {
+                tMin = tCeil;
+                hitPos = p;
+                hitNorm = vec3(0.0, -sign(rd.y), 0.0);
+                if (abs(p.x) <= 0.6 && abs(p.z) <= 0.6) {
+                    hitColor = vec3(0.65);
+                    matType = 0;
+                    emit = LightEmit;
+                } else {
+                    hitColor = vec3(0.725, 0.71, 0.68);
+                    matType = 0;
+                }
+            }
+        }
+
+        return tMin;
+    }
+
+    vec3 pathTrace(vec3 rayOrigin, vec3 rayDirection) {
+        vec3 throughput = vec3(1.0);
+        vec3 accumulatedLight = vec3(0.0);
+        
+        vec3 currentOrigin = rayOrigin;
+        vec3 currentDir = rayDirection;
+        
+        vec3 hitPos, hitNorm, hitColor, emit;
+        int matType;
+        float t = intersect(currentOrigin, currentDir, hitPos, hitNorm, hitColor, matType, emit);
+        
+        if (t >= uMaxDist) {
+            return BgColor;
+        }
+        
+        if (emit != vec3(0.0)) {
+            return emit * uLightIntensity;
+        }
+        
+        for (int bounce = 0; bounce < MaxDepth; bounce++) {
+            float u_light_x = rand() * 1.2 - 0.6;
+            float u_light_z = rand() * 1.2 - 0.6;
+            vec3 x_pos = vec3(u_light_x, 1.98, u_light_z);
+            vec3 NN = vec3(0.0, -1.0, 0.0);
+            
+            vec3 ws = x_pos - hitPos;
+            float dist2 = dot(ws, ws);
+            ws = normalize(ws);
+            
+            vec3 shadowHitPos, shadowHitNorm, shadowHitColor, shadowEmit;
+            int shadowMatType;
+            float shadowT = intersect(hitPos + hitNorm * 0.001, ws, shadowHitPos, shadowHitNorm, shadowHitColor, shadowMatType, shadowEmit);
+            
+            vec3 L_dir = vec3(0.0);
+            if (shadowT < 0.0 || shadowT > sqrt(dist2) - 0.01) {
+                vec3 eval_brdf = hitColor / PI;
+                float pdf_light = 1.0 / 1.44;
+                L_dir = (LightEmit * uLightIntensity) * eval_brdf * max(dot(ws, hitNorm), 0.0) * max(dot(-ws, NN), 0.0) / dist2 / pdf_light;
+            }
+            accumulatedLight += throughput * L_dir;
+            
+            float P_RR = 0.8;
+            if (rand() > P_RR) {
+                break;
+            }
+            
+            vec3 wi = randomCosineHemisphere(hitNorm);
+            
+            vec3 nextHitPos, nextHitNorm, nextHitColor, nextEmit;
+            int nextMatType;
+            float nextT = intersect(hitPos + hitNorm * 0.001, wi, nextHitPos, nextHitNorm, nextHitColor, nextMatType, nextEmit);
+            
+            if (nextT >= uMaxDist) {
+                break;
+            }
+            
+            if (nextEmit != vec3(0.0)) {
+                break;
+            }
+            
+            currentOrigin = hitPos + hitNorm * 0.001;
+            currentDir = wi;
+            
+            throughput *= hitColor / P_RR;
+            
+            hitPos = nextHitPos;
+            hitNorm = nextHitNorm;
+            hitColor = nextHitColor;
+        }
+        
+        return accumulatedLight;
+    }
+
+    void main() {
+        uvec2 pixelCoords = uvec2(gl_FragCoord.xy);
+        initRand(pixelCoords, uint(uFrameCount));
+        
+        vec3 accumulatedColor = vec3(0.0);
+        const int Samples = 8;
+        
+        for (int s = 0; s < Samples; s++) {
+            // Add sub-pixel jitter for anti-aliasing
+            float jitterX = (rand() - 0.5) / 500.0;
+            float jitterY = (rand() - 0.5) / 500.0;
+            vec3 localRayDir = normalize(vec3(vScreenPos.x * uViewportSize.x + jitterX, vScreenPos.y * uViewportSize.y + jitterY, -1.0));
+            vec3 rayDirection = normalize(uRayMatrix * localRayDir);
+            
+            accumulatedColor += pathTrace(uEyePosition, rayDirection);
+        }
+        
+        vec3 color = accumulatedColor / float(Samples);
+        
+        // Reinhard Tone Mapping
+        vec3 finalColor = color / (color + vec3(1.0));
+        // Gamma Correction
+        finalColor = pow(finalColor, vec3(1.0 / 2.2));
+        
+        o_FragColor = vec4(finalColor, 1.0);
+    }
+  </script>
+
+  <script type="module">
+    import { twgl, glMatrix, Camera, Control } from './lib/bundle.js';
+
+    const { mat3, mat4 } = glMatrix;
+
+    const canvas = document.getElementById('container');
+    const gl = canvas.getContext("webgl2");
+
+    // Compile trace program directly to render onto the screen
+    const traceProgramInfo = twgl.createProgramInfo(gl, ['vs', 'fs']);
+
+    const camera = new Camera({
+      type: 'PerspectiveCamera',
+      fov: 40,
+      aspect: canvas.offsetWidth / canvas.offsetHeight,
+      far: 1000,
+    });
+    camera.setPosition(0, 0.0, 6.2);
+    camera.lookAt(0, 0, 0);
+
+    const control = new Control(camera, canvas, {
+      minZoom: 0.6,
+      maxZoom: 8,
+      zoomScale: 0.01
+    });
+    control.start();
+
+    const lightIntensityInput = document.getElementById('lightIntensity');
+    const lightIntensityVal = document.getElementById('lightIntensityVal');
+
+    // Setup full-screen quad vertex buffer
+    const quadVertices = new Float32Array([
+      -1.0, -1.0,
+      1.0, -1.0,
+      -1.0, 1.0,
+
+      -1.0, 1.0,
+      1.0, -1.0,
+      1.0, 1.0
+    ]);
+
+    const bufferInfo = twgl.createBufferInfoFromArrays(gl, {
+      aVertexPosition: { numComponents: 2, data: quadVertices }
+    });
+
+    const vaoTrace = twgl.createVAOFromBufferInfo(gl, traceProgramInfo, bufferInfo);
+
+    let frameCount = 0;
+
+    function renderPathTracer() {
+      // Resize canvas to display size
+      twgl.resizeCanvasToDisplaySize(gl.canvas);
+
+      // Compute viewport bounds and camera matrices
+      const radian = Math.PI / 180;
+      const fovRadians = (camera.fov / camera.zoom) * radian;
+      const viewportH = Math.tan(fovRadians / 2);
+      const viewportW = viewportH * (canvas.offsetWidth / canvas.offsetHeight);
+
+      const viewMat3 = mat3.fromMat4([], camera.viewMatrix);
+      const rayMatrix = mat3.transpose([], viewMat3);
+
+      // Read slider values and update value labels
+      const lightIntensity = parseFloat(lightIntensityInput.value);
+      lightIntensityVal.textContent = lightIntensity.toFixed(1);
+
+      // --- Draw Directly to Canvas ---
+      twgl.bindFramebufferInfo(gl, null); // screen
+      gl.useProgram(traceProgramInfo.program);
+      gl.bindVertexArray(vaoTrace);
+
+      twgl.setUniforms(traceProgramInfo, {
+        uEyePosition: camera.position,
+        uMaxDist: camera.far,
+        uRayMatrix: rayMatrix,
+        uViewportSize: [viewportW, viewportH],
+        uFrameCount: frameCount,
+        uLightIntensity: lightIntensity
+      });
+      twgl.drawBufferInfo(gl, bufferInfo);
+
+      frameCount++;
+    }
+
+    function anim() {
+      renderPathTracer();
+      requestAnimationFrame(anim);
+    }
+    requestAnimationFrame(anim);
+  </script>
+</body>
+
+</html>

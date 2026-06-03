@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Path Tracing with Hybrid Denoiser</title>
+
+    <link rel="stylesheet" type="text/css" href="./main.css">
+</head>
+
+<body>
+    <main>
+        <canvas id="container"></canvas>
+        <div id="control">
+            <div class="item" id="statusLabel">
+                <span>State: Converging</span>
+            </div>
+            <div class="item">
+                <label for="lightIntensity">Light Intensity</label>
+                <input type="range" id="lightIntensity" min="0.1" max="2.0" step="0.1" value="1.0">
+                <span id="lightIntensityVal">1.0</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- Reusable Vertex Shader for Screen-Space Quad Passes -->
+    <script id="vs" type="notjs">#version 300 es
+    precision highp float;
+ 
+    in vec2 aVertexPosition;
+    out vec2 vScreenPos;
+ 
+    void main(void) {
+      vScreenPos = aVertexPosition;
+      gl_Position = vec4(aVertexPosition, 0.0, 1.0);
+    }
+  </script>
+
+    <!-- Pass 1: Raw Path Tracing Trace Shader (1 SPP HDR Output) -->
+    <script id="fs_trace" type="notjs">#version 300 es
+    precision highp float;
+ 
+    uniform vec3 uEyePosition;
+    uniform float uMaxDist;
+    uniform mat3 uRayMatrix;
+    uniform vec2 uViewportSize;
+    uniform int uFrameCount;
+    uniform float uLightIntensity;
+ 
+    in vec2 vScreenPos;
+    out vec4 o_FragColor;
+ 
+    const float PI = 3.14159265359;
+    const float EPSILON = 0.00001;
+    const vec3 BgColor = vec3(0.0, 0.0, 0.0);
+ 
+    const vec3 LightEmit = 8.0 * vec3(0.805, 1.005, 0.747) + 15.6 * vec3(1.027, 0.900, 0.740) + 18.4 * vec3(1.379, 0.896, 0.737);
+    const int MaxDepth = 5;
+ 
+    uint g_seed;
+ 
+    void initRand(uvec2 co, uint frame) {
+        g_seed = co.x * 1973u + co.y * 9277u + frame * 26699u | 1u;
+    }
+ 
+    uint wangHash() {
+        g_seed = (g_seed ^ 61u) ^ (g_seed >> 16u);
+        g_seed *= 9u;
+        g_seed = g_seed ^ (g_seed >> 4u);
+        g_seed *= 0x27d4eb2du;
+        g_seed = g_seed ^ (g_seed >> 15u);
+        return g_seed;
+    }
+ 
+    float rand() {
+        return float(wangHash()) * (1.0 / 4294967296.0);
+    }
+ 
+    vec3 randomCosineHemisphere(vec3 normal) {
+        float u1 = rand();
+        float u2 = rand();
+        
+        float theta = 2.0 * PI * u1;
+        float r = sqrt(u2);
+        float x = r * cos(theta);
+        float y = r * sin(theta);
+        float z = sqrt(1.0 - u2);
+        
+        vec3 tangent, bitangent;
+        if (abs(normal.x) > 0.1) {
+            tangent = normalize(cross(vec3(0.0, 1.0, 0.0), normal));
+        } else {
+            tangent = normalize(cross(vec3(1.0, 0.0, 0.0), normal));
+        }
+        bitangent = cross(normal, tangent);
+        
+        return tangent * x + bitangent * y + normal * z;
+    }
+ 
+    float sphereInter(vec3 rayOrigin, vec3 rayDir, vec3 sphereCenter, float sphereRadius, bool testInside) {
+        vec3 oro = rayOrigin - sphereCenter;
+        float a = dot(rayDir, rayDir);
+        float b = 2.0 * dot(oro, rayDir);
+        float c = dot(oro, oro) - sphereRadius * sphereRadius;
+        float d = b * b - 4.0 * a * c;
+        if (d < 0.0) return -1.0;
+        float sqrtD = sqrt(d);
+        float t_near = (-b - sqrtD) / (2.0 * a);
+        float t_far  = (-b + sqrtD) / (2.0 * a);
+        if (t_near > 0.0) return t_near;
+        if (testInside && t_far > 0.0) return t_far;
+        return -1.0;
+    }
+ 
+    float planeInter(vec3 ro, vec3 rd, vec3 p0, vec3 n) {
+        float denom = dot(rd, n);
+        if (abs(denom) > 0.0001) {
+            float t = dot(p0 - ro, n) / denom;
+            if (t > 0.0) return t;
+        }
+        return -1.0;
+    }
+ 
+    vec3 rotateY(vec3 v, float angle) {
+        float s = sin(angle);
+        float c = cos(angle);
+        return vec3(c * v.x - s * v.z, v.y, s * v.x + c * v.z);
+    }
+ 
+    float boxInter(vec3 ro, vec3 rd, vec3 boxSize, out vec3 outNormal) {
+        vec3 m = 1.0 / rd;
+        vec3 n = m * ro;
+        vec3 k = abs(m) * boxSize;
+        vec3 t1 = -n - k;
+        vec3 t2 = -n + k;
+        float tN = max(max(t1.x, t1.y), t1.z);
+        float tF = min(min(t2.x, t2.y), t2.z);
+        if (tN > tF || tF < 0.0) return -1.0;
+        if (tN == t1.x) outNormal = vec3(-sign(rd.x), 0.0, 0.0);
+        else if (tN == t1.y) outNormal = vec3(0.0, -sign(rd.y), 0.0);
+        else outNormal = vec3(0.0, 0.0, -sign(rd.z));
+        return tN;
+    }
+ 
+    float obbInter(vec3 ro, vec3 rd, vec3 pos, vec3 size, float angle, out vec3 outNormal) {
+        vec3 localRo = ro - pos;
+        localRo = rotateY(localRo, -angle);
+        vec3 localRd = rotateY(rd, -angle);
+        vec3 localNormal;
+        float t = boxInter(localRo, localRd, size * 0.5, localNormal);
+        if (t > 0.0) {
+            outNormal = rotateY(localNormal, angle);
+        }
+        return t;
+    }
+ 
+    float intersect(vec3 ro, vec3 rd, out vec3 hitPos, out vec3 hitNorm, out vec3 hitColor, out int matType, out vec3 emit) {
+        float tMin = uMaxDist;
+        hitNorm = vec3(0.0);
+        hitColor = vec3(0.0);
+        matType = 0;
+        emit = vec3(0.0);
+        vec3 norm;
+ 
+        // 1. Tall Box
+        vec3 tallBoxPos = vec3(-0.5, -0.95, -0.3);
+        vec3 tallBoxSize = vec3(0.65, 2.3, 0.65);
+        float tTall = obbInter(ro, rd, tallBoxPos, tallBoxSize, 0.8, norm);
+        if (tTall > 0.001 && tTall < tMin) {
+            tMin = tTall;
+            hitPos = ro + tTall * rd;
+            hitNorm = norm;
+            hitColor = vec3(0.725, 0.71, 0.68);
+            matType = 0;
+        }
+ 
+        // 2. Short Box
+        vec3 shortBoxPos = vec3(0.5, -1.5, 0.4);
+        vec3 shortBoxSize = vec3(0.65, 1.2, 0.65);
+        float tShort = obbInter(ro, rd, shortBoxPos, shortBoxSize, -0.8, norm);
+        if (tShort > 0.001 && tShort < tMin) {
+            tMin = tShort;
+            hitPos = ro + tShort * rd;
+            hitNorm = norm;
+            hitColor = vec3(0.725, 0.71, 0.68);
+            matType = 0;
+        }
+ 
+        // 3. Left Wall (Red)
+        float tLeft = planeInter(ro, rd, vec3(-2.0, 0.0, 0.0), vec3(1.0, 0.0, 0.0));
+        if (tLeft > 0.001 && tLeft < tMin) {
+            vec3 p = ro + tLeft * rd;
+            if (p.y >= -2.0 && p.y <= 2.0 && p.z >= -2.0 && p.z <= 2.2) {
+                tMin = tLeft;
+                hitPos = p;
+                hitNorm = vec3(-sign(rd.x), 0.0, 0.0);
+                hitColor = vec3(0.63, 0.065, 0.05);
+                matType = 0;
+            }
+        }
+ 
+        // 4. Right Wall (Green)
+        float tRight = planeInter(ro, rd, vec3(2.0, 0.0, 0.0), vec3(-1.0, 0.0, 0.0));
+        if (tRight > 0.001 && tRight < tMin) {
+            vec3 p = ro + tRight * rd;
+            if (p.y >= -2.0 && p.y <= 2.0 && p.z >= -2.0 && p.z <= 2.2) {
+                tMin = tRight;
+                hitPos = p;
+                hitNorm = vec3(-sign(rd.x), 0.0, 0.0);
+                hitColor = vec3(0.14, 0.45, 0.091);
+                matType = 0;
+            }
+        }
+ 
+        // 5. Back Wall (White/Gray)
+        float tBack = planeInter(ro, rd, vec3(0.0, 0.0, -2.0), vec3(0.0, 0.0, 1.0));
+        if (tBack > 0.001 && tBack < tMin) {
+            vec3 p = ro + tBack * rd;
+            if (p.x >= -2.0 && p.x <= 2.0 && p.y >= -2.0 && p.y <= 2.0) {
+                tMin = tBack;
+                hitPos = p;
+                hitNorm = vec3(0.0, 0.0, -sign(rd.z));
+                hitColor = vec3(0.725, 0.71, 0.68);
+                matType = 0;
+            }
+        }
+ 
+        // 6. Floor (White/Gray)
+        float tFloor = planeInter(ro, rd, vec3(0.0, -2.0, 0.0), vec3(0.0, 1.0, 0.0));
+        if (tFloor > 0.001 && tFloor < tMin) {
+            vec3 p = ro + tFloor * rd;
+            if (p.x >= -2.0 && p.x <= 2.0 && p.z >= -2.0 && p.z <= 2.2) {
+                tMin = tFloor;
+                hitPos = p;
+                hitNorm = vec3(0.0, -sign(rd.y), 0.0);
+                hitColor = vec3(0.725, 0.71, 0.68);
+                matType = 0;
+            }
+        }
+ 
+        // 7. Ceiling (White + Light)
+        float tCeil = planeInter(ro, rd, vec3(0.0, 2.0, 0.0), vec3(0.0, -1.0, 0.0));
+        if (tCeil > 0.001 && tCeil < tMin) {
+            vec3 p = ro + tCeil * rd;
+            if (p.x >= -2.0 && p.x <= 2.0 && p.z >= -2.0 && p.z <= 2.2) {
+                tMin = tCeil;
+                hitPos = p;
+                hitNorm = vec3(0.0, -sign(rd.y), 0.0);
+                if (abs(p.x) <= 0.6 && abs(p.z) <= 0.6) {
+                    hitColor = vec3(0.65);
+                    matType = 0;
+                    emit = LightEmit;
+                } else {
+                    hitColor = vec3(0.725, 0.71, 0.68);
+                    matType = 0;
+                }
+            }
+        }
+        return tMin;
+    }
+ 
+    vec3 pathTrace(vec3 rayOrigin, vec3 rayDirection) {
+        vec3 throughput = vec3(1.0);
+        vec3 accumulatedLight = vec3(0.0);
+        vec3 currentOrigin = rayOrigin;
+        vec3 currentDir = rayDirection;
+        vec3 hitPos, hitNorm, hitColor, emit;
+        int matType;
+        
+        float t = intersect(currentOrigin, currentDir, hitPos, hitNorm, hitColor, matType, emit);
+        if (t >= uMaxDist) {
+            return BgColor;
+        }
+        if (emit != vec3(0.0)) {
+            return emit * uLightIntensity;
+        }
+ 
+        for (int bounce = 0; bounce < MaxDepth; bounce++) {
+            float u_light_x = rand() * 1.2 - 0.6;
+            float u_light_z = rand() * 1.2 - 0.6;
+            vec3 x_pos = vec3(u_light_x, 1.98, u_light_z);
+            vec3 NN = vec3(0.0, -1.0, 0.0);
+            
+            vec3 ws = x_pos - hitPos;
+            float dist2 = dot(ws, ws);
+            ws = normalize(ws);
+            
+            vec3 shadowHitPos, shadowHitNorm, shadowHitColor, shadowEmit;
+            int shadowMatType;
+            float shadowT = intersect(hitPos + hitNorm * 0.001, ws, shadowHitPos, shadowHitNorm, shadowHitColor, shadowMatType, shadowEmit);
+            
+            vec3 L_dir = vec3(0.0);
+            if (shadowT < 0.0 || shadowT > sqrt(dist2) - 0.01) {
+                vec3 eval_brdf = hitColor / PI;
+                float pdf_light = 1.0 / 1.44;
+                L_dir = (LightEmit * uLightIntensity) * eval_brdf * max(dot(ws, hitNorm), 0.0) * max(dot(-ws, NN), 0.0) / dist2 / pdf_light;
+            }
+            accumulatedLight += throughput * L_dir;
+            
+            float P_RR = 0.8;
+            if (rand() > P_RR) {
+                break;
+            }
+            
+            vec3 wi = randomCosineHemisphere(hitNorm);
+            vec3 nextHitPos, nextHitNorm, nextHitColor, nextEmit;
+            int nextMatType;
+            float nextT = intersect(hitPos + hitNorm * 0.001, wi, nextHitPos, nextHitNorm, nextHitColor, nextMatType, nextEmit);
+            
+            if (nextT >= uMaxDist) {
+                break;
+            }
+            if (nextEmit != vec3(0.0)) {
+                break;
+            }
+            
+            currentOrigin = hitPos + hitNorm * 0.001;
+            currentDir = wi;
+            throughput *= hitColor / P_RR;
+            
+            hitPos = nextHitPos;
+            hitNorm = nextHitNorm;
+            hitColor = nextHitColor;
+        }
+        return accumulatedLight;
+    }
+ 
+    void main() {
+        uvec2 pixelCoords = uvec2(gl_FragCoord.xy);
+        initRand(pixelCoords, uint(uFrameCount));
+        
+        // Single Sample per Pixel (1 SPP) for offscreen denoising pipeline
+        float jitterX = (rand() - 0.5) / 500.0;
+        float jitterY = (rand() - 0.5) / 500.0;
+        vec3 localRayDir = normalize(vec3(vScreenPos.x * uViewportSize.x + jitterX, vScreenPos.y * uViewportSize.y + jitterY, -1.0));
+        vec3 rayDirection = normalize(uRayMatrix * localRayDir);
+        
+        vec3 color = pathTrace(uEyePosition, rayDirection);
+        o_FragColor = vec4(color, 1.0);
+    }
+  </script>
+
+    <!-- Pass 2: Temporal Accumulation Shader -->
+    <script id="fs_accum" type="notjs">#version 300 es
+    precision highp float;
+ 
+    uniform sampler2D uRawTexture;
+    uniform sampler2D uHistoryTexture;
+    uniform float uAlpha;
+ 
+    in vec2 vScreenPos;
+    out vec4 o_FragColor;
+ 
+    void main() {
+        vec2 uv = vScreenPos * 0.5 + 0.5;
+        vec3 rawColor = texture(uRawTexture, uv).rgb;
+        vec3 historyColor = texture(uHistoryTexture, uv).rgb;
+        
+        o_FragColor = vec4(mix(historyColor, rawColor, uAlpha), 1.0);
+    }
+  </script>
+
+    <!-- Pass 3: Edge-Avoiding À-Trous Wavelet Denoise Shader (with Analytical G-Buffer) -->
+    <script id="fs_denoise" type="notjs">#version 300 es
+    precision highp float;
+ 
+    uniform sampler2D uInputTexture;
+    uniform float uStepSize;
+    uniform vec2 uViewportSize;
+    uniform vec3 uEyePosition;
+    uniform mat3 uRayMatrix;
+    uniform float uMaxDist;
+ 
+    in vec2 vScreenPos;
+    out vec4 o_FragColor;
+ 
+    // Analytical Cornell Box room and rotated box intersection functions
+    float planeInter(vec3 ro, vec3 rd, vec3 p0, vec3 n) {
+        float denom = dot(rd, n);
+        if (abs(denom) > 0.0001) {
+            float t = dot(p0 - ro, n) / denom;
+            if (t > 0.0) return t;
+        }
+        return -1.0;
+    }
+ 
+    vec3 rotateY(vec3 v, float angle) {
+        float s = sin(angle);
+        float c = cos(angle);
+        return vec3(c * v.x - s * v.z, v.y, s * v.x + c * v.z);
+    }
+ 
+    float boxInter(vec3 ro, vec3 rd, vec3 boxSize, out vec3 outNormal) {
+        vec3 m = 1.0 / rd;
+        vec3 n = m * ro;
+        vec3 k = abs(m) * boxSize;
+        vec3 t1 = -n - k;
+        vec3 t2 = -n + k;
+        float tN = max(max(t1.x, t1.y), t1.z);
+        float tF = min(min(t2.x, t2.y), t2.z);
+        if (tN > tF || tF < 0.0) return -1.0;
+        if (tN == t1.x) outNormal = vec3(-sign(rd.x), 0.0, 0.0);
+        else if (tN == t1.y) outNormal = vec3(0.0, -sign(rd.y), 0.0);
+        else outNormal = vec3(0.0, 0.0, -sign(rd.z));
+        return tN;
+    }
+ 
+    float obbInter(vec3 ro, vec3 rd, vec3 pos, vec3 size, float angle, out vec3 outNormal) {
+        vec3 localRo = ro - pos;
+        localRo = rotateY(localRo, -angle);
+        vec3 localRd = rotateY(rd, -angle);
+        vec3 localNormal;
+        float t = boxInter(localRo, localRd, size * 0.5, localNormal);
+        if (t > 0.0) {
+            outNormal = rotateY(localNormal, angle);
+        }
+        return t;
+    }
+ 
+    float intersect(vec3 ro, vec3 rd, out vec3 hitNorm) {
+        float tMin = uMaxDist;
+        hitNorm = vec3(0.0);
+        vec3 norm;
+ 
+        // 1. Tall Box
+        vec3 tallBoxPos = vec3(-0.5, -0.95, -0.3);
+        vec3 tallBoxSize = vec3(0.65, 2.3, 0.65);
+        float tTall = obbInter(ro, rd, tallBoxPos, tallBoxSize, 0.26, norm);
+        if (tTall > 0.001 && tTall < tMin) {
+            tMin = tTall;
+            hitNorm = norm;
+        }
+ 
+        // 2. Short Box
+        vec3 shortBoxPos = vec3(0.5, -1.5, 0.4);
+        vec3 shortBoxSize = vec3(0.65, 1.2, 0.65);
+        float tShort = obbInter(ro, rd, shortBoxPos, shortBoxSize, -0.3, norm);
+        if (tShort > 0.001 && tShort < tMin) {
+            tMin = tShort;
+            hitNorm = norm;
+        }
+ 
+        // 3. Left Wall (Red)
+        float tLeft = planeInter(ro, rd, vec3(-2.0, 0.0, 0.0), vec3(1.0, 0.0, 0.0));
+        if (tLeft > 0.001 && tLeft < tMin) {
+            vec3 p = ro + tLeft * rd;
+            if (p.y >= -2.0 && p.y <= 2.0 && p.z >= -2.0 && p.z <= 2.2) {
+                tMin = tLeft;
+                hitNorm = vec3(-sign(rd.x), 0.0, 0.0);
+            }
+        }
+ 
+        // 4. Right Wall (Green)
+        float tRight = planeInter(ro, rd, vec3(2.0, 0.0, 0.0), vec3(-1.0, 0.0, 0.0));
+        if (tRight > 0.001 && tRight < tMin) {
+            vec3 p = ro + tRight * rd;
+            if (p.y >= -2.0 && p.y <= 2.0 && p.z >= -2.0 && p.z <= 2.2) {
+                tMin = tRight;
+                hitNorm = vec3(-sign(rd.x), 0.0, 0.0);
+            }
+        }
+ 
+        // 5. Back Wall (White/Gray)
+        float tBack = planeInter(ro, rd, vec3(0.0, 0.0, -2.0), vec3(0.0, 0.0, 1.0));
+        if (tBack > 0.001 && tBack < tMin) {
+            vec3 p = ro + tBack * rd;
+            if (p.x >= -2.0 && p.x <= 2.0 && p.y >= -2.0 && p.y <= 2.0) {
+                tMin = tBack;
+                hitNorm = vec3(0.0, 0.0, -sign(rd.z));
+            }
+        }
+ 
+        // 6. Floor
+        float tFloor = planeInter(ro, rd, vec3(0.0, -2.0, 0.0), vec3(0.0, 1.0, 0.0));
+        if (tFloor > 0.001 && tFloor < tMin) {
+            vec3 p = ro + tFloor * rd;
+            if (p.x >= -2.0 && p.x <= 2.0 && p.z >= -2.0 && p.z <= 2.2) {
+                tMin = tFloor;
+                hitNorm = vec3(0.0, -sign(rd.y), 0.0);
+            }
+        }
+ 
+        // 7. Ceiling
+        float tCeil = planeInter(ro, rd, vec3(0.0, 2.0, 0.0), vec3(0.0, -1.0, 0.0));
+        if (tCeil > 0.001 && tCeil < tMin) {
+            vec3 p = ro + tCeil * rd;
+            if (p.x >= -2.0 && p.x <= 2.0 && p.z >= -2.0 && p.z <= 2.2) {
+                tMin = tCeil;
+                hitNorm = vec3(0.0, -sign(rd.y), 0.0);
+            }
+        }
+        return tMin;
+    }
+ 
+    void getAnalyticalGBuffer(vec2 screenPos, out vec3 normal, out float depth) {
+        vec3 localRayDir = normalize(vec3(screenPos.x * uViewportSize.x, screenPos.y * uViewportSize.y, -1.0));
+        vec3 rayDirection = normalize(uRayMatrix * localRayDir);
+        depth = intersect(uEyePosition, rayDirection, normal);
+    }
+ 
+    void main() {
+        vec2 uv = vScreenPos * 0.5 + 0.5;
+        vec2 texelSize = 1.0 / vec2(textureSize(uInputTexture, 0));
+        
+        vec3 centerColor = texture(uInputTexture, uv).rgb;
+        vec3 centerNormal;
+        float centerDepth;
+        getAnalyticalGBuffer(vScreenPos, centerNormal, centerDepth);
+        
+        if (centerDepth >= uMaxDist) {
+            o_FragColor = vec4(centerColor, 1.0);
+            return;
+        }
+        
+        // 5x5 B3-spline wavelet filter kernel
+        float kernel[5];
+        kernel[0] = 1.0/16.0; kernel[1] = 4.0/16.0; kernel[2] = 6.0/16.0; kernel[3] = 4.0/16.0; kernel[4] = 1.0/16.0;
+        
+        vec3 sumColor = vec3(0.0);
+        float sumWeight = 0.0;
+        
+        float sigma_c = 2.0;
+        float sigma_n = 0.12;
+        float sigma_z = 0.25;
+        
+        for (int v = -2; v <= 2; v++) {
+            for (int u = -2; u <= 2; u++) {
+                vec2 offset = vec2(float(u), float(v)) * uStepSize * texelSize;
+                vec2 neighborUv = uv + offset;
+                vec3 neighborColor = texture(uInputTexture, neighborUv).rgb;
+                
+                vec2 neighborScreenPos = neighborUv * 2.0 - 1.0;
+                vec3 neighborNormal;
+                float neighborDepth;
+                getAnalyticalGBuffer(neighborScreenPos, neighborNormal, neighborDepth);
+                
+                float w_spatial = kernel[u+2] * kernel[v+2];
+                
+                float d_color = dot(neighborColor - centerColor, neighborColor - centerColor);
+                float w_color = exp(-d_color / (2.0 * sigma_c * sigma_c));
+                
+                float d_normal = 1.0 - max(0.0, dot(centerNormal, neighborNormal));
+                float w_normal = exp(-d_normal / sigma_n);
+                
+                float d_depth = abs(centerDepth - neighborDepth);
+                float w_depth = exp(-d_depth / sigma_z);
+                
+                float w = w_spatial * w_color * w_normal * w_depth;
+                
+                sumColor += neighborColor * w;
+                sumWeight += w;
+            }
+        }
+        
+        vec3 finalColor = sumWeight > 0.0001 ? sumColor / sumWeight : centerColor;
+        o_FragColor = vec4(finalColor, 1.0);
+    }
+  </script>
+
+    <!-- Pass 4: Display/Tone-mapping Shader -->
+    <script id="fs_display" type="notjs">#version 300 es
+    precision highp float;
+ 
+    uniform sampler2D uInputTexture;
+ 
+    in vec2 vScreenPos;
+    out vec4 o_FragColor;
+ 
+    void main() {
+        vec2 uv = vScreenPos * 0.5 + 0.5;
+        vec3 color = texture(uInputTexture, uv).rgb;
+        
+        // Reinhard Tone Mapping
+        vec3 finalColor = color / (color + vec3(1.0));
+        // Gamma Correction
+        finalColor = pow(finalColor, vec3(1.0 / 2.2));
+        
+        o_FragColor = vec4(finalColor, 1.0);
+    }
+  </script>
+
+    <script type="module">
+        import { twgl, glMatrix, Camera, Control } from './lib/bundle.js';
+
+        const { mat3, mat4, vec3 } = glMatrix;
+
+        const canvas = document.getElementById('container');
+        const gl = canvas.getContext("webgl2");
+
+        // Check float texture support
+        if (!gl.getExtension("EXT_color_buffer_float")) {
+            alert("Need EXT_color_buffer_float extension to run this demo.");
+        }
+
+        // Compile trace program directly to render onto the screen
+        const traceProgramInfo = twgl.createProgramInfo(gl, ['vs', 'fs_trace']);
+        const accumProgramInfo = twgl.createProgramInfo(gl, ['vs', 'fs_accum']);
+        const denoiseProgramInfo = twgl.createProgramInfo(gl, ['vs', 'fs_denoise']);
+        const displayProgramInfo = twgl.createProgramInfo(gl, ['vs', 'fs_display']);
+
+        const camera = new Camera({
+            type: 'PerspectiveCamera',
+            fov: 40,
+            aspect: canvas.offsetWidth / canvas.offsetHeight,
+            far: 1000,
+        });
+        camera.setPosition(0, 0.0, 6.2);
+        camera.lookAt(0, 0, 0);
+
+        const control = new Control(camera, canvas, {
+            minZoom: 0.6,
+            maxZoom: 8,
+            zoomScale: 0.01
+        });
+        control.start();
+
+        const lightIntensityInput = document.getElementById('lightIntensity');
+        const lightIntensityVal = document.getElementById('lightIntensityVal');
+        const statusLabel = document.getElementById('statusLabel');
+
+        // Setup full-screen quad vertex buffer
+        const quadVertices = new Float32Array([
+            -1.0, -1.0,
+            1.0, -1.0,
+            -1.0, 1.0,
+
+            -1.0, 1.0,
+            1.0, -1.0,
+            1.0, 1.0
+        ]);
+
+        const bufferInfo = twgl.createBufferInfoFromArrays(gl, {
+            aVertexPosition: { numComponents: 2, data: quadVertices }
+        });
+
+        const vaoTrace = twgl.createVAOFromBufferInfo(gl, traceProgramInfo, bufferInfo);
+        const vaoAccum = twgl.createVAOFromBufferInfo(gl, accumProgramInfo, bufferInfo);
+        const vaoDenoise = twgl.createVAOFromBufferInfo(gl, denoiseProgramInfo, bufferInfo);
+        const vaoDisplay = twgl.createVAOFromBufferInfo(gl, displayProgramInfo, bufferInfo);
+
+        // Create offscreen float framebuffers
+        const attachments = [{
+            internalFormat: gl.RGBA32F,
+            format: gl.RGBA,
+            type: gl.FLOAT,
+            minMag: gl.NEAREST,
+            wrap: gl.CLAMP_TO_EDGE,
+        }];
+
+        let fboTrace = twgl.createFramebufferInfo(gl, attachments);
+        let fboAccumA = twgl.createFramebufferInfo(gl, attachments);
+        let fboAccumB = twgl.createFramebufferInfo(gl, attachments);
+        let fboDenoise = twgl.createFramebufferInfo(gl, attachments);
+
+        let frameCount = 0;
+
+        // Variables to track camera transformation differences
+        let lastCameraPos = vec3.clone(camera.position);
+        let lastCameraView = mat4.clone(camera.viewMatrix);
+        let lastCameraZoom = camera.zoom;
+
+        function renderPathTracer() {
+            // Handle canvas resizing
+            if (twgl.resizeCanvasToDisplaySize(gl.canvas)) {
+                twgl.resizeFramebufferInfo(gl, fboTrace, attachments);
+                twgl.resizeFramebufferInfo(gl, fboAccumA, attachments);
+                twgl.resizeFramebufferInfo(gl, fboAccumB, attachments);
+                twgl.resizeFramebufferInfo(gl, fboDenoise, attachments);
+            }
+
+            // Compute viewport bounds and camera matrices
+            const radian = Math.PI / 180;
+            const fovRadians = (camera.fov / camera.zoom) * radian;
+            const viewportH = Math.tan(fovRadians / 2);
+            const viewportW = viewportH * (canvas.offsetWidth / canvas.offsetHeight);
+
+            const viewMat3 = mat3.fromMat4([], camera.viewMatrix);
+            const rayMatrix = mat3.transpose([], viewMat3);
+
+            // Read slider values and update value labels
+            const lightIntensity = parseFloat(lightIntensityInput.value);
+            lightIntensityVal.textContent = lightIntensity.toFixed(1);
+
+            // Determine if camera is moving (including zoom changes)
+            const posDiff = vec3.distance(camera.position, lastCameraPos);
+            let viewDiff = 0.0;
+            for (let i = 0; i < 16; i++) {
+                viewDiff += Math.abs(camera.viewMatrix[i] - lastCameraView[i]);
+            }
+            const zoomDiff = Math.abs(camera.zoom - lastCameraZoom);
+
+            const isCameraMoving = posDiff > 0.0001 || viewDiff > 0.0001 || zoomDiff > 0.0001;
+            if (isCameraMoving) {
+                frameCount = 0; // Reset temporal accumulation
+                vec3.copy(lastCameraPos, camera.position);
+                mat4.copy(lastCameraView, camera.viewMatrix);
+                lastCameraZoom = camera.zoom;
+                statusLabel.textContent = "State: Denoising (Motion)";
+                statusLabel.style.color = "#ea4335"; // Red
+            } else {
+                statusLabel.textContent = "State: Converging (" + frameCount + " frames)";
+                statusLabel.style.color = "#34a853"; // Green
+            }
+
+            // Determine Ping-Pong buffers for Temporal Accumulation
+            const currentHistory = frameCount % 2 === 0 ? fboAccumA : fboAccumB;
+            const nextAccum = frameCount % 2 === 0 ? fboAccumB : fboAccumA;
+
+            // --- Pass 1: Draw Raw 1 SPP Path Tracing to fboTrace ---
+            twgl.bindFramebufferInfo(gl, fboTrace);
+            gl.useProgram(traceProgramInfo.program);
+            gl.bindVertexArray(vaoTrace);
+            twgl.setUniforms(traceProgramInfo, {
+                uEyePosition: camera.position,
+                uMaxDist: camera.far,
+                uRayMatrix: rayMatrix,
+                uViewportSize: [viewportW, viewportH],
+                uFrameCount: frameCount,
+                uLightIntensity: lightIntensity
+            });
+            twgl.drawBufferInfo(gl, bufferInfo);
+
+            // --- Pass 2: Temporal Accumulation to nextAccum ---
+            twgl.bindFramebufferInfo(gl, nextAccum);
+            gl.useProgram(accumProgramInfo.program);
+            gl.bindVertexArray(vaoAccum);
+            twgl.setUniforms(accumProgramInfo, {
+                uRawTexture: fboTrace.attachments[0],
+                uHistoryTexture: currentHistory.attachments[0],
+                uAlpha: isCameraMoving ? 1.0 : (1.0 / (frameCount + 1.0))
+            });
+            twgl.drawBufferInfo(gl, bufferInfo);
+
+
+            // --- Pass 3: Spatial Filtering (À-Trous) if camera is moving ---
+            let finalTexture = nextAccum.attachments[0];
+            if (isCameraMoving) {
+                twgl.bindFramebufferInfo(gl, fboDenoise);
+                gl.useProgram(denoiseProgramInfo.program);
+                gl.bindVertexArray(vaoDenoise);
+                twgl.setUniforms(denoiseProgramInfo, {
+                    uInputTexture: nextAccum.attachments[0],
+                    uStepSize: 2.0, // Sparse step size
+                    uViewportSize: [viewportW, viewportH],
+                    uEyePosition: camera.position,
+                    uRayMatrix: rayMatrix,
+                    uMaxDist: camera.far
+                });
+                twgl.drawBufferInfo(gl, bufferInfo);
+                finalTexture = fboDenoise.attachments[0];
+            }
+
+            // --- Pass 4: Draw to Screen with Tone-Mapping & Gamma Correction ---
+            twgl.bindFramebufferInfo(gl, null); // target screen
+            gl.useProgram(displayProgramInfo.program);
+            gl.bindVertexArray(vaoDisplay);
+            twgl.setUniforms(displayProgramInfo, {
+                uInputTexture: finalTexture
+            });
+            twgl.drawBufferInfo(gl, bufferInfo);
+
+            frameCount++;
+        }
+
+        function anim() {
+            renderPathTracer();
+            requestAnimationFrame(anim);
+        }
+        requestAnimationFrame(anim);
+    </script>
+</body>
+
+</html>
