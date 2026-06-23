@@ -69,9 +69,29 @@ main {
 
 #main-container img {
   width: 25%;
+  object-fit: cover;
+  display: inline-block;
+  vertical-align: top;
+  box-sizing: border-box;
   padding: 0.25em;
   border: 1px solid #dee2e6;
   border-radius: 0.25em;
+  background-color: #f0f0f0;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+#main-container.cg-example img,
+#main-container.webgl-example img {
+  aspect-ratio: 8 / 5;
+}
+
+#main-container.dggs-example img {
+  aspect-ratio: 1 / 1;
+}
+
+#main-container img.loaded {
+  opacity: 1;
 }
 
 #main-container .content {

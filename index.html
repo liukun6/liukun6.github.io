@@ -199,7 +199,7 @@
 
     const exampleTemplate = `
       <div class="item">
-        <img src="#{src}" alt="">
+        <img src="#{src}" loading="lazy" onload="this.classList.add('loaded')" alt="">
         <span class="content">
           <a href="#{url}">#{title}</a><br>
         </span>
@@ -231,6 +231,7 @@
     }
 
     function renderContainer(page = 'cg-example') {
+      containerEle.className = page;
       const items = [];
       if (page === 'cg-example') {
         let path;
