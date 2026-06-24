@@ -1,14 +1,56 @@
+:root {
+  --bg-base: #eee;
+  --text-primary: #2d3135;
+  --text-secondary: #5a6065;
+  --glass-bg: rgba(255, 255, 255, 0.45);
+  --glass-border: rgba(255, 255, 255, 0.6);
+  --glass-shadow: rgba(0, 0, 0, 0.05);
+  --accent-color: #4b6584;
+  --accent-hover: #20b2aa;
+  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
 body {
   margin: 0;
   padding: 0;
-  color: #494e52;
+  color: var(--text-primary);
+  background-color: var(--bg-base);
+  font-family: var(--font-family);
   line-height: 1.5;
   font-size: 18px;
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Ambient Glow */
+.ambient-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  z-index: -1;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.glow-1 {
+  width: 450px;
+  height: 450px;
+  background: radial-gradient(circle, rgba(165, 180, 252, 0.4) 0%, rgba(255, 255, 255, 0) 70%);
+  top: -10%;
+  left: 10%;
+}
+
+.glow-2 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(147, 197, 253, 0.4) 0%, rgba(255, 255, 255, 0) 70%);
+  top: 40%;
+  right: 5%;
 }
 
 header {
   position: relative;
-  border-bottom: 1px solid #f2f3f3;
 }
 
 nav {
