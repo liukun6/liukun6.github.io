@@ -189,8 +189,37 @@ main {
 
 #main-about {
   display: none;
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 30px 40px;
+  box-shadow: 0 8px 32px 0 var(--glass-shadow);
+  max-width: 600px;
+  margin: 2em auto;
 }
 
 #main-about p {
-  margin: 1.5em 0;
+  margin: 1em 0;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+#main-about strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Fade Transition Utilities */
+.fade-transition {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  opacity: 1;
+  transform: scale(1);
+}
+
+.fade-hide {
+  opacity: 0;
+  transform: scale(0.98);
+  pointer-events: none;
 }
