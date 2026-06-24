@@ -56,13 +56,23 @@ header {
 nav {
   max-width: 960px;
   margin: 30px auto;
-  padding: 10px 24px;
+  padding: 12px 24px;
   background: var(--glass-bg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--glass-border);
   border-radius: 50px;
   box-shadow: 0 8px 32px 0 var(--glass-shadow);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nav-brand {
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
 }
 
 #nav-menu {
@@ -70,49 +80,32 @@ nav {
   margin: 0;
   list-style-type: none;
   display: flex;
-  justify-content: space-around;
   align-items: center;
+  gap: 8px;
 }
 
 #nav-menu li {
   position: relative;
   display: inline-block;
-  padding: 0.5rem 1rem;
+  padding: 8px 16px;
   color: var(--text-secondary);
   font-weight: 500;
   cursor: pointer;
   text-decoration: none;
-  transition: color 0.3s ease;
-}
-
-#nav-menu li::before {
-  content: "";
-  position: absolute;
-  left: 10%;
-  bottom: 0;
-  height: 3px;
-  background: var(--accent-hover);
-  border-radius: 2px;
-  width: 80%;
-  transition: transform 0.3s ease;
-  transform: scaleX(0);
+  border-radius: 8px;
+  transition: color 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 #nav-menu li:hover {
   color: var(--text-primary);
-}
-
-#nav-menu li:hover::before {
-  transform: scaleX(1);
+  background-color: rgba(255, 255, 255, 0.35);
 }
 
 #nav-menu li.active {
-  color: var(--accent-hover);
+  color: var(--text-primary);
+  background-color: rgba(255, 255, 255, 0.75);
   font-weight: 600;
-}
-
-#nav-menu li.active::before {
-  transform: scaleX(1);
+  box-shadow: 0 4px 12px var(--glass-shadow);
 }
 
 main {
