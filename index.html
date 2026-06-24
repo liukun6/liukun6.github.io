@@ -260,11 +260,16 @@
     ];
 
     const exampleTemplate = `
-      <div class="item">
-        <img src="#{src}" loading="lazy" onload="this.classList.add('loaded')" alt="">
-        <span class="content">
-          <a href="#{url}">#{title}</a><br>
-        </span>
+      <div class="item" onclick="location.href='#{url}'">
+        <div class="img-container">
+          <img src="#{src}" loading="lazy" onload="this.classList.add('loaded')" alt="">
+          <div class="tech-badge">#{badge}</div>
+        </div>
+        <div class="content">
+          <h3 class="card-title">#{title}</h3>
+          <p class="card-desc">#{desc}</p>
+          <span class="card-link">#{linkText}</span>
+        </div>
       </div>`
     function handleHash() {
       const hash = location.hash.slice(1);
@@ -343,22 +348,25 @@
               ...item,
               url: path + '.html',
               imgSrc: path + '.png',
+              linkText: 'Learn - Geometry'
             })
           });
         });
       } else if (page === 'dggs-example') {
         const { file, title } = DGGS_EXAMPLE;
         items.push({
-          title,
+          ...DGGS_EXAMPLE,
           url: `dggs-example/${file}.html`,
           imgSrc: `dggs-example/${file}.png`,
+          linkText: 'Learn - DGGS'
         });
       } else if (page === 'webgl-example') {
-        WEBGL_EXAMPLES.forEach(({ title, file }) => {
+        WEBGL_EXAMPLES.forEach((item) => {
           items.push({
-            title,
-            url: `webgl-example/${file}.html`,
-            imgSrc: `webgl-example/${file}.png`,
+            ...item,
+            url: `webgl-example/${item.file}.html`,
+            imgSrc: `webgl-example/${item.file}.png`,
+            linkText: 'Learn - WebGL'
           });
         });
       }
@@ -367,11 +375,14 @@
         exampleTemplate.replace('#{url}', item.url)
           .replace('#{src}', item.imgSrc)
           .replace('#{title}', item.title)
+          .replace('#{badge}', item.badge)
+          .replace('#{desc}', item.desc)
+          .replace('#{linkText}', item.linkText)
       ).join('');
       containerEle.innerHTML = content;
 
       aboutEle.style.display = 'none';
-      containerEle.style.display = 'block';
+      containerEle.style.display = 'grid';
     }
 
     function renderAbout() {
