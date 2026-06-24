@@ -211,16 +211,31 @@
     function handleHash() {
       const hash = location.hash.slice(1);
       const pages = ['cg-example', 'dggs-example', 'webgl-example'];
+      
+      // Update active nav menu item class
+      const menuItems = navMenuEle.querySelectorAll('li');
+      menuItems.forEach(item => {
+        if (item.id === hash || (!hash && item.id === 'cg-example')) {
+          item.classList.add('active');
+        } else {
+          item.classList.remove('active');
+        }
+      });
+
       if (hash === 'about') {
-        renderAbout();
+        switchView(renderAbout);
       } else if (pages.includes(hash)) {
-        renderContainer(hash);
+        switchView(() => renderContainer(hash));
       } else {
-        renderContainer('cg-example');
+        switchView(() => renderContainer('cg-example'));
       }
     }
 
     function init() {
+      // Add transition classes on load
+      containerEle.classList.add('fade-transition');
+      aboutEle.classList.add('fade-transition');
+
       handleHash();
 
       window.addEventListener('hashchange', handleHash);
@@ -232,6 +247,30 @@
           location.hash = targetId;
         }
       });
+    }
+
+    function switchView(renderFunc) {
+      const isAboutVisible = aboutEle.style.display === 'block' || (window.getComputedStyle(aboutEle).display !== 'none');
+      const currentVisible = isAboutVisible ? aboutEle : containerEle;
+      
+      const isInitialLoad = !containerEle.style.display && !aboutEle.style.display;
+      
+      if (isInitialLoad) {
+        renderFunc();
+        return;
+      }
+      
+      currentVisible.classList.add('fade-hide');
+      
+      setTimeout(() => {
+        renderFunc();
+        
+        const nextVisible = containerEle.style.display !== 'none' ? containerEle : aboutEle;
+        nextVisible.classList.add('fade-hide');
+        // Force reflow
+        nextVisible.offsetHeight; 
+        nextVisible.classList.remove('fade-hide');
+      }, 300);
     }
 
     function renderContainer(page = 'cg-example') {
