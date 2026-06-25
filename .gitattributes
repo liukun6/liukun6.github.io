@@ -1,1 +1,4 @@
-*.onnx filter=lfs diff=lfs merge=lfs -text
+webllm-example/knowledge-graph/models/**/*.onnx filter=lfs diff=lfs merge=lfs -text
+webllm-example/knowledge-graph/models/**/*.wasm filter=lfs diff=lfs merge=lfs -text
+webllm-example/knowledge-graph/models/**/*.json -diff linguist-generated
+webllm-example/knowledge-graph/models/**/*.txt -diff linguist-generated
