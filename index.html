@@ -6,22 +6,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kun Liu's Blog</title>
 
-  <link rel="stylesheet" href="./main.css">
+  <link rel="stylesheet" href="./main.css?v=3">
 </head>
 
 <body onload="init()">
   <!-- Ambient Glow Layers -->
   <div class="ambient-glow glow-1"></div>
   <div class="ambient-glow glow-2"></div>
+  <div class="ambient-glow glow-3"></div>
 
   <header>
     <nav>
       <div class="nav-brand">Kun Liu's Blog</div>
       <ul id="nav-menu">
-        <li id="cg-example">Computational Geometry</li>
-        <li id="webgl-example">WebGL</li>
-        <li id="dggs-example">DGGS</li>
-        <li id="about">About</li>
+        <li data-page="cg-example">Computational Geometry</li>
+        <li data-page="webgl-example">WebGL</li>
+        <li data-page="dggs-example">DGGS</li>
+        <li data-page="about">About</li>
       </ul>
     </nav>
   </header>
@@ -264,12 +265,10 @@
       <div class="item" onclick="location.href='#{url}'">
         <div class="img-container">
           <img src="#{src}" loading="lazy" onload="this.classList.add('loaded')" alt="">
-          <div class="tech-badge">#{badge}</div>
         </div>
         <div class="content">
           <h3 class="card-title">#{title}</h3>
           <p class="card-desc">#{desc}</p>
-          <span class="card-link">#{linkText}</span>
         </div>
       </div>`
     function handleHash() {
@@ -279,7 +278,8 @@
       // Update active nav menu item class
       const menuItems = navMenuEle.querySelectorAll('li');
       menuItems.forEach(item => {
-        if (item.id === hash || (!hash && item.id === 'cg-example')) {
+        const page = item.getAttribute('data-page');
+        if (page === hash || (!hash && page === 'cg-example')) {
           item.classList.add('active');
         } else {
           item.classList.remove('active');
@@ -305,10 +305,10 @@
       window.addEventListener('hashchange', handleHash);
 
       navMenuEle.addEventListener('click', (event) => {
-        const targetId = event.target.id;
+        const targetPage = event.target.getAttribute('data-page');
         const allMenus = ['cg-example', 'dggs-example', 'webgl-example', 'about'];
-        if (allMenus.includes(targetId)) {
-          location.hash = targetId;
+        if (allMenus.includes(targetPage)) {
+          location.hash = targetPage;
         }
       });
     }
@@ -348,8 +348,7 @@
             items.push({
               ...item,
               url: path + '.html',
-              imgSrc: path + '.png',
-              linkText: 'Learn - Geometry'
+              imgSrc: path + '.png'
             })
           });
         });
@@ -358,16 +357,14 @@
         items.push({
           ...DGGS_EXAMPLE,
           url: `dggs-example/${file}.html`,
-          imgSrc: `dggs-example/${file}.png`,
-          linkText: 'Learn - DGGS'
+          imgSrc: `dggs-example/${file}.png`
         });
       } else if (page === 'webgl-example') {
         WEBGL_EXAMPLES.forEach((item) => {
           items.push({
             ...item,
             url: `webgl-example/${item.file}.html`,
-            imgSrc: `webgl-example/${item.file}.png`,
-            linkText: 'Learn - WebGL'
+            imgSrc: `webgl-example/${item.file}.png`
           });
         });
       }
@@ -376,9 +373,7 @@
         exampleTemplate.replace('#{url}', item.url)
           .replace('#{src}', item.imgSrc)
           .replace('#{title}', item.title)
-          .replace('#{badge}', item.badge)
           .replace('#{desc}', item.desc)
-          .replace('#{linkText}', item.linkText)
       ).join('');
       containerEle.innerHTML = content;
 
