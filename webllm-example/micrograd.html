@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebGPU micrograd - WebGPU LLM</title>
+  <link rel="stylesheet" href="main.css">
+
+</head>
+<body>
+  <!-- Ambient Glow Layers -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+  <div class="ambient-glow glow-3"></div>
+
+  <div class="container">
+
+    <header>
+      <h1>WebGPU micrograd</h1>
+      <div class="subtitle">A [2, 16, 16, 1] tanh-MLP trained end-to-end on the GPU with WGSL compute shaders. Forward, backward and parameter updates never leave the GPU.</div>
+    </header>
+
+    <div class="layout-two-col">
+      <div class="layout-col visual-col">
+        <div class="canvas-wrap">
+          <canvas id="gpu-canvas"></canvas>
+          <canvas id="overlay-canvas"></canvas>
+        </div>
+        <div class="row-buttons">
+          <button type="button" id="class-a-btn" class="legend-btn active">&#9679; Class A (green)</button>
+          <button type="button" id="class-b-btn" class="legend-btn">&#9679; Class B (red)</button>
+        </div>
+        <p class="hint">Click a class above to choose what left-click / drag adds. Right-click / drag always adds the other class.</p>
+      </div>
+
+      <div class="layout-col controls-col scrollable">
+        <div id="status-indicator" class="status info">Initializing WebGPU...</div>
+        <div class="panel">
+          <h2>Data</h2>
+          <div class="row-buttons">
+            <button data-preset="moons">Moons</button>
+            <button data-preset="circles">Circles</button>
+            <button data-preset="xor">XOR</button>
+            <button data-preset="spiral">Spiral</button>
+            <button id="clear-data-btn" class="secondary-btn">Clear</button>
+          </div>
+
+          <h2>Training</h2>
+          <div class="row-buttons">
+            <button id="train-btn">Train</button>
+          </div>
+
+          <div class="field">
+            <label><span>Learning rate</span><span id="lr-label">0.05</span></label>
+            <input id="lr-slider" type="range" min="0" max="1000" value="450">
+          </div>
+          <div class="field">
+            <label><span>Optimizer</span></label>
+            <select id="optimizer-select">
+              <option value="sgd">SGD</option>
+              <option value="adam">Adam</option>
+            </select>
+          </div>
+          <div class="field">
+            <label><span>Training steps / frame</span><span id="steps-label">2</span></label>
+            <input id="steps-slider" type="range" min="1" max="8" value="2">
+          </div>
+        </div>
+
+        <details class="panel" open>
+          <summary>Advanced</summary>
+          <p class="hint">Network architecture, gradient self-check, execution log.</p>
+
+          <h2>Architecture</h2>
+          <div class="field">
+            <label><span>Hidden layer 1 width</span><span id="h1-label">16</span></label>
+            <input id="h1-slider" type="range" min="2" max="32" value="16">
+          </div>
+          <div class="field">
+            <label><span>Hidden layer 2 width</span><span id="h2-label">16</span></label>
+            <input id="h2-slider" type="range" min="2" max="32" value="16">
+          </div>
+          <div class="row-buttons">
+            <button id="reset-params-btn" class="secondary-btn">Reset params</button>
+          </div>
+          <p class="hint">Changing width takes effect on the next "Reset params" click (rebuilds GPU buffers and re-initializes weights; the dataset is kept).</p>
+
+          <h2>Training tools</h2>
+          <div class="row-buttons">
+            <button id="step-btn" class="secondary-btn">Step once</button>
+            <button id="check-btn" class="secondary-btn">Self-check gradients</button>
+          </div>
+
+          <h2>Execution Log</h2>
+          <div id="console-out" class="console">
+            <div class="console-line info">Console ready.</div>
+          </div>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="micrograd/main.js"></script>
+</body>
+</html>

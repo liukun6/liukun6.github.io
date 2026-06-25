@@ -1,0 +1,8 @@
+# Offline embedding precompute (one-time build step). See precompute_embeddings.py.
+# Pinned to versions that ship Intel-macOS (x86_64) wheels and Python 3.9 support.
+sentence-transformers==2.7.0
+torch==2.2.2
+# torch 2.2.x was built against the NumPy 1.x ABI; NumPy 2.x crashes it.
+numpy<2
+# Used directly by the script (not just a transitive dep of sentence-transformers).
+requests>=2.28,<3

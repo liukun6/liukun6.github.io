@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Knowledge Graph Agent - WebGPU LLM</title>
+  <link rel="stylesheet" href="main.css">
+
+</head>
+<body>
+  <!-- Ambient Glow Layers -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+  <div class="ambient-glow glow-3"></div>
+
+  <div class="container">
+    <div class="layout-two-col graph-layout">
+      <div class="layout-col visual-col">
+        <div class="scene-wrap">
+          <canvas id="gpu-canvas"></canvas>
+        </div>
+        <p class="hint" id="degraded-hint" style="display:none;">
+          This demo requires WebGPU. Try a recent desktop Chrome or Edge. The retrieval and logic shown here
+          is the same technique used across this site's other WebGPU demos — see the Dashboard for ones that may
+          work on your device.
+        </p>
+      </div>
+
+      <div class="layout-col controls-col scrollable">
+        <header>
+          <h1>Knowledge Graph Agent</h1>
+          <div class="subtitle">Ask a question; a local embedding model retrieves the closest concept and a local 135M-parameter LLM explains why, while a hand-written WGSL force-directed layout keeps the graph alive in the background.</div>
+        </header>
+
+        <div id="status-indicator" class="status info">Initializing WebGPU...</div>
+
+        <p class="disclosure">Predefined knowledge graph demo. Model weights (~190MB total, self-hosted) download once on first load, then this page works offline.</p>
+
+        <div class="panel">
+          <div class="query-row">
+            <input id="query-input" type="text" placeholder="e.g. how does attention avoid recomputation?">
+            <button id="ask-btn">Ask</button>
+            <button id="relayout-btn" class="secondary-btn">Re-layout</button>
+          </div>
+          <div class="explanation-card" id="explanation-card">Ask a question above to highlight a concept.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.webgpu.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+      }
+    }
+  </script>
+  <script type="module" src="knowledge-graph/main.js"></script>
+</body>
+</html>
