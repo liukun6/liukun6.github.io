@@ -168,6 +168,7 @@ main {
   transition: opacity 0.3s ease-in-out;
 }
 
+#main-container.webllm-example img,
 #main-container.cg-example img,
 #main-container.webgl-example img {
   aspect-ratio: 8 / 5;

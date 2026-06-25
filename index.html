@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kun Liu's Blog</title>
 
-  <link rel="stylesheet" href="./main.css?v=3">
+  <link rel="stylesheet" href="./main.css?v=4">
 </head>
 
 <body onload="init()">
@@ -19,8 +19,9 @@
     <nav>
       <div class="nav-brand">Kun Liu's Blog</div>
       <ul id="nav-menu">
-        <li data-page="cg-example">Computational Geometry</li>
+        <li data-page="webllm-example">WebLLM</li>
         <li data-page="webgl-example">WebGL</li>
+        <li data-page="cg-example">Computational Geometry</li>
         <li data-page="dggs-example">DGGS</li>
         <li data-page="about">About</li>
       </ul>
@@ -45,6 +46,19 @@
     const containerEle = document.getElementById('main-container');
     const aboutEle = document.getElementById('main-about');
     const navMenuEle = document.getElementById('nav-menu');
+
+    const WEBLLM_EXAMPLES = [
+      {
+        file: 'knowledge-graph',
+        title: 'Knowledge Graph Agent',
+        desc: 'Extract entities and build interactive knowledge graphs locally using WebGPU LLM.'
+      },
+      {
+        file: 'micrograd',
+        title: 'WebGPU Micrograd',
+        desc: 'A [2, 16, 16, 1] tanh-MLP trained end-to-end on the GPU with WGSL compute shaders. Forward and backward passes run entirely on GPU.'
+      }
+    ];
 
     const CG_EXAMPLE = {
       type: 'cg-example',
@@ -273,13 +287,13 @@
       </div>`
     function handleHash() {
       const hash = location.hash.slice(1);
-      const pages = ['cg-example', 'dggs-example', 'webgl-example'];
+      const pages = ['webllm-example', 'webgl-example', 'cg-example', 'dggs-example'];
       
       // Update active nav menu item class
       const menuItems = navMenuEle.querySelectorAll('li');
       menuItems.forEach(item => {
         const page = item.getAttribute('data-page');
-        if (page === hash || (!hash && page === 'cg-example')) {
+        if (page === hash || (!hash && page === 'webllm-example')) {
           item.classList.add('active');
         } else {
           item.classList.remove('active');
@@ -291,7 +305,7 @@
       } else if (pages.includes(hash)) {
         switchView(() => renderContainer(hash));
       } else {
-        switchView(() => renderContainer('cg-example'));
+        switchView(() => renderContainer('webllm-example'));
       }
     }
 
@@ -306,7 +320,7 @@
 
       navMenuEle.addEventListener('click', (event) => {
         const targetPage = event.target.getAttribute('data-page');
-        const allMenus = ['cg-example', 'dggs-example', 'webgl-example', 'about'];
+        const allMenus = ['webllm-example', 'webgl-example', 'cg-example', 'dggs-example', 'about'];
         if (allMenus.includes(targetPage)) {
           location.hash = targetPage;
         }
@@ -337,10 +351,18 @@
       }, 300);
     }
 
-    function renderContainer(page = 'cg-example') {
+    function renderContainer(page = 'webllm-example') {
       containerEle.className = page;
       const items = [];
-      if (page === 'cg-example') {
+      if (page === 'webllm-example') {
+        WEBLLM_EXAMPLES.forEach((item) => {
+          items.push({
+            ...item,
+            url: `webllm-example/${item.file}.html`,
+            imgSrc: `webllm-example/${item.file}.png`
+          });
+        });
+      } else if (page === 'cg-example') {
         let path;
         CG_EXAMPLE.groups.forEach((group) => {
           group.methods.forEach((item) => {
