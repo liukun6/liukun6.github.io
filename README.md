@@ -1,7 +1,5 @@
 Hi! I'm Kun Liu.
 
-As a software engineer, I'm interested in <strong>computational geometry</strong>, <strong>data/geographic visualization</strong>, <strong>3d</strong>.
+I am a software engineer specializing in **full-stack system architecture**, **computer graphics (WebGL/WebGPU)**, and **Geographic Information Systems (GIS)**.
 
-I graduated with a Master's degree in Geographic Information Science(GIS) from Nanjing Normal University.
-
-I will publish some interesting examples.
+This site serves as a developer playground where I publish interactive demos exploring computational geometry, WebGPU LLM inference, and graphics shaders.
