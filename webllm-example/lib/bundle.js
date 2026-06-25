@@ -524,5 +524,3 @@ function matmul(tensorA, tensorB) {
 }
 
 export { Tensor, add, gpu, matmul };
-
-//# sourceMappingURL=bundle.js.map
